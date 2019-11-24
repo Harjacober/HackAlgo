@@ -1,4 +1,4 @@
-class problem:
+class ProblemInstance:
     def __init__(self,problem_ds):
         assert isinstance(problem_ds,dict)
         self.problem=problem_ds
@@ -17,14 +17,19 @@ class problem:
     
     def getAnswerForCases(self):
         return self.problem["answercases"]
-
     
     def getTestCases(self):
-        return self.problem["tases"]
+        return self.problem["tcases"]
 
     def getNTestCases(self):
         return self.problem["ntcases"]
     
     def getAnswerForTestCases(self):
         return self.problem["answertcases"]
+
+    def getProblemStatement(self):
+        return self.problem["problemstatement"]
+
+    def getProblemCategory(self):
+        return self.problem["category"]
     

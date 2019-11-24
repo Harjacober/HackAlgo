@@ -3,3 +3,4 @@ To get started for development install mongodb and make sure its  running on por
 Then do *pip install -r requirement.txt* in the project root
 
 #Genaral project docs
+Runs on python3.7

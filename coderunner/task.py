@@ -3,7 +3,7 @@ from random import randint
 from time import time
 import subprocess
 from threading import Thread
-from coderunner.problem import problem
+
 
 ORIGINAL_DIR=os.getcwd()
 
@@ -24,13 +24,14 @@ compilers={
 class Task(Thread):
     PossibelTasksState=["initialize","running","finished"]
     def __init__(self,lang,content,person_email,problem,id):
+        Thread.__init__(self)
         self.state=Task.PossibelTasksState[0]
         self.lang=lang
         self.content=content
         self.person_email=person_email
-        self.cases=problem.getCases()
-        self.answercase=problem.getAnswerForCases
-        self.result=[None]*len(self.answercase)
+        self.cases=problem.getCases().split("\n")
+        self.answercase=problem.getAnswerForCases().split("\n")
+        self.result=[None]*int(problem.getNCases())
         self.id=id
         self.enter()
 
@@ -38,7 +39,6 @@ class Task(Thread):
         return {"state":self.state,"lang":self.lang,"email":self.person_email,"_id":self.id,"result":self.result}
 
     def __del___(self):
-        self.file.close()
         os.remove(self.filepath)
 
     def __lt__(self,other):
@@ -50,6 +50,7 @@ class Task(Thread):
         self.filepath=self.folder+self.filename
         self.file=open(self.filepath,"w+")
         self.file.write(self.content)
+        self.file.close()
     
     def resolveFolder(self,lang):
         #python is py,java is java e.t.c.This function exist if need be resolve the name later
@@ -75,8 +76,8 @@ class Task(Thread):
             self.result[l]=ans==self.answercase[cc] #would scrutinize this line soon cos answer formatting might be disimilar to stored answrer
 
     def run(self):
-        l=len(self.cases)
-        self.state=self.PossibelTasksState[2]
+        l=len(self.result)
+        self.state=self.PossibelTasksState[1]
         #some languagues have to compile then run 
         if self.lang == "java":
             options_compile=["-d",self.folder,"-s",self.folder,"-h",self.folder]
@@ -92,11 +93,20 @@ class Task(Thread):
             self.runCompile("g++",options_compile,options_run,l,"",self.filepath+"CP")
         else:
             # languages like python, js, php should be fine.
+            
             for cc in range(l):
                 ans=subprocess.\
-                        run([self.resolveFolder(self.lang),self.filepath], capture_output=True,\
-                        input=self.cases[cc],encoding="utf-8").stdout.decode()
-                self.result[l]=ans==self.answercase[cc] #would scrutinize this line soon
-        self.state=self.PossibelTasksState[3]
+                        run([self.resolveFolder(self.lang),self.filepath],capture_output=True,\
+                        input=self.cases[cc],encoding="utf-8")
+
+                output=ans.stdout.strip()
+                errput=ans.stderr.strip()
+                
+                res={"passed":output==self.answercase[cc],"output":output,"errput":errput}
+                
+                self.result[cc]= res
+                
+        self.state=self.PossibelTasksState[2]
+        os.remove(self.filepath)
 
 
