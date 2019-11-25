@@ -11,6 +11,7 @@ from coderunner.taskqueue import queue
 from coderunner.task import Task
 from db.models import Problem
 from bson.objectid import ObjectId
+from coderunner.problem import ProblemInstance
 
 run_code_parser = reqparse.RequestParser()
 run_code_parser.add_argument('prblmid', help = 'This field cannot be blank. It also accept email', required = True)
@@ -25,16 +26,12 @@ run_code_status_parser.add_argument('prblmid', help = 'This field cannot be blan
 run_code_status_parser.add_argument('usermail', help = 'This field cannot be blank', required = True)
 
 
+
 class RunCode(Resource):
     @jwt_required
     def post(self):
         input_data=run_code_parser.parse_args()
 
-        for required in ["prblmid","usermail","codecontent","lang"]:        
-            if not (required in input_data):
-                return  {"code":"400","msg":"{} not in request".format(required),"data":[]}
-    
-        
         problem_id=input_data["prblmid"]
         problem= Problem.getBy(_id= ObjectId(problem_id))
         if not problem:
@@ -44,14 +41,12 @@ class RunCode(Resource):
         code_content=input_data["codecontent"]
         language=input_data["lang"]
 
-        task_id=queue.Queue.generateID()
+        task_id=queue.generateID()
        
-        task=Task(language,code_content,user_mail,problem,task_id)
-        queue.queue.add(task)
+        task=Task(language,code_content,user_mail,ProblemInstance(problem),task_id)
+        queue.add(task_id,task)
 
         return {"code":"200","msg":"Task started ","data":[task.toJson()]}
-
-
 
     @jwt_required
     def get(self):
@@ -63,10 +58,6 @@ class RunCodeStatus(Resource):
     def post(self):
         input_data = run_code_status_parser.parse_args()
 
-        for required in ["prblmid","usermail","taskid","lang"]:        
-            if not (required in input_data):
-                return  {"code":"400","msg":"{} not in request".format(required),"data":[]}
-
         problem_id=input_data["prblmid"]
         problem= Problem.getBy(_id= ObjectId(problem_id))
         if not problem:
@@ -76,15 +67,12 @@ class RunCodeStatus(Resource):
         task_id=input_data["taskid"]
         language=input_data["lang"]
 
-        task=queue.queue.getById(task_id)
+        task=queue.getById(task_id)
 
         if task is None:
             return {"code":"404","msg":"Task not found","data":[]}
 
         return {"code":"404","msg":"Task state is {} ".format(task.status()),"data":[task.toJson()]}
-
-
-            
 
     @jwt_required
     def get(self):

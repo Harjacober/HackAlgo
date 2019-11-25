@@ -29,11 +29,13 @@ class AdminRegistration(Resource):
     category=Admin
     def post(self):
         data=reg_parser.parse_args()
+        
         if self.category.getBy(email=data["email"]):
             return response(200,"email taken",[])
-        
+
         data["pswd"]=sha256.hash(data["pswd"])
         self.category.addDoc(data)
+
         return response(200,"Successfully resgistered",[],access_token=create_access_token(data["email"]))
     def get(self):
         return response(200,"Method not allowed",[])
@@ -48,16 +50,18 @@ class AdminLogin(Resource):
 
         user_data=self.category.getBy(username=data["username"])
 
-        if user_data and sha256.verify(user_data["pswd"], data["pswd"]):
+        if user_data and sha256.verify(data["pswd"],user_data["pswd"]):
             
-            return response(200,"login successfuly",[],access_token=create_access_token(data["username"]))
+            return response(200,"login successfuly",[],access_token=create_access_token(data["username"]+user_data["pswd"]))
 
-        user_data=self.category.getBy(username=data["email"])
+        user_data=self.category.getBy(email=data["username"])
+        
 
-        if user_data and sha256.verify(user_data["pswd"], data["pswd"]):
-            return response(200,"login successfuly",[],access_token=create_access_token(data["username"]))
+        if user_data and sha256.verify(data["pswd"],user_data["pswd"]):
+            return response(200,"login successfuly",[],access_token=create_access_token(data["username"]+user_data["pswd"]))
 
         return response(200,"check the username and password",[])
+
     def get(self):
         return response(200,"Method not allowed",[])
 

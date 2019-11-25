@@ -4,7 +4,7 @@ class base:
     def addDoc(self,doc):
         assert self.collection is not None
         id=self.collection.insert_one(doc).inserted_id
-        return self(id)
+        return base(id)
 
     @classmethod
     def getBy(self,**kwargs):

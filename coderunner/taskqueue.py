@@ -2,6 +2,7 @@
 This class holds runnng tasks and can provide the status of each 
 """
 from os import getcwd
+from bson.objectid import ObjectId
 
 class Queue:
     tasks={}
@@ -11,6 +12,8 @@ class Queue:
         if id in Queue.tasks:
             print("WARN: id in task")
         Queue.tasks[id]=task
+        Queue.tasks[id].start()
+
 
     def getById(self,id):
         return Queue.tasks[id] if self.checkForID(id) else None
@@ -34,7 +37,8 @@ class Queue:
     def generateID(self):
         if Queue.idsAvailable:
             return Queue.idsAvailable.pop()
-        return len(Queue.tasks)+1
+        
+        return str(ObjectId())
 
 
 
