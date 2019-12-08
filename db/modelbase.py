@@ -7,8 +7,8 @@ class base:
         return id
 
     @classmethod
-    def getBy(self,**kwargs):
-        return self.collection.find_one(kwargs)
+    def getBy(self,params=None,**kwargs):
+        return self.collection.find_one(kwargs,params)
 
     def __init__(self,id):
         self.id=id

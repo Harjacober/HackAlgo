@@ -21,14 +21,17 @@ reg_parser.add_argument('email', help = 'This field cannot be blank.', required 
 reg_parser.add_argument('username', help = 'This field cannot be blank.', required = True)
 reg_parser.add_argument('pswd', help = 'This field cannot be blank', required = True)
 
-profile_parser = reqparse.RequestParser()
-profile_parser.add_argument('uniqueid', help='unqueid of user whose profile needs to be updated', required=False)
-profile_parser.add_argument('name', help = '', required = False)
-profile_parser.add_argument('birthday', help = '', required = False)
-profile_parser.add_argument('gender', help = 'should either be male, female or other', required = False)
-profile_parser.add_argument('location', help = '', required = False)
-profile_parser.add_argument('summary', help = 'Brief description about yourself', required = False)
-profile_parser.add_argument('profilephoto', help='Link to profile pictture on storage', required=False)
+profile_parser = reqparse.RequestParser() 
+profile_parser.add_argument('uniqueid', help='unqueid of user whose profile needs to be updated', required=False, store_missing=False)
+profile_parser.add_argument('name', help = '', required = False, store_missing=False)
+profile_parser.add_argument('birthday', help = '', required = False, store_missing=False)
+profile_parser.add_argument('gender', help = 'should either be male, female or other', required = False, store_missing=False)
+profile_parser.add_argument('location', help = '', required = False, store_missing=False)
+profile_parser.add_argument('summary', help = 'Brief description about yourself', required = False, store_missing=False)
+profile_parser.add_argument('profilephoto', help='Link to profile pictture on storage', required=False, store_missing=False)
+
+getprofile_parser = reqparse.RequestParser()
+getprofile_parser.add_argument('uniqueid', "This field cannot be blan", required=True)
 
 def response(code,msg,data,access_token=""):
     return {"code":code,"msg":msg,"data":data,"access_token":access_token}
@@ -78,8 +81,9 @@ class UserUpdateProfile(Resource):
     category = User
     def post(self):
         data = profile_parser.parse_args()
+        print(data)
         #update the profile(document) with unqiueid provided 
-        uid = ObjectId(data['uniqueid'])
+        uid = ObjectId(data['uniqueid']) #convert str id to a bson object
         if self.category.update(params=data, _id=uid):
             return response(200, "update successful",[],access_token=create_access_token(data['uniqueid']))
 
@@ -89,6 +93,20 @@ class UserUpdateProfile(Resource):
 
 class AdminUpdateProfile(UserUpdateProfile):
     category = Admin        
+
+class UserProfile(Resource):
+    category = User
+    def get(self):
+        data = getprofile_parser.parse_args() 
+        uid = ObjectId(data['uniqueid'])
+        exclude = {'_id':0, 'pswd':0, 'lastModified':0}
+        user_data = self.category.getBy( params=exclude, _id=uid) 
+        if user_data:
+            return response(200, "Success", user_data)
+        return response(200, "uniqueid doesn't exist",[])    
+
+class AdminProfile(UserProfile):
+    category = Admin
 
 
 
