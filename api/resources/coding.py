@@ -30,16 +30,16 @@ run_code_status_parser.add_argument('usermail', help = 'This field cannot be bla
 class RunCode(Resource):
     @jwt_required
     def post(self):
-        input_data=run_code_parser.parse_args()
+        input_data = run_code_parser.parse_args()
 
-        problem_id=input_data["prblmid"]
-        problem= Problem.getBy(_id= ObjectId(problem_id))
+        problem_id=input_data["prblmid"] #get id
+        problem = Problem.getBy(_id= ObjectId(problem_id))#fetch the actual problem from database with the problemId 
         if not problem:
             return {"code":"404","msg":"Invalid Problem ID","data":[]}
 
-        user_mail=input_data["usermail"]
-        code_content=input_data["codecontent"]
-        language=input_data["lang"]
+        user_mail=input_data["usermail"] #get email
+        code_content=input_data["codecontent"] #get submitted code content
+        language=input_data["lang"] #get submission language
 
         task_id=queue.generateID()
        

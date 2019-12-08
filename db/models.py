@@ -7,7 +7,10 @@ class Admin(base):
 class User(base):
     collection=client["user"]
 class Problem(base):
-    collection=client["problem"]
+    collection=client["problem"]    
+class Submission(base):
+    sclient=client["user"]
+    collection = sclient["submission"]     
 
 if __name__ == "__main__":
     pass

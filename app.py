@@ -9,7 +9,7 @@ from flask_restful import Api
 from flask_jwt_extended import JWTManager
 
 from api.access.user import UserAPI
-from api.resources.regapi import AdminRegistration,UserRegistration,AdminLogin,UserLogin
+from api.resources.regapi import AdminRegistration,UserRegistration,AdminLogin,UserLogin,AdminUpdateProfile,UserUpdateProfile
 from api.resources.coding import RunCode,RunCodeStatus
 from api.access.problem import ProblemAdd,ProblemAPI
 
@@ -24,12 +24,14 @@ jwt = JWTManager(app)
 @app.route("/")
 def index():
     #server some home page here
-    return "Hello !!"
+    return "Hello who is there!!"
 
 api.add_resource(AdminRegistration, '/nimdareg/')
 api.add_resource(UserRegistration, '/userreg/')
 api.add_resource(AdminLogin, '/nimdalogin/')
-api.add_resource(UserLogin, '/userlogin/')
+api.add_resource(UserLogin, '/userlogin/') 
+api.add_resource(AdminUpdateProfile, '/adminprofile/')
+api.add_resource(UserUpdateProfile, '/userprofile/')
 api.add_resource(UserAPI, '/<string:id>')
 
 api.add_resource(RunCode, '/run/code/')

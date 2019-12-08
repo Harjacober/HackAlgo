@@ -28,7 +28,7 @@ class Queue:
             return "Task not found in queue"
         Queue.tasks.pop(id)
         Queue.idsAvailable.append(id)
-        Print(" Removed ID {}".format(id))
+        print(" Removed ID {}".format(id))
 
     def checkForID(self,id):
         return id in Queue.tasks

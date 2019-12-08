@@ -4,7 +4,7 @@ class base:
     def addDoc(self,doc):
         assert self.collection is not None
         id=self.collection.insert_one(doc).inserted_id
-        return base(id)
+        return id
 
     @classmethod
     def getBy(self,**kwargs):
@@ -17,11 +17,11 @@ class base:
     def get(self):
         return self.collection.find_one({"_id": self.id})
 
-
-    def update(self,params: dict,**kwargs):
-        return self.collection.updateOne(
+    @classmethod
+    def update(self, params,**kwargs):
+        return self.collection.update_one(
             kwargs,
-            {"$set": params},
-            {"$currentDate": { lastModified: true }}
-        ).modified_count >0
+            {"$set": params,
+            "$currentDate": { "lastModified": True }}
+        ).modified_count > 0
        
