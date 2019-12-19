@@ -11,12 +11,12 @@ ORIGINAL_DIR=os.getcwd()
 #for unix we might use which to find binary but mehn i dont know brah
 compilers={
     "go":"/usr/local/go/bin/go",
-    "py":"/usr/bin/python3",
+    "py":"/usr/local/bin/python",
     "java":"",
     "c":"",
     "c++":"/usr/bin/g++",
-    "python":"/usr/bin/python3",
-    "python2":"/usr/bin/python3",
+    "python":"/usr/local/bin/python",
+    "python2":"/usr/bin/python",
     "php":"php",
     "js":"node"
 }

@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  mongodb:
+    container_name: mongo
+    image: mongo
+    restart: on-failure
+    ports:
+      - "27017:27017"
+  web:
+    container_name: platform
+    build:
+      context: .
+      dockerfile: Dockerfile
+    links:
+      - mongodb
+    volumes:
+      - .:/home
+    ports:
+      - "9000:9000"
+    depends_on:
+      - mongodb
+    restart: on-failure
