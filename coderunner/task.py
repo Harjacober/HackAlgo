@@ -7,8 +7,9 @@ from threading import Thread
 
 ORIGINAL_DIR=os.getcwd()
 
-#So this would be different for each machine not sure how to about this efficiently yet
-#for unix we might use which to find binary but mehn i dont know brah
+#So this would be different for each machine not sure how 
+#to go about this efficiently yet for unix.
+#we might use which to find binary but mehn i dont know brah
 compilers={
     "go":"/usr/local/go/bin/go",
     "py":"/usr/bin/python3",
@@ -23,12 +24,12 @@ compilers={
 
 class Task(Thread):
     PossibelTasksState=["initialize","running","finished"]
-    def __init__(self,lang,content,person_email,problem,id):
+    def __init__(self,lang,content,userid,problem,id):
         Thread.__init__(self)
         self.state=Task.PossibelTasksState[0]
         self.lang=lang
         self.content=content
-        self.person_email=person_email
+        self.userid=userid
         self.cases=problem.getCases().split("\n")
         self.answercase=problem.getAnswerForCases().split("\n")
         self.result=[None]*int(problem.getNCases())
@@ -36,7 +37,7 @@ class Task(Thread):
         self.enter()
 
     def toJson(self):
-        return {"state":self.state,"lang":self.lang,"email":self.person_email,"_id":self.id,"result":self.result}
+        return {"state":self.state,"lang":self.lang,"userid":self.userid,"_id":self.id,"result":self.result}
 
     def __del___(self):
         os.remove(self.filepath)
@@ -48,7 +49,7 @@ class Task(Thread):
         self.filename=self.randomFilename()
         self.folder="/tmp/{}/".format(self.lang)
         self.filepath=self.folder+self.filename
-        self.file=open(self.filepath,"w+")
+        self.file = open(self.filepath,"w+")
         self.file.write(self.content)
         self.file.close()
     
@@ -58,8 +59,8 @@ class Task(Thread):
             raise NotImplementedError("Not yet suported")
         return compilers[lang]
 
-    def randomFilename(self):
-        return self.person_email+"{}{}".format(time(),hash(self))
+    def randomFilename(self): 
+        return self.userid+"{}{}".format(hash(time()),hash(self))
 
     def status(self):
         return self.state
@@ -95,9 +96,8 @@ class Task(Thread):
             # languages like python, js, php should be fine.
             
             for cc in range(l):
-                ans=subprocess.\
-                        run([self.resolveFolder(self.lang),self.filepath],capture_output=True,\
-                        input=self.cases[cc],encoding="utf-8")
+                ans=subprocess.run([self.resolveFolder(self.lang),self.filepath],capture_output=True,
+                input=self.cases[cc],encoding="utf-8")
 
                 output=ans.stdout.strip()
                 errput=ans.stderr.strip()

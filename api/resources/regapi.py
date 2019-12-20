@@ -47,9 +47,9 @@ class AdminRegistration(Resource):
             return response(200,"usernname taken",[])    
 
         data["pswd"]=sha256.hash(data["pswd"]) #replace the old pswd arg with new hash passowrd
-        obj = self.category.addDoc(data) #finally add registration data to database
+        uid = self.category.addDoc(data) #finally add registration data to database
 
-        return response(200,"Successfully resgistered",{"uniqueid":str(obj)},access_token=create_access_token(data["email"]))
+        return response(200,"Successfully resgistered",{"uniqueid":str(uid)},access_token=create_access_token(data["email"]))
     def get(self):
         return response(200,"Method not allowed",[]) 
 

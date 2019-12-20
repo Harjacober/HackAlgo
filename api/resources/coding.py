@@ -9,13 +9,13 @@ from flask_jwt_extended import (
 
 from coderunner.taskqueue import queue
 from coderunner.task import Task
-from db.models import Problem
+from db.models import Problem,Submission
 from bson.objectid import ObjectId
 from coderunner.problem import ProblemInstance
 
 run_code_parser = reqparse.RequestParser()
 run_code_parser.add_argument('prblmid', help = 'This field cannot be blank. It also accept email', required = True)
-run_code_parser.add_argument('usermail', help = 'This field cannot be blank', required = True)
+run_code_parser.add_argument('userid', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('codecontent', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('lang', help = 'This field cannot be blank', required = True)
 
@@ -23,11 +23,12 @@ run_code_status_parser = reqparse.RequestParser()
 run_code_status_parser.add_argument('taskid', help = 'This field cannot be blank.', required = True)
 run_code_status_parser.add_argument('lang', help = 'This field cannot be blank.', required = True)
 run_code_status_parser.add_argument('prblmid', help = 'This field cannot be blank', required = True)
-run_code_status_parser.add_argument('usermail', help = 'This field cannot be blank', required = True)
+run_code_status_parser.add_argument('userid', help = 'This field cannot be blank', required = True)
 
 
 
 class RunCode(Resource):
+    category = Submission
     @jwt_required
     def post(self):
         input_data = run_code_parser.parse_args()
@@ -37,14 +38,19 @@ class RunCode(Resource):
         if not problem:
             return {"code":"404","msg":"Invalid Problem ID","data":[]}
 
-        user_mail=input_data["usermail"] #get email
+        print(input_data)
+        userid=input_data["userid"] #get user id
         code_content=input_data["codecontent"] #get submitted code content
         language=input_data["lang"] #get submission language
 
         task_id=queue.generateID()
        
-        task=Task(language,code_content,user_mail,ProblemInstance(problem),task_id)
+        task=Task(language,code_content,userid,ProblemInstance(problem),task_id)
         queue.add(task_id,task)
+        #add the submission to database as the task has started
+        
+        input_data['verdict'] = 'running'
+        uid = self.category.addDoc(input_data) 
 
         return {"code":"200","msg":"Task started ","data":[task.toJson()]}
 
@@ -63,7 +69,7 @@ class RunCodeStatus(Resource):
         if not problem:
             return {"code":"404","msg":"Invalid Problem ID","data":[]}
 
-        user_mail=input_data["usermail"]
+        user_id=input_data["userid"]
         task_id=input_data["taskid"]
         language=input_data["lang"]
 

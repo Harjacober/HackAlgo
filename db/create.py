@@ -20,7 +20,12 @@ contestdb["comment"]
 langs=['go', 'py', 'java', 'c', 'c++', 'python', 'python2', 'php', 'js']
 
 for lgn in langs:
-    os.mkdir("/tmp/{}".format(lgn))
+    path = "/tmp/{}/".format(lgn) 
+    directory = os.path.dirname(path) 
+    print(directory)
+    os.makedirs(directory)
+    if not os.path.dirname(directory):
+        os.makedirs(directory)
 
 
 

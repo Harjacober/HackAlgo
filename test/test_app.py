@@ -8,7 +8,7 @@ from app import  *
 from db.models import *
 app_client=app.test_client()
 
-
+#Run create.py first before this test file
 langs=['go', 'py', 'java', 'c', 'c++', 'python', 'python2', 'php', 'js']
 
 class AppTests(unittest.TestCase):
@@ -23,9 +23,10 @@ class AppTests(unittest.TestCase):
     def setProblemID(cls,problem_id):
         cls.problem_id=problem_id
 
-    def test_folder_avail(self):
+    def test_folder_avail(self): 
         for lgn in langs:
-            os.stat("/tmp/{}".format(lgn))
+            directory = os.path.dirname("/tmp/{}".format(lgn))
+            os.stat(directory)
 
     def reg_test(self,url):
         resp=app_client.post(url, data=dict(
@@ -141,20 +142,20 @@ class AppTests(unittest.TestCase):
 
         data=dict(
             prblmid=self.problem_id,
-            usermail="nairamarley@yahoo.com",
+            userid="wkgs426haqie6yvnacswteelkjsndteaqp",
             codecontent="ot=input()\nprint(ot)",
             lang="py"
         )
 
         resp=app_client.post("/run/code/",data=data,headers=header)
-       
+        print(json.loads(resp.data.decode()))
         resp=json.loads(resp.data.decode())["data"][0]
 
         task_id=resp["_id"]
       
         data=dict(
             prblmid=self.problem_id,
-            usermail="nairamarley@yahoo.com",
+            userid="wkgs426haqie6yvnacswteelkjsndteaqp",
             taskid=task_id,
             lang="py"
         )

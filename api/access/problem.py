@@ -56,7 +56,7 @@ class ProblemAdd(Resource):
         if not input_data["ntcases"].isdigit():
             return {"code":"400","msg":"ncases must be a digit str","data":[]}
 
-        id=str(Problem.addDoc(input_data).id)
+        id = str(Problem.addDoc(input_data))  
 
         return {"code":"200","msg":"New Problem added","data":[id]}
 
