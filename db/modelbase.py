@@ -15,7 +15,11 @@ class base:
         
     @classmethod
     def getAll(self, params=None,start=0, size=1, **kwargs):
-        return self.collection.find(kwargs, params).skip(start).limit(size)
+        """
+        :param start: where query should begin
+        :param size: size of data needed
+        """
+        return self.collection.find(kwargs, params).skip(start-1).limit(size)
 
     @classmethod
     def update(self, params,**kwargs):

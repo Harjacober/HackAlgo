@@ -26,11 +26,16 @@ req_show_problem = reqparse.RequestParser()
 req_show_problem.add_argument('category', required=False)
 req_show_problem.add_argument('author', required=False)
 req_show_problem.add_argument('name', required=False)
+req_show_problem.add_argument('start',type=int, required=False)
+req_show_problem.add_argument('size', type=int, required=False)
 
 def response(code,msg,data):
     return {"code":code,"msg":msg,"data":data}
 
 class ProblemDetails(Resource):
+    """
+    Returns full desciption of a problem excluding answercases and sampleanswercase
+    """
     @jwt_required
     def get(self):
         input_data=req_show_problem_details.parse_args()
@@ -53,6 +58,9 @@ class ProblemDetails(Resource):
 
         return response(200, "Success", pb)  
 class ProblemsSet(Resource):
+    """
+    Returns all problem that match specific search parameters
+    """
     @jwt_required
     def get(self):
         input_data = req_show_problem.parse_args()
@@ -60,8 +68,8 @@ class ProblemsSet(Resource):
         exclude = {'_id':0,'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
          'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
 
-        data = Problem.getAll(params=exclude,start=0,size=1,category=input_data['category'],
-         author=input_data['author'], name=input_data['name'])
+        data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'],
+        category=input_data['category'], author=input_data['author'], name=input_data['name'])
         data = list(data)
         return response(200, "Success", data)
 
@@ -72,8 +80,8 @@ class ProblemsSet(Resource):
         exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
          'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
 
-        data = Problem.getAll(params=exclude,start=0,size=1,category=input_data['category'],
-         author=input_data['author'], name=input_data['name']) 
+        data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'],
+        category=input_data['category'], author=input_data['author'], name=input_data['name']) 
         data = list(data) 
         return response(200, "Success", data)
  
