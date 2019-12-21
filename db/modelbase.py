@@ -13,9 +13,9 @@ class base:
     def __init__(self,id):
         self.id=id
         
-
-    def get(self):
-        return self.collection.find_one({"_id": self.id})
+    @classmethod
+    def getAll(self, params=None,start=0, size=1, **kwargs):
+        return self.collection.find(kwargs, params).skip(start).limit(size)
 
     @classmethod
     def update(self, params,**kwargs):

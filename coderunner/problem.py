@@ -9,23 +9,23 @@ class ProblemInstance:
     def getAuthor(self):
         return self.problem["author"]
     
-    def getCases(self):
-        return self.problem["cases"]
-
-    def getNCases(self):
-        return self.problem["ncases"]
-    
-    def getAnswerForCases(self):
-        return self.problem["answercases"]
-    
     def getTestCases(self):
-        return self.problem["tcases"]
+        return self.problem["testcases"]
 
-    def getNTestCases(self):
-        return self.problem["ntcases"]
+    def getSizeOfTestCases(self):
+        return self.problem["sizeoftestcases"]
     
     def getAnswerForTestCases(self):
-        return self.problem["answertcases"]
+        return self.problem["answercases"]
+    
+    def getSampleCases(self):
+        return self.problem["samplecases"]
+
+    def getSizeOfSampleCases(self):
+        return self.problem["sizeofsamplecases"]
+    
+    def getAnswerForSampleCases(self):
+        return self.problem["sampleanswercases"]
 
     def getProblemStatement(self):
         return self.problem["problemstatement"]

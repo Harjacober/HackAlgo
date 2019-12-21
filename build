@@ -1,0 +1,4 @@
+#!/bin/sh
+python db/create.py
+python test/test_app.py
+python app.py 

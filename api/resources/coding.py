@@ -18,6 +18,7 @@ run_code_parser.add_argument('prblmid', help = 'This field cannot be blank. It a
 run_code_parser.add_argument('userid', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('codecontent', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('lang', help = 'This field cannot be blank', required = True)
+run_code_parser.add_argument('stype', help = 'This field cannot be blank', required = True)
 
 run_code_status_parser = reqparse.RequestParser()
 run_code_status_parser.add_argument('taskid', help = 'This field cannot be blank.', required = True)
@@ -37,18 +38,17 @@ class RunCode(Resource):
         problem = Problem.getBy(_id= ObjectId(problem_id))#fetch the actual problem from database with the problemId 
         if not problem:
             return {"code":"404","msg":"Invalid Problem ID","data":[]}
-
-        print(input_data)
+ 
         userid=input_data["userid"] #get user id
-        code_content=input_data["codecontent"] #get submitted code content
-        language=input_data["lang"] #get submission language
-
+        code_content = input_data["codecontent"] #get submitted code content
+        language = input_data["lang"] #get submission language
+        submission_type = input_data["stype"] #get submission type
         task_id=queue.generateID()
        
-        task=Task(language,code_content,userid,ProblemInstance(problem),task_id)
+        task=Task(language,code_content,userid,ProblemInstance(problem),task_id, submission_type)
         queue.add(task_id,task)
-        #add the submission to database as the task has started
         
+        #add the submission to database as the task has started 
         input_data['verdict'] = 'running'
         uid = self.category.addDoc(input_data) 
 

@@ -9,4 +9,3 @@ if TESTING:
     client=client["contestplatformtesting"]
 else:
     client = MongoClient('localhost', 27017)["contestplatform"]
-

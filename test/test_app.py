@@ -76,8 +76,8 @@ class AppTests(unittest.TestCase):
         
        
     def test_admin_reg(self):
-        self.reg_test("/nimdareg/")
-        self.login_test("/nimdalogin/")
+        self.reg_test("/adminreg/")
+        self.login_test("/adminlogin/")
 
     def test_user_reg(self):
         self.reg_test("/userreg/")
@@ -90,16 +90,23 @@ class AppTests(unittest.TestCase):
 
         # Authorization: Bearer <token>
         header={"Authorization":"Bearer "+self.api_token}
-
+        c1 = "1 2 3 4 5\n2 3 5 6 7,3 4 8 9 1\n4 2 3 5 1,5 2 4 3 1\n6 3 5 7 8"
+        a1 = "[3, 5, 8, 10, 12],[7, 6, 11, 14, 2],[11, 5, 9, 10, 9]"
+        s1 = "3 4 6 3\n2 4 6 2"
+        as1= "[5, 8, 12, 5]"
+        c2 = "3\r\n1\r\n2\r\n3\r\n4\r\n5\r\n6,2\r\n7\r\n8\r\n9\r\n10,1\r\n9\r\n10'"
+        a2= "3\n7\n11,\n15\n19,\n19"
+        s2 = "2\n3\n4\n2\n1"
+        as2 = "7\n3"
         data=dict(
             name="problem test",
             author="abraham",
-            cases="1\n2\n3",
-            ncases="3",
-            answercases="1\n2\n3",
-            tcases="1",
-            ntcases="1",
-            answertcases="1",
+            testcases=c2,
+            sizeoftestcases="3",
+            answercases=a2,
+            samplecases=s2,
+            sizeofsamplecases="1",
+            sampleanswercases = as2, 
             problemstatement="Read the input and print them",
             category="test"
         )
@@ -122,16 +129,16 @@ class AppTests(unittest.TestCase):
 
         self.assertTrue("200" in resp.data.decode())
         self.assertTrue("author" in resp.data.decode())
-        self.assertTrue("ncases" in resp.data.decode())
-        self.assertTrue("tcases" in resp.data.decode())
+        self.assertTrue("sizeoftestcases" in resp.data.decode())
+        self.assertTrue("samplecases" in resp.data.decode())
 
         resp=app_client.get("/get/problem/?prblid="+problem_id,headers=header)
 
 
         self.assertTrue("200" in resp.data.decode())
         self.assertTrue("author" in resp.data.decode())
-        self.assertTrue("ncases" in resp.data.decode())
-        self.assertTrue("tcases" in resp.data.decode())
+        self.assertTrue("sizeoftestcases" in resp.data.decode())
+        self.assertTrue("samplecases" in resp.data.decode())
 
 
 
@@ -139,12 +146,14 @@ class AppTests(unittest.TestCase):
         self.assertTrue(len(self.problem_id)>0)
 
         header={"Authorization":"Bearer "+self.api_token}
-
+        code1="a=map(int,input().split())\nb=map(int,input().split())\nprint(list(map(lambda x:sum(x), zip(a,b))))"
+        code2="n = int(input())\nfor i in range(n):\n\tprint(int(input()) + int(input()))"
         data=dict(
             prblmid=self.problem_id,
             userid="wkgs426haqie6yvnacswteelkjsndteaqp",
-            codecontent="ot=input()\nprint(ot)",
-            lang="py"
+            codecontent=code2,
+            lang="py",
+            stype = "sample"
         )
 
         resp=app_client.post("/run/code/",data=data,headers=header)
@@ -157,7 +166,8 @@ class AppTests(unittest.TestCase):
             prblmid=self.problem_id,
             userid="wkgs426haqie6yvnacswteelkjsndteaqp",
             taskid=task_id,
-            lang="py"
+            lang="py",
+            stype = "test"
         )
 
         sleep(1) # wait a second for result

@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\Harjacober\Desktop\PythonProjects\Contest-Platform\venv"
+VIRTUAL_ENV="C:\Users\Harjacober\Desktop\PythonProjects\temp\Contest-Platform\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

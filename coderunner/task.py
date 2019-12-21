@@ -10,29 +10,41 @@ ORIGINAL_DIR=os.getcwd()
 #So this would be different for each machine not sure how 
 #to go about this efficiently yet for unix.
 #we might use which to find binary but mehn i dont know brah
+py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe" 
 compilers={
     "go":"/usr/local/go/bin/go",
-    "py":"/usr/bin/python3",
+    "py":py_dir,
     "java":"",
     "c":"",
     "c++":"/usr/bin/g++",
-    "python":"/usr/bin/python3",
-    "python2":"/usr/bin/python3",
+    "python":py_dir,
+    "python2":"/usr/bin/python",
     "php":"php",
     "js":"node"
 }
 
 class Task(Thread):
     PossibelTasksState=["initialize","running","finished"]
-    def __init__(self,lang,content,userid,problem,id):
+    def __init__(self,lang,content,userid,problem,id,stype):
+        """
+        :param stype: the type of submission. differentiate testing against sample
+                     cases and actual submission against test cases.
+        :param content: code content
+        :param problem: an Instance of :class: `ProblemInstance`.
+        """
         Thread.__init__(self)
         self.state=Task.PossibelTasksState[0]
         self.lang=lang
         self.content=content
         self.userid=userid
-        self.cases=problem.getCases().split("\n")
-        self.answercase=problem.getAnswerForCases().split("\n")
-        self.result=[None]*int(problem.getNCases())
+        if stype == "test":
+            self.cases=problem.getTestCases().split(",")
+            self.answercase=problem.getAnswerForTestCases().split(",")
+            self.result=[None]*int(problem.getSizeOfTestCases())
+        elif stype == "sample":
+            self.cases=problem.getSampleCases().split(",")
+            self.answercase=problem.getAnswerForSampleCases().split(",")
+            self.result=[None]*int(problem.getSizeOfSampleCases()) 
         self.id=id
         self.enter()
 
