@@ -2,19 +2,19 @@ from flask_restful import Resource,reqparse
 from flask_jwt_extended import jwt_required
 from bson.objectid import ObjectId
 from flask import jsonify
-import werkzeug
+from werkzeug.datastructures import FileStorage
 from db.models import Problem
 
 add_prob_parser = reqparse.RequestParser()
 
 add_prob_parser.add_argument('author', help = 'This field cannot be blank. It also accept email', required = True)
 add_prob_parser.add_argument('name', help = 'This field cannot be blank', required = True) 
-add_prob_parser.add_argument('testcases', type=werkzeug.datastructures.FileStorage, location = 'files')
+add_prob_parser.add_argument('testcases', type=FileStorage, location = 'files')
 add_prob_parser.add_argument('sizeoftestcases', help = 'This field cannot be blank', required = True)
-add_prob_parser.add_argument('answercases', type=werkzeug.datastructures.FileStorage, location = 'files')
-add_prob_parser.add_argument('samplecases', type=werkzeug.datastructures.FileStorage, location = 'files')
+add_prob_parser.add_argument('answercases', type=FileStorage, location = 'files')
+add_prob_parser.add_argument('samplecases', type=FileStorage, location = 'files')
 add_prob_parser.add_argument('sizeofsamplecases', help = 'This field cannot be blank', required = True)
-add_prob_parser.add_argument('sampleanswercases', type=werkzeug.datastructures.FileStorage, location = 'files')
+add_prob_parser.add_argument('sampleanswercases', type=FileStorage, location = 'files')
 add_prob_parser.add_argument('problemstatement', help = 'This field cannot be blank', required = True)
 add_prob_parser.add_argument('category', help = 'This field cannot be blank', required = True)
 
@@ -57,6 +57,7 @@ class ProblemDetails(Resource):
         pb["_id"]=str(pb["_id"])
 
         return response(200, "Success", pb)  
+
 class ProblemsSet(Resource):
     """
     Returns all problem that match specific search parameters
@@ -97,6 +98,7 @@ class ProblemAdd(Resource):
         Reads the cases from the uploaded .txt file and decode the byte into a unicode string,
         before saving it into the database
         """
+
         input_data = add_prob_parser.parse_args()
         testcases = input_data['testcases'].read().decode("utf-8")  
         answercases = input_data['answercases'].read().decode("utf-8")  

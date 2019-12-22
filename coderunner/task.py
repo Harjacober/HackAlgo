@@ -10,7 +10,8 @@ ORIGINAL_DIR=os.getcwd()
 #So this would be different for each machine not sure how 
 #to go about this efficiently yet for unix.
 #we might use which to find binary but mehn i dont know brah
-py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe" 
+py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe"
+py_dir="/usr/local/bin/python"
 compilers={
     "go":"/usr/local/go/bin/go",
     "py":py_dir,

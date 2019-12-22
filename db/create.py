@@ -22,10 +22,9 @@ langs=['go', 'py', 'java', 'c', 'c++', 'python', 'python2', 'php', 'js']
 for lgn in langs:
     path = "/tmp/{}/".format(lgn) 
     directory = os.path.dirname(path) 
-    print(directory)
-    os.makedirs(directory)
+    os.makedirs(directory,exist_ok=True)
     if not os.path.dirname(directory):
-        os.makedirs(directory)
+        os.makedirs(directory,exist_ok=True)
 
 
 

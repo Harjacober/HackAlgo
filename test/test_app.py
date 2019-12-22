@@ -1,6 +1,6 @@
 import unittest
 import json
-import os
+import os,io
 from time import sleep
 
 from pymongo import MongoClient
@@ -94,30 +94,30 @@ class AppTests(unittest.TestCase):
         a1 = "[3, 5, 8, 10, 12],[7, 6, 11, 14, 2],[11, 5, 9, 10, 9]"
         s1 = "3 4 6 3\n2 4 6 2"
         as1= "[5, 8, 12, 5]"
-        c2 = "3\r\n1\r\n2\r\n3\r\n4\r\n5\r\n6,2\r\n7\r\n8\r\n9\r\n10,1\r\n9\r\n10'"
-        a2= "3\n7\n11,\n15\n19,\n19"
-        s2 = "2\n3\n4\n2\n1"
-        as2 = "7\n3"
+        c2 = b"3\r\n1\r\n2\r\n3\r\n4\r\n5\r\n6,2\r\n7\r\n8\r\n9\r\n10,1\r\n9\r\n10'"
+        a2= b"3\n7\n11,\n15\n19,\n19"
+        s2 = b"2\n3\n4\n2\n1"
+        as2 = b"7\n3"
         data=dict(
             name="problem test",
             author="abraham",
-            testcases=c2,
+            testcases=(io.BytesIO(c2), 'test.in'),
             sizeoftestcases="3",
-            answercases=a2,
-            samplecases=s2,
+            answercases=(io.BytesIO(a2), 'anstest.in'),
+            samplecases=(io.BytesIO(s2), 'sampletest.in'),
             sizeofsamplecases="1",
-            sampleanswercases = as2, 
+            sampleanswercases = (io.BytesIO(as2), 'answersampletest.in'), 
             problemstatement="Read the input and print them",
             category="test"
         )
 
-        resp=app_client.post("/add/problem/",data=data,headers=header)
+        resp=app_client.post("/add/problem/",data=data,headers=header,content_type='multipart/form-data')
 
-        self.assertTrue("New Problem added" in resp.data.decode())
+        self.assertTrue("New Problem Added" in resp.data.decode())
 
         resp=json.loads(resp.data.decode())
 
-        problem_id=resp["data"][0]
+        problem_id=resp["data"]["prblid"]
 
         self.setProblemID(problem_id)
 
@@ -126,6 +126,7 @@ class AppTests(unittest.TestCase):
         )
 
         resp=app_client.post("/get/problem/",data=data,headers=header)
+        print(resp.data.decode())
 
         self.assertTrue("200" in resp.data.decode())
         self.assertTrue("author" in resp.data.decode())
@@ -157,7 +158,7 @@ class AppTests(unittest.TestCase):
         )
 
         resp=app_client.post("/run/code/",data=data,headers=header)
-        print(json.loads(resp.data.decode()))
+
         resp=json.loads(resp.data.decode())["data"][0]
 
         task_id=resp["_id"]

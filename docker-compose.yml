@@ -15,7 +15,7 @@ services:
     links:
       - mongodb
     volumes:
-      - .:/home
+      - ./:/home
     ports:
       - "9000:9000"
     depends_on:
