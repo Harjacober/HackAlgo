@@ -58,7 +58,37 @@ class ProblemDetails(Resource):
 
         return response(200, "Success", pb)  
 
-class ProblemsSet(Resource):
+class ProblemSet(Resource):
+    """
+    Returns all problem that match specific search parameters
+    """
+    @jwt_required
+    def get(self, category):
+        input_data = req_show_problem.parse_args()
+        if category = "all":
+            category = {}
+
+        exclude = {'_id':0,'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
+         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
+
+        data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'],category=category)
+        data = list(data)
+        return response(200, "Success", data)
+
+    @jwt_required    
+    def post(self, category):
+        input_data = req_show_problem.parse_args()
+        if category = "all":
+            category = {}
+
+        exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
+         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
+
+        data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'],category=category) 
+        data = list(data) 
+        return response(200, "Success", data)
+
+class ProblemSearch(Resource):
     """
     Returns all problem that match specific search parameters
     """

@@ -11,7 +11,7 @@ from flask_jwt_extended import JWTManager
 from api.access.user import UserAPI
 from api.resources.regapi import AdminRegistration,UserRegistration,AdminLogin,UserLogin,AdminUpdateProfile,UserUpdateProfile,AdminProfile,UserProfile
 from api.resources.coding import RunCode,RunCodeStatus
-from api.access.problem import ProblemAdd,ProblemDetails,ProblemsSet
+from api.access.problem import ProblemAdd,ProblemDetails,ProblemSet,ProblemSearch
 
 
 app=Flask(__name__)
@@ -40,8 +40,10 @@ api.add_resource(RunCode, '/run/code/')
 api.add_resource(RunCodeStatus,'/run/code/status/')
 
 api.add_resource(ProblemAdd,'/add/problem/')
-api.add_resource(ProblemDetails,'/get/problem/')
-api.add_resource(ProblemsSet,'/get/problems/')
+api.add_resource(ProblemDetails,'/get/problems/')
+api.add_resource(ProblemSearch,'/get/problemset/')
+api.add_resource(ProblemSet,'/get/problemset/<string:category>/')
+
 
 
 if __name__ == "__main__":
