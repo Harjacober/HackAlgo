@@ -142,10 +142,10 @@ class ProblemAdd(Resource):
         input_data=dict(input_data)
 
         if not input_data["sizeoftestcases"].isdigit():
-            return {"code":"400","msg":"tcases must be a digit str","data":[]}
+            return {"code":"204","msg":"tcases must be a digit str","data":[]}
 
         if not input_data["sizeofsamplecases"].isdigit():
-            return {"code":"400","msg":"ncases must be a digit str","data":[]}
+            return {"code":"204","msg":"ncases must be a digit str","data":[]}
 
         id = str(Problem.addDoc(input_data))  
 

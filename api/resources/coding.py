@@ -78,7 +78,7 @@ class RunCodeStatus(Resource):
         if task is None:
             return {"code":"404","msg":"Task not found","data":[]}
 
-        return {"code":"404","msg":"Task state is {} ".format(task.status()),"data":[task.toJson()]}
+        return {"code":"200","msg":"Task state is {} ".format(task.status()),"data":[task.toJson()]}
 
     @jwt_required
     def get(self):

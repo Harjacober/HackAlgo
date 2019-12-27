@@ -12,15 +12,15 @@ ORIGINAL_DIR=os.getcwd()
 py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe"
 #py_dir="/usr/local/bin/python"
 compilers={
-    "go":"/usr/local/go/bin/go",
+    "go":"/usr/bin/go",
     "py":py_dir,
-    "java":"",
-    "c":"",
+    "java":"/usr/bin/java",
+    "c":"/usr/bin/gcc",
     "c++":"/usr/bin/g++",
     "python":py_dir,
-    "python2":"/usr/bin/python",
-    "php":"php",
-    "js":"node"
+    "python2":"/usr/bin/python2",
+    "php":"/usr/bin/php",
+    "js":"/usr/bin/node"
 }
 
 class Task(Thread):
@@ -52,14 +52,22 @@ class Task(Thread):
         return {"state":self.state,"lang":self.lang,"userid":self.userid,"_id":self.id,"result":self.result}
 
     def __del___(self):
+        #cleaning up
         os.remove(self.filepath)
+        if self.lang.lower()=="java":
+            os.rmdir(self.folder)
 
     def __lt__(self,other):
         return ~self.PossibelTasksState.index(self.state)< ~other.PossibelTasksState.index(other.state)
 
     def enter(self):
         self.filename=self.randomFilename()
-        self.folder="/tmp/{}/".format(self.lang)
+        if self.lang.lower()=="java":
+            filename=os.path.join(*self.filename.split(".")[:-1])
+            self.folder="/tmp/{}/{}/".format(self.lang,filename)
+            os.makedirs(self.folder,exist_ok=True)
+        else:
+            self.folder="/tmp/{}/".format(self.lang)
         self.filepath=self.folder+self.filename
         self.file = open(self.filepath,"w+")
         self.file.write(self.content)
@@ -67,26 +75,36 @@ class Task(Thread):
     
     def resolveFolder(self,lang):
         #python is py,java is java e.t.c.This function exist if need be resolve the name later
+    
         if lang not in compilers:
             raise NotImplementedError("Not yet suported")
-        return compilers[lang]
+        if lang.lower()=="go":
+            return [compilers[lang],"run"]
+        return [compilers[lang]]
 
-    def randomFilename(self): 
-        return self.userid+"{}{}".format(hash(time()),hash(self))
+    def randomFilename(self):
+        return self.userid+"{}{}.{}".format(hash(time()),hash(self),self.lang)
 
     def status(self):
         return self.state
 
-    def runCompile(self,compiler_name,compile_options,run_options,n_cases,compile_file_ext,binary):
+    def runCompile(self,compiler_name,compile_options,run_options,n_cases,binary):
 
         subprocess.run([compiler_name]+compile_options+[self.filepath])
     
         for cc in range(n_cases):
             ans=subprocess.\
-                run([binary]+run_options+[self.filepath+compile_file_ext], capture_output=True,\
-                            input=self.cases[cc],encoding="utf-8").stdout.decode()
+                run([binary]+run_options, capture_output=True,\
+                            input=self.cases[cc],encoding="utf-8")
 
-            self.result[l]=ans==self.answercase[cc] #would scrutinize this line soon cos answer formatting might be disimilar to stored answrer
+            output=ans.stdout.strip()
+            errput=ans.stderr.strip()
+
+            self.result[cc] ={
+                            "passed":output==self.answercase[cc],
+                            "output":output,
+                            "errput":errput
+                            }
 
     def run(self):
         l=len(self.result)
@@ -94,29 +112,34 @@ class Task(Thread):
         #some languagues have to compile then run 
         if self.lang == "java":
             options_compile=["-d",self.folder,"-s",self.folder,"-h",self.folder]
-            options_run=[]
-            self.runCompile("javac",options_compile,options_run,l,".class","java")
+            options_run=["-classpath",self.folder,"Solution"]
+            self.runCompile("javac",options_compile,options_run,l,"java")
         elif self.lang == "c":
-            options_compile=["-o",self.filepath+"CP"]
+            options_compile=["-o",self.filepath+".out"]
             options_run=[]
-            self.runCompile("g++",options_compile,options_run,l,"",self.filepath+"CP")
+            self.runCompile("gcc",options_compile,options_run,l,self.filepath+".out")
         elif self.lang=="c++":
-            options_compile=["-o",self.filepath+"CP"]
+            options_compile=["-o",self.filepath+".out"]
             options_run=[]
-            self.runCompile("g++",options_compile,options_run,l,"",self.filepath+"CP")
+            self.runCompile("g++",options_compile,options_run,l,self.filepath+".out")
         else:
             # languages like python, js, php should be fine.
-            
             for cc in range(l):
-                ans=subprocess.run([self.resolveFolder(self.lang),self.filepath],capture_output=True,
+                args=[]
+                args.extend(self.resolveFolder(self.lang))
+                args.append(self.filepath)
+                ans=subprocess.run(args,capture_output=True,
                 input=self.cases[cc],encoding="utf-8")
 
                 output=ans.stdout.strip()
                 errput=ans.stderr.strip()
+
+                self.result[cc] ={
+                                "passed":output==self.answercase[cc],
+                                "output":output,
+                                "errput":errput
+                                }
                 
-                res={"passed":output==self.answercase[cc],"output":output,"errput":errput}
-                
-                self.result[cc]= res
                 
         self.state=self.PossibelTasksState[2]
         os.remove(self.filepath)

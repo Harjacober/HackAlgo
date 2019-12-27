@@ -1,11 +1,12 @@
 import unittest
 import json
 import os,io
-from time import sleep
 
 from pymongo import MongoClient
 from app import  *
 from db.models import *
+from coderun import CodeRunTests 
+
 app_client=app.test_client()
 
 #Run create.py first before this test file
@@ -146,37 +147,33 @@ class AppTests(unittest.TestCase):
     def test_run_code(self):
         self.assertTrue(len(self.problem_id)>0)
 
-        header={"Authorization":"Bearer "+self.api_token}
-        code1="a=map(int,input().split())\nb=map(int,input().split())\nprint(list(map(lambda x:sum(x), zip(a,b))))"
-        code2="n = int(input())\nfor i in range(n):\n\tprint(int(input()) + int(input()))"
-        data=dict(
-            prblmid=self.problem_id,
-            userid="wkgs426haqie6yvnacswteelkjsndteaqp",
-            codecontent=code2,
-            lang="py",
-            stype = "sample"
-        )
+        codeRun=CodeRunTests(self.problem_id)
 
-        resp=app_client.post("/run/code/",data=data,headers=header)
+        #testing python
+        resp=codeRun.run(self.api_token,app_client,codeRun.pythonData())
+        data=json.loads(resp.data.decode())
+        self.assertTrue(data["data"][0]["result"][0]["passed"])
+        
+        #testing golang
+        resp=codeRun.run(self.api_token,app_client,codeRun.golangData())
+        data=json.loads(resp.data.decode())
+        if not data["data"][0]["result"][0]["passed"]:
+            print(data["data"][0]["result"][0]["errput"])
+        self.assertTrue(data["data"][0]["result"][0]["passed"])
 
-        resp=json.loads(resp.data.decode())["data"][0]
+        #rtesting c
+        resp=codeRun.run(self.api_token,app_client,codeRun.cData())
+        data=json.loads(resp.data.decode())
+        if not data["data"][0]["result"][0]["passed"]:
+            print(data["data"][0]["result"][0]["errput"])
+        self.assertTrue(data["data"][0]["result"][0]["passed"])
 
-        task_id=resp["_id"]
-      
-        data=dict(
-            prblmid=self.problem_id,
-            userid="wkgs426haqie6yvnacswteelkjsndteaqp",
-            taskid=task_id,
-            lang="py",
-            stype = "test"
-        )
-
-        sleep(1) # wait a second for result
-
-        resp=app_client.post("/run/code/status/",data=data,headers=header)
-
-        self.assertTrue("Task state is" in resp.data.decode())
-
+        #testing java
+        resp=codeRun.run(self.api_token,app_client,codeRun.javaData())
+        data=json.loads(resp.data.decode())
+        if not data["data"][0]["result"][0]["passed"]:
+            print(data["data"][0]["result"][0]["errput"])
+        self.assertTrue(data["data"][0]["result"][0]["passed"])
 
 if __name__ == "__main__":
     unittest.main()
