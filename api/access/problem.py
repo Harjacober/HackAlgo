@@ -65,27 +65,31 @@ class ProblemSet(Resource):
     @jwt_required
     def get(self, category):
         input_data = req_show_problem.parse_args()
-        if category = "all":
-            category = {}
 
-        exclude = {'_id':0,'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
+        exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
          'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
 
-        data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'],category=category)
+        if category == "all":
+            data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'])
+        else:
+            data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'], category=category)
+            
         data = list(data)
         return response(200, "Success", data)
 
     @jwt_required    
     def post(self, category):
         input_data = req_show_problem.parse_args()
-        if category = "all":
-            category = {}
 
         exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
          'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
 
-        data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'],category=category) 
-        data = list(data) 
+        if category == "all":
+            data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'])
+        else:
+            data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'], category=category)
+            
+        data = list(data)
         return response(200, "Success", data)
 
 class ProblemSearch(Resource):
@@ -96,7 +100,7 @@ class ProblemSearch(Resource):
     def get(self):
         input_data = req_show_problem.parse_args()
 
-        exclude = {'_id':0,'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
+        exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
          'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
 
         data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'],
@@ -148,6 +152,7 @@ class ProblemAdd(Resource):
             return {"code":"204","msg":"ncases must be a digit str","data":[]}
 
         id = str(Problem.addDoc(input_data))  
+        input_data['prblid'] = str(id)
 
         return response(200, "New Problem Added", {"prblid":id})  
 

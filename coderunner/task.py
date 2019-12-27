@@ -4,6 +4,7 @@ from time import time
 import subprocess
 from threading import Thread
 
+from db.models import Submission
 
 ORIGINAL_DIR=os.getcwd()
 
@@ -24,11 +25,14 @@ compilers={
 }
 
 class Task(Thread):
+    """
+    Handles running of submitted code and updates the submission details in the database
+    """
     PossibelTasksState=["initialize","running","finished"]
     def __init__(self,lang,content,userid,problem,id,stype):
         """
-        :param stype: the type of submission. differentiate testing against sample
-                     cases and actual submission against test cases.
+        :param stype: the type of submission. differentiates actual 
+                      test cases from sample cases.
         :param content: code content
         :param problem: an Instance of :class: `ProblemInstance`.
         """
@@ -37,11 +41,12 @@ class Task(Thread):
         self.lang=lang
         self.content=content
         self.userid=userid
-        if stype == "test":
+        self.stype = stype
+        if self.stype == "test":
             self.cases=problem.getTestCases().split(",")
             self.answercase=problem.getAnswerForTestCases().split(",")
             self.result=[None]*int(problem.getSizeOfTestCases())
-        elif stype == "sample":
+        elif self.stype == "sample":
             self.cases=problem.getSampleCases().split(",")
             self.answercase=problem.getAnswerForSampleCases().split(",")
             self.result=[None]*int(problem.getSizeOfSampleCases()) 
@@ -134,13 +139,16 @@ class Task(Thread):
                 output=ans.stdout.strip()
                 errput=ans.stderr.strip()
 
-                self.result[cc] ={
+                self.result[cc] = {
                                 "passed":output==self.answercase[cc],
                                 "output":output,
                                 "errput":errput
                                 }
-                
-                
+
+        #update submission in the database    
+        if self.stype == "test":     
+            category = Submission(self.userid)
+            category.update(params={'verdict': self.result}, userid=userid)  
         self.state=self.PossibelTasksState[2]
         os.remove(self.filepath)
 

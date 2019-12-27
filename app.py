@@ -40,7 +40,7 @@ api.add_resource(RunCode, '/run/code/')
 api.add_resource(RunCodeStatus,'/run/code/status/')
 
 api.add_resource(ProblemAdd,'/add/problem/')
-api.add_resource(ProblemDetails,'/get/problems/')
+api.add_resource(ProblemDetails,'/get/problem/')
 api.add_resource(ProblemSearch,'/get/problemset/')
 api.add_resource(ProblemSet,'/get/problemset/<string:category>/')
 
