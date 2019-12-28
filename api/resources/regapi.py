@@ -9,7 +9,7 @@ from flask_jwt_extended import (
     get_jwt_identity, get_raw_jwt
     )
 from bson.objectid import ObjectId
-from db.models import Admin,User
+from db.models import Admin,User,Submission
 
 
 login_parser = reqparse.RequestParser()
@@ -31,13 +31,21 @@ profile_parser.add_argument('summary', help = 'Brief description about yourself'
 profile_parser.add_argument('profilephoto', help='Link to profile pictture on storage', required=False, store_missing=False)
 
 getprofile_parser = reqparse.RequestParser()
-getprofile_parser.add_argument('uniqueid', "This field cannot be blan", required=True)
+getprofile_parser.add_argument('uniqueid', help="This field cannot be blank", required=True)
+
+getsubmission_parser = reqparse.RequestParser()
+getsubmission_parser.add_argument('userid', required=True)
+getsubmission_parser.add_argument('prblid', required=False)
+getsubmission_parser.add_argument('submid', required=False )
 
 def response(code,msg,data,access_token=""):
     return {"code":code,"msg":msg,"data":data,"access_token":access_token}
 
 class AdminRegistration(Resource):
-    category=Admin
+    category=Admin()
+    def get(self):
+        return response(300,"Method not allowed",[]) 
+        
     def post(self):
         data=reg_parser.parse_args()
         
@@ -50,14 +58,15 @@ class AdminRegistration(Resource):
         uid = self.category.addDoc(data) #finally add registration data to database
 
         return response(200,"Successfully resgistered",{"uniqueid":str(uid)},access_token=create_access_token(data["email"]))
-    def get(self):
-        return response(200,"Method not allowed",[]) 
 
 class UserRegistration(AdminRegistration):
-    category=User
+    category=User()
 
 class AdminLogin(Resource):
-    category=Admin
+    category=Admin()
+    def get(self) -> dict:
+        return response(300,"Method not allowed",[])
+
     def post(self) -> dict:
         data=login_parser.parse_args()
 
@@ -71,14 +80,14 @@ class AdminLogin(Resource):
 
         return response(200,"check the username and password",[])
 
-    def get(self) -> dict:
-        return response(200,"Method not allowed",[])
-
 class UserLogin(AdminLogin):
-   category=User 
+   category=User() 
 
 class UserUpdateProfile(Resource):
-    category = User
+    category = User()
+    def get(self):
+        return response(300, "Method not allowed", [])  
+
     def post(self):
         data = profile_parser.parse_args()
         print(data)
@@ -87,15 +96,13 @@ class UserUpdateProfile(Resource):
         if self.category.update(params=data, _id=uid):
             return response(200, "update successful",[],access_token=create_access_token(data['uniqueid']))
 
-        return response(200, "uniqueid does not exist",[])     
-    def get(self):
-        return response(200, "Method not allowed", [])  
+        return response(200, "uniqueid does not exist",[])      
 
 class AdminUpdateProfile(UserUpdateProfile):
-    category = Admin        
+    category = Admin()        
 
 class UserProfile(Resource):
-    category = User
+    category = User()
     def get(self):
         data = getprofile_parser.parse_args() 
         uid = ObjectId(data['uniqueid'])
@@ -105,8 +112,45 @@ class UserProfile(Resource):
             return response(200, "Success", user_data)
         return response(200, "uniqueid doesn't exist",[])    
 
+    def post(self):
+        data = getprofile_parser.parse_args() 
+        uid = ObjectId(data['uniqueid'])
+        exclude = {'_id':0, 'pswd':0, 'lastModified':0}
+        user_data = self.category.getBy( params=exclude, _id=uid) 
+        if user_data:
+            return response(200, "Success", user_data)
+        return response(200, "uniqueid doesn't exist",[])        
+
 class AdminProfile(UserProfile):
-    category = Admin
+    category = Admin()
+
+class SubmissionInfo(Resource):
+    def get(self):
+        return response(300, "Method not allowed", [])
+    def post(self):
+        data = getsubmission_parser.parse_args()
+        userid = data['userid']
+        subm_id = data['submid']
+        exclude = {'_id':0, 'lastModified':0}
+        user_submission = Submission(userid).getBy(params=exclude, _id=ObjectId(subm_id))
+        if user_submission:
+            return response(200, "Success", user_submission)
+        return response(200, "Submission doesn't exist", [])    
+
+class SubmissionList(Resource):
+    def get(self, problemid): 
+        return response(300, "Method not allowed", [])
+    def post(self, problemid):
+        data = getsubmission_parser.parse_args()
+        userid = data['userid'] 
+        exclude = {'_id':0, 'codecontent': 0, 'result':0, 'lastModified':0}
+        if problemid == "all":
+            submissions = Submission(userid).getAll(params=exclude)
+        else:   
+            submissions = Submission(userid).getAll(params=exclude, prblmid=problemid)
+        if submissions:    
+            return response(200, "Success", list(submissions))   
+        return response(200, "No matching Submission found", [])            
 
 
 

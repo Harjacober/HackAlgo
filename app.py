@@ -9,7 +9,7 @@ from flask_restful import Api
 from flask_jwt_extended import JWTManager
 
 from api.access.user import UserAPI
-from api.resources.regapi import AdminRegistration,UserRegistration,AdminLogin,UserLogin,AdminUpdateProfile,UserUpdateProfile,AdminProfile,UserProfile
+from api.resources.regapi import AdminRegistration,UserRegistration,AdminLogin,UserLogin,AdminUpdateProfile,UserUpdateProfile,AdminProfile,UserProfile,SubmissionInfo,SubmissionList
 from api.resources.coding import RunCode,RunCodeStatus
 from api.access.problem import ProblemAdd,ProblemDetails,ProblemSet,ProblemSearch
 
@@ -34,6 +34,8 @@ api.add_resource(AdminUpdateProfile, '/updateadminprofile/')
 api.add_resource(UserUpdateProfile, '/updateuserprofile/')
 api.add_resource(AdminProfile, '/adminprofile/')
 api.add_resource(UserProfile, '/userprofile/')
+api.add_resource(SubmissionInfo, '/userprofile/submissions/')
+api.add_resource(SubmissionList, '/userprofile/submissions/<string:problemid>/')
 api.add_resource(UserAPI, '/<string:id>')
 
 api.add_resource(RunCode, '/run/code/')

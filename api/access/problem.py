@@ -20,7 +20,7 @@ add_prob_parser.add_argument('category', help = 'This field cannot be blank', re
 
 
 req_show_problem_details=reqparse.RequestParser()
-req_show_problem_details.add_argument('prblid', help = 'This field cannot be blank', required = True) 
+req_show_problem_details.add_argument('prblmid', help = 'This field cannot be blank', required = True) 
 
 req_show_problem = reqparse.RequestParser()
 req_show_problem.add_argument('category', required=False)
@@ -41,7 +41,7 @@ class ProblemDetails(Resource):
         input_data=req_show_problem_details.parse_args()
 
         exclude = {'answercases':0, 'sampleanswercases':0}
-        pb=Problem.getBy(params=exclude, _id=ObjectId(input_data["prblid"]))
+        pb=Problem().getBy(params=exclude, _id=ObjectId(input_data["prblmid"]))
         pb["_id"]=str(pb["_id"])
 
         return response(200, "Success", pb)  
@@ -51,7 +51,7 @@ class ProblemDetails(Resource):
         input_data=req_show_problem_details.parse_args()
  
         exclude = {'answercases':0, 'sampleanswercases':0}
-        pb=Problem.getBy(params=exclude, _id=ObjectId(input_data["prblid"]))
+        pb=Problem().getBy(params=exclude, _id=ObjectId(input_data["prblmid"]))
         if not pb:
             return response(200, "Problem id does not exist", [])
         pb["_id"]=str(pb["_id"])
@@ -70,9 +70,9 @@ class ProblemSet(Resource):
          'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
 
         if category == "all":
-            data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'])
+            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'])
         else:
-            data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'], category=category)
+            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'], category=category)
             
         data = list(data)
         return response(200, "Success", data)
@@ -85,9 +85,9 @@ class ProblemSet(Resource):
          'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
 
         if category == "all":
-            data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'])
+            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'])
         else:
-            data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'], category=category)
+            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'], category=category)
             
         data = list(data)
         return response(200, "Success", data)
@@ -103,7 +103,7 @@ class ProblemSearch(Resource):
         exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
          'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
 
-        data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'],
+        data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'],
         category=input_data['category'], author=input_data['author'], name=input_data['name'])
         data = list(data)
         return response(200, "Success", data)
@@ -115,7 +115,7 @@ class ProblemSearch(Resource):
         exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
          'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
 
-        data = Problem.getAll(params=exclude,start=input_data['start'],size=input_data['size'],
+        data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'],
         category=input_data['category'], author=input_data['author'], name=input_data['name']) 
         data = list(data) 
         return response(200, "Success", data)
@@ -123,8 +123,7 @@ class ProblemSearch(Resource):
 class ProblemAdd(Resource):
     @jwt_required
     def get(self):
-
-        return response(300, "Use A POST Rewuest", [])  
+        return response(300, "Use A POST Request", [])  
 
     @jwt_required
     def post(self):
@@ -151,10 +150,7 @@ class ProblemAdd(Resource):
         if not input_data["sizeofsamplecases"].isdigit():
             return {"code":"204","msg":"ncases must be a digit str","data":[]}
 
-        id = str(Problem.addDoc(input_data))  
-        input_data['prblid'] = str(id)
+        id = str(Problem().addDoc(input_data))  
+        input_data['prblmid'] = str(id)
 
-        return response(200, "New Problem Added", {"prblid":id})  
-
-
-        
+        return response(200, "New Problem Added", {"prblmid":id})  

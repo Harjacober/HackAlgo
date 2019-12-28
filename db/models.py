@@ -3,14 +3,26 @@ from db.modelbase import base
 
 
 class Admin(base):
-    collection=client["admin"]
+    def __init__(self):
+        super().__init__(self)
+        self.collection = client["admin"]  
+        
 class User(base):
-    collection=client["user"]
+    def __init__(self):
+        super().__init__(self)
+        self.collection = client["user"]  
+    
 class Problem(base):
-    collection=client["problem"]    
+    def __init__(self):
+        super().__init__(self)
+        self.collection = client["problem"]  
 class Submission(base):
-    sclient=client["user"]
-    collection = sclient["submission"]     
+    def __init__(self, userid):
+        super().__init__(self)
+        usercollection = client["user"]
+        submissioncollection = usercollection["submission"]  
+        collection = submissioncollection[userid]
+        self.collection = submissioncollection[userid]  
 
 if __name__ == "__main__":
     pass

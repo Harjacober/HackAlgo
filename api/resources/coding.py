@@ -38,25 +38,15 @@ class RunCode(Resource):
         input_data = run_code_parser.parse_args()
 
         problem_id=input_data["prblmid"] #get id
-        problem = Problem.getBy(_id= ObjectId(problem_id))#fetch the actual problem from database with the problemId 
+        problem = Problem().getBy(_id= ObjectId(problem_id))#fetch the actual problem from database with the problemId 
         if not problem:
             return {"code":"404","msg":"Invalid Problem ID","data":[]}
  
-        userid=input_data["userid"] #get user id
-        code_content = input_data["codecontent"] #get submitted code content
-        language = input_data["lang"] #get submission language
-        submission_type = input_data["stype"] #get submission type
+        
         task_id=queue.generateID()
        
-        task=Task(language,code_content,userid,ProblemInstance(problem),task_id, submission_type)
-        queue.add(task_id,task)
-        
-        #add the submission to database as the task has started. 
-        #And modify verdict in the `Task` Class once the task is done. 
-        if submission_type == "test":
-            input_data['verdict'] = 'running'
-            category = Submission(userid)
-            uid = category.addDoc(input_data) 
+        task=Task(ProblemInstance(problem),task_id,input_data)
+        queue.add(task_id,task) 
 
         return {"code":"200","msg":"Task started ","data":[task.toJson()]}
 
@@ -71,7 +61,7 @@ class RunCodeStatus(Resource):
         input_data = run_code_status_parser.parse_args()
 
         problem_id=input_data["prblmid"]
-        problem= Problem.getBy(_id= ObjectId(problem_id))
+        problem= Problem().getBy(_id= ObjectId(problem_id))
         if not problem:
             return {"code":"404","msg":"Invalid Problem ID","data":[]}
 

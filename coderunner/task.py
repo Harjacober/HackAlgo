@@ -29,7 +29,7 @@ class Task(Thread):
     Handles running of submitted code and updates the submission details in the database
     """
     PossibelTasksState=["initialize","running","finished"]
-    def __init__(self,lang,content,userid,problem,id,stype):
+    def __init__(self,problem,id,input_data):
         """
         :param stype: the type of submission. differentiates actual 
                       test cases from sample cases.
@@ -37,24 +37,45 @@ class Task(Thread):
         :param problem: an Instance of :class: `ProblemInstance`.
         """
         Thread.__init__(self)
-        self.state=Task.PossibelTasksState[0]
-        self.lang=lang
-        self.content=content
-        self.userid=userid
-        self.stype = stype
+        self.input_data = input_data
+        self.userid = self.input_data["userid"]  
+        self.content = self.input_data["codecontent"] #get submitted code content
+        self.lang = self.input_data["lang"]  
+        self.stype = self.input_data["stype"]  
+        self.state=Task.PossibelTasksState[0]  
+        self.id=id
+        self.verdict = "Passed"
         if self.stype == "test":
             self.cases=problem.getTestCases().split(",")
-            self.answercase=problem.getAnswerForTestCases().split(",")
+            self.answercase=problem.getAnswerForTestCases().split(",") 
             self.result=[None]*int(problem.getSizeOfTestCases())
         elif self.stype == "sample":
             self.cases=problem.getSampleCases().split(",")
             self.answercase=problem.getAnswerForSampleCases().split(",")
             self.result=[None]*int(problem.getSizeOfSampleCases()) 
-        self.id=id
+        # The two for loops should be removed else an efficient way to the
+        # processing should be found.
+        # In the future, there should be no need to remove \r as the reading
+        # of the file in `ProblemAdd` method will be fixed to not read in \r
+        for i in range(len(self.cases)):
+            string = self.cases[i].lstrip("\r\n")   
+            arr = []
+            for e in string:
+                if e != "\r":
+                    arr.append(e)
+            self.cases[i] = "".join(arr)   
+        for i in range(len(self.answercase)):
+            string = self.answercase[i].lstrip("\r\n")   
+            arr = []
+            for e in string:
+                if e != "\r":
+                    arr.append(e)
+            self.answercase[i] = "".join(arr)  
         self.enter()
 
     def toJson(self):
-        return {"state":self.state,"lang":self.lang,"userid":self.userid,"_id":self.id,"result":self.result}
+        return {"state":self.state,"lang":self.lang,"userid":self.userid,
+        "_id":self.id,"submid":str(self.submission_id),"result":self.result}
 
     def __del___(self):
         #cleaning up
@@ -66,6 +87,12 @@ class Task(Thread):
         return ~self.PossibelTasksState.index(self.state)< ~other.PossibelTasksState.index(other.state)
 
     def enter(self):
+        #add the submission to database as the task has started. 
+        #And modify verdict in the `Task` Class once the task is done. 
+        if self.stype == "test":
+            self.input_data['verdict'] = 'running'
+            category = Submission(self.userid)
+            self.submission_id = category.addDoc(self.input_data) 
         self.filename=self.randomFilename()
         if self.lang.lower()=="java":
             filename=os.path.join(*self.filename.split(".")[:-1])
@@ -75,14 +102,14 @@ class Task(Thread):
             self.folder="/tmp/{}/".format(self.lang)
         self.filepath=self.folder+self.filename
         self.file = open(self.filepath,"w+")
-        self.file.write(self.content)
+        self.file.write(self.content) 
         self.file.close()
     
     def resolveFolder(self,lang):
         #python is py,java is java e.t.c.This function exist if need be resolve the name later
     
         if lang not in compilers:
-            raise NotImplementedError("Not yet suported")
+            raise NotImplementedError("Not yet supported")
         if lang.lower()=="go":
             return [compilers[lang],"run"]
         return [compilers[lang]]
@@ -132,23 +159,26 @@ class Task(Thread):
             for cc in range(l):
                 args=[]
                 args.extend(self.resolveFolder(self.lang))
-                args.append(self.filepath)
+                args.append(self.filepath) 
                 ans=subprocess.run(args,capture_output=True,
                 input=self.cases[cc],encoding="utf-8")
 
                 output=ans.stdout.strip()
                 errput=ans.stderr.strip()
 
+                if output!=self.answercase[cc]:
+                    self.verdict = "Failed"     
                 self.result[cc] = {
                                 "passed":output==self.answercase[cc],
                                 "output":output,
                                 "errput":errput
-                                }
+                                }             
 
         #update submission in the database    
         if self.stype == "test":     
             category = Submission(self.userid)
-            category.update(params={'verdict': self.result}, userid=userid)  
+            category.update(params={'result': self.result, 'verdict':self.verdict}, _id=self.submission_id)  
+        print(self.result)       
         self.state=self.PossibelTasksState[2]
         os.remove(self.filepath)
 
