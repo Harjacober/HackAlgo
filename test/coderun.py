@@ -7,19 +7,23 @@ class CodeRunTests:
         self.problem_id=problem_id
 
     def pythonData(self):
-        code1="a=map(int,input().split())\nb=map(int,input().split())\nprint(list(map(lambda x:sum(x), zip(a,b))))"
-        code2="n = int(input())\nfor i in range(n):\n\tprint(int(input()) + int(input()))"
+        win_path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/test.py"
+        path = "testcasefile/test.py"
+        with open(win_path) as f:
+            code = f.read()
         data=dict(
             prblmid=self.problem_id,
             userid="wkgs426haqie6yvnacswteelkjsndteaqp",
-            codecontent=code2,
+            codecontent=code,
             lang="py",
             stype = "sample"
         )
         return data
 
     def golangData(self):
-        with open(join("testcasefile/test.go")) as f:
+        win_path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/test.go"
+        path = "testcasefile/test.go"
+        with open(win_path) as f:
             code=f.read()
         data=dict(
             prblmid=self.problem_id,
@@ -31,7 +35,9 @@ class CodeRunTests:
         return data
 
     def javaData(self):
-        with open(join("testcasefile/test.java")) as f:
+        win_path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/test.java"
+        path = "testcasefile/test.java"
+        with open(win_path) as f:
             code=f.read()
         data=dict(
             prblmid=self.problem_id,
@@ -44,7 +50,9 @@ class CodeRunTests:
 
 
     def cData(self):
-        with open(join("testcasefile/test.c")) as f:
+        win_path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/test.c"
+        path = "testcasefile/test.c"
+        with open(win_path) as f:
             code=f.read()
         data=dict(
             prblmid=self.problem_id,

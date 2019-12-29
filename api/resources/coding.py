@@ -18,7 +18,7 @@ run_code_parser = reqparse.RequestParser()
 run_code_parser.add_argument('prblmid', help = 'This field cannot be blank. It also accept email', required = True)
 run_code_parser.add_argument('userid', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('codecontent', help = 'This field cannot be blank', required = True)
-run_code_parser.add_argument('codefile', type=FileStorage, location='files', required = False)
+run_code_parser.add_argument('codefile', type=FileStorage, location='files', required = False, store_missing=False)
 run_code_parser.add_argument('lang', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('stype', help = 'This field cannot be blank', required = True)
 

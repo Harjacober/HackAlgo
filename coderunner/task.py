@@ -56,6 +56,24 @@ class Task(Thread):
             self.cases=problem.getSampleCases().split(",")
             self.answercase=problem.getAnswerForSampleCases().split(",")
             self.result=[None]*int(problem.getSizeOfSampleCases()) 
+        self.submission_id = None    
+        self.formatcase() # This method is temporal    
+        self.enter()
+
+    def toJson(self):
+        return {"state":self.state,"lang":self.lang,"userid":self.userid,
+        "_id":self.id,"submid":str(self.submission_id),"result":self.result}
+
+    def __del___(self):
+        #cleaning up
+        os.remove(self.filepath)
+        if self.lang.lower()=="java":
+            os.rmdir(self.folder)
+
+    def __lt__(self,other):
+        return ~self.PossibelTasksState.index(self.state)< ~other.PossibelTasksState.index(other.state)
+
+    def formatcase(self):
         # The two for loops should be removed else an efficient way to the
         # processing should be found.
         # In the future, there should be no need to remove \r as the reading
@@ -73,21 +91,7 @@ class Task(Thread):
             for e in string:
                 if e != "\r":
                     arr.append(e)
-            self.answercase[i] = "".join(arr)  
-        self.enter()
-
-    def toJson(self):
-        return {"state":self.state,"lang":self.lang,"userid":self.userid,
-        "_id":self.id,"submid":str(self.submission_id),"result":self.result}
-
-    def __del___(self):
-        #cleaning up
-        os.remove(self.filepath)
-        if self.lang.lower()=="java":
-            os.rmdir(self.folder)
-
-    def __lt__(self,other):
-        return ~self.PossibelTasksState.index(self.state)< ~other.PossibelTasksState.index(other.state)
+            self.answercase[i] = "".join(arr) 
 
     def enter(self):
         #add the submission to database as the task has started. 

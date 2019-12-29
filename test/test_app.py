@@ -109,7 +109,9 @@ class AppTests(unittest.TestCase):
             sizeofsamplecases="1",
             sampleanswercases = (io.BytesIO(as2), 'answersampletest.in'), 
             problemstatement="Read the input and print them",
-            category="test"
+            category="test",
+            timelimit=1,
+            memorylimit=250
         )
 
         resp=app_client.post("/add/problem/",data=data,headers=header,content_type='multipart/form-data')
@@ -118,7 +120,7 @@ class AppTests(unittest.TestCase):
 
         resp=json.loads(resp.data.decode())
 
-        problem_id=resp["data"]["prblid"]
+        problem_id=resp["data"]["prblmid"]
 
         self.setProblemID(problem_id)
 
