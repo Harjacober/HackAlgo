@@ -39,7 +39,10 @@ class Task(Thread):
         Thread.__init__(self)
         self.input_data = input_data
         self.userid = self.input_data["userid"]  
-        self.content = self.input_data["codecontent"] #get submitted code content
+        if 'codefile' in self.input_data:
+            self.content = self.input_data['codefile'].read().decode("utf-8") 
+        else:
+            self.content = self.input_data["codecontent"] # get submitted code content    
         self.lang = self.input_data["lang"]  
         self.stype = self.input_data["stype"]  
         self.state=Task.PossibelTasksState[0]  

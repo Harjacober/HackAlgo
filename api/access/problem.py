@@ -10,13 +10,15 @@ add_prob_parser = reqparse.RequestParser()
 add_prob_parser.add_argument('author', help = 'This field cannot be blank. It also accept email', required = True)
 add_prob_parser.add_argument('name', help = 'This field cannot be blank', required = True) 
 add_prob_parser.add_argument('testcases', type=FileStorage, location = 'files')
-add_prob_parser.add_argument('sizeoftestcases', help = 'This field cannot be blank', required = True)
+add_prob_parser.add_argument('sizeoftestcases', type=int, help = 'This field cannot be blank', required = True)
 add_prob_parser.add_argument('answercases', type=FileStorage, location = 'files')
 add_prob_parser.add_argument('samplecases', type=FileStorage, location = 'files')
-add_prob_parser.add_argument('sizeofsamplecases', help = 'This field cannot be blank', required = True)
+add_prob_parser.add_argument('sizeofsamplecases', type=int, help = 'This field cannot be blank', required = True)
 add_prob_parser.add_argument('sampleanswercases', type=FileStorage, location = 'files')
 add_prob_parser.add_argument('problemstatement', help = 'This field cannot be blank', required = True)
 add_prob_parser.add_argument('category', help = 'This field cannot be blank', required = True)
+add_prob_parser.add_argument('timelimit', type=float, help = 'Time in seconds', required = True)
+add_prob_parser.add_argument('memorylimit', type=float, help = 'Memory limit in Megabytes', required = True)
 
 
 req_show_problem_details=reqparse.RequestParser()
@@ -26,7 +28,7 @@ req_show_problem = reqparse.RequestParser()
 req_show_problem.add_argument('category', required=False)
 req_show_problem.add_argument('author', required=False)
 req_show_problem.add_argument('name', required=False)
-req_show_problem.add_argument('start',type=int, required=False)
+req_show_problem.add_argument('start', type=int, required=False)
 req_show_problem.add_argument('size', type=int, required=False)
 
 def response(code,msg,data):
@@ -127,28 +129,20 @@ class ProblemAdd(Resource):
 
     @jwt_required
     def post(self):
-        """
-        Reads the cases from the uploaded .txt file and decode the byte into a unicode string,
-        before saving it into the database
-        """
-
         input_data = add_prob_parser.parse_args()
+        # Reads the cases from the uploaded files and decode the byte into a unicode string,
+        # before saving it into the database
         testcases = input_data['testcases'].read().decode("utf-8")  
         answercases = input_data['answercases'].read().decode("utf-8")  
         samplecases = input_data['samplecases'].read().decode("utf-8")  
         sampleanswercases = input_data['sampleanswercases'].read().decode("utf-8")  
+
         input_data['testcases'] = testcases 
         input_data['answercases'] = answercases 
         input_data['samplecases'] = samplecases 
         input_data['sampleanswercases'] = sampleanswercases 
 
-        input_data=dict(input_data)
-
-        if not input_data["sizeoftestcases"].isdigit():
-            return {"code":"204","msg":"tcases must be a digit str","data":[]}
-
-        if not input_data["sizeofsamplecases"].isdigit():
-            return {"code":"204","msg":"ncases must be a digit str","data":[]}
+        input_data=dict(input_data) 
 
         id = str(Problem().addDoc(input_data))  
         input_data['prblmid'] = str(id)
