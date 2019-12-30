@@ -23,6 +23,16 @@ class Submission(base):
         submissioncollection = usercollection["submission"]  
         collection = submissioncollection[userid]
         self.collection = submissioncollection[userid]  
+class Contest(base):
+    def __init__(self, ctype):
+        super().__init__(self)
+        contest = client['contest']
+        types = contest[ctype]     
+        self.collection = types 
+class ContestProblem(Contest):
+    def __init__(self, ctype, contestid):
+        super().__init__(self, ctype)   
+        self.collection = self.collection[contestid]      
 
 if __name__ == "__main__":
     pass

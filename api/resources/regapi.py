@@ -125,8 +125,12 @@ class AdminProfile(UserProfile):
     category = Admin()
 
 class SubmissionInfo(Resource):
+
+    @jwt_required
     def get(self):
         return response(300, "Method not allowed", [])
+
+    @jwt_required    
     def post(self):
         data = getsubmission_parser.parse_args()
         userid = data['userid']
@@ -138,8 +142,12 @@ class SubmissionInfo(Resource):
         return response(200, "Submission doesn't exist", [])    
 
 class SubmissionList(Resource):
+
+    @jwt_required
     def get(self, problemid): 
         return response(300, "Method not allowed", [])
+        
+    @jwt_required    
     def post(self, problemid):
         data = getsubmission_parser.parse_args()
         userid = data['userid'] 
