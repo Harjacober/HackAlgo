@@ -14,8 +14,8 @@ from api.resources.usersapi import UserProfile,UserUpdateProfile,SubmissionInfo,
 from api.resources.adminapi import AdminProfile, AdminUpdateProfile
 from api.resources.coding import RunCode,RunCodeStatus
 from api.access.problem import ProblemAdd,ProblemDetails,ProblemSet,ProblemSearch
-from api.access.contest import (InitializeContest,UpdateContest,AddProblemForContest
-,UpdateProblemForContest,ApproveContest,AddNewAuthor,RemoveAuthor,GetContest)
+from api.access.contest import (InitializeContest,UpdateContest,AddProblemForContest,
+UpdateProblemForContest,ApproveContest,AddNewAuthor,RemoveAuthor,GetContest,GetContestById)
 
 
 app=Flask(__name__)
@@ -57,7 +57,9 @@ api.add_resource(AddNewAuthor, '/contest/<string:ctype>/author/add/')
 api.add_resource(RemoveAuthor, '/contest/<string:ctype>/author/remove/')
 api.add_resource(AddProblemForContest, '/contest/<string:ctype>/problem/add/')
 api.add_resource(UpdateProblemForContest, '/contest/<string:ctype>/problem/update/')
-api.add_resource(GetContest, '/contest/<string:ctype>/<string:contestid>/')
+api.add_resource(ApproveContest, '/contest/<string:ctype>/approve/')
+api.add_resource(GetContestById, '/contest/<string:ctype>/<string:contestid>/')
+api.add_resource(GetContest, '/contest/many/<string:ctype>/<string:status>/')
 
 
 

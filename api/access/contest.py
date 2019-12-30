@@ -92,6 +92,8 @@ class UpdateContest(Resource):
         author_username = input_data['authorusername'] 
         contestid = input_data['contestid']
         data = Contest(ctype).getBy(_id=ObjectId(contestid))
+        if not data:
+            return response(200, "check contestid", [])
         # check if author is authorized
         if author_username not in data['authors']:
             return response(200, "Unauthorized author", [])
@@ -194,7 +196,7 @@ class ApproveContest(Resource):
         if creator != data['creator']:
             return response(200, "Not authorized", [])
 
-        # confirm that start date is not less than 6hrs in the future before approval 
+        #TODO confirm that start date is not less than 6hrs in the future before approval 
         params = {'status': 1}
         if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
             return response(200, "Success", [])    
@@ -216,7 +218,7 @@ class AddNewAuthor(Resource):
             return response(200, "Username does not exist", [])
         update = {'$addToSet': {'authors': author_username}, "$currentDate": { "lastModified": True }}
         if Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)):
-            # find a way to notify the admin that he has been made an author and add this contest to his list
+            #TODO find a way to notify the admin that he has been made an author and add this contest to his list
             update = {'$addToSet': {'contests': contestid}, "$currentDate": { "lastModified": True }}
             if Admin().flexibleUpdate(update, username=author_username):
                 return response(200, "Author Added Successfully", [])
@@ -250,7 +252,7 @@ class RemoveAuthor(Resource):
           
         return response(200, "Check the contestid", [])  
 
-class GetContest(Resource):   
+class GetContestById(Resource):   
     @jwt_required
     def get(self, ctype, contestid):
         exclude = {'_id':0, 'lastModified':0}
@@ -265,4 +267,27 @@ class GetContest(Resource):
         data = Contest(ctype).getBy(params=exclude, _id=ObjectId(contestid))
         if data:
             return response(200, "Success", data ) 
-        return response(200, "Check the contestid", [])             
+        return response(200, "Check the contestid", [])   
+
+class GetContest(Resource):   
+    @jwt_required
+    def get(self, ctype, status):
+        status_code = {'active':1, 'inreview':0, 'completed':-1}
+        if ctype == "all":
+            #TODO handle this
+            pass
+        exclude = {'_id':0, 'lastModified':0}
+        data = Contest(ctype).getAll(params=exclude, status=status_code[status])
+        if data:
+            return response(200, "Success", list(data))
+        return response(200, "Check the contestid", [])    
+
+    @jwt_required
+    def post(self, ctype, status): 
+        status_code = {'active':1, 'inreview':0, 'completed':-1}
+        exclude = {'_id':0, 'lastModified':0}
+        data = Contest(ctype).getBy(params=exclude, _id=ObjectId(contestid))
+        data = Contest(ctype).getAll(params=exclude, status=status_code[status])
+        if data:
+            return response(200, "Success", list(data)) 
+        return response(200, "Check the contestid", [])   
