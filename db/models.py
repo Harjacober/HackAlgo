@@ -29,12 +29,7 @@ class Contest(base):
         contest = client['contest']
         types = contest[ctype]     
         self.collection = types 
-
-    def flexibleUpdate(self, update, **kwargs):
-        return self.collection.update_one(
-            kwargs,
-            update
-        ).modified_count > 0   
+ 
 class ContestProblem(Contest):
     def __init__(self, ctype, contestid):
         super().__init__(self, ctype)   

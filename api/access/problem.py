@@ -3,11 +3,11 @@ from flask_jwt_extended import jwt_required
 from bson.objectid import ObjectId
 from flask import jsonify
 from werkzeug.datastructures import FileStorage
-from db.models import Problem
+from db.models import Problem, Admin
 
 add_prob_parser = reqparse.RequestParser()
 
-add_prob_parser.add_argument('author', help = 'This field cannot be blank. It also accept email', required = True)
+add_prob_parser.add_argument('author', help = 'username of the admin adding the problem', required = True)
 add_prob_parser.add_argument('name', help = 'This field cannot be blank', required = True) 
 add_prob_parser.add_argument('testcases', type=FileStorage, location = 'files')
 add_prob_parser.add_argument('sizeoftestcases', type=int, help = 'This field cannot be blank', required = True)
@@ -144,7 +144,11 @@ class ProblemAdd(Resource):
 
         input_data=dict(input_data) 
 
-        id = str(Problem().addDoc(input_data))  
-        input_data['prblmid'] = str(id)
+        uid = str(Problem().addDoc(input_data))  
+        input_data['prblmid'] = uid
+        # add reference to the problems field in the admin collection
+        update = {'$addToSet': {'problems': uid}, "$currentDate": { "lastModified": True }}
+        if Admin().flexibleUpdate(update, username=input_data['author']):
+            return response(200, "New Problem Added", {"prblmid":uid})  
 
-        return response(200, "New Problem Added", {"prblmid":id})  
+        return response(200, "Problem not Added", [])      

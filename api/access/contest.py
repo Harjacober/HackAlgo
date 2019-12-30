@@ -7,7 +7,7 @@ from flask_jwt_extended import (
     get_jwt_identity, get_raw_jwt
     )
 from bson.objectid import ObjectId
-from db.models import Contest, ContestProblem
+from db.models import Contest, ContestProblem, Admin
 from werkzeug.datastructures import FileStorage
 
 init_contest_parser = reqparse.RequestParser()
@@ -76,8 +76,7 @@ class InitializeContest(Resource):
         input_data['duration'] = 0
         input_data['startdate'] = 0
         input_data['enddate'] = 0  
-        uid = Contest(ctype).addDoc(input_data)
-        # notify authors and invite them to make edits
+        uid = Contest(ctype).addDoc(input_data) 
 
         return response(200, "Contest Created Successfully", {'contestid':str(uid), 'contesttype':ctype})
 
@@ -212,10 +211,17 @@ class AddNewAuthor(Resource):
         contestid = input_data['contestid']
         author_username = input_data['authorusername']
 
+        admin = Admin().getBy(username=author_username)
+        if not admin:
+            return response(200, "Username does not exist", [])
         update = {'$addToSet': {'authors': author_username}, "$currentDate": { "lastModified": True }}
-        # find a way to notify the admin that he has been made an author and add this contest to his list
         if Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)):
-            return response(200, "Author Added Successfully", [])
+            # find a way to notify the admin that he has been made an author and add this contest to his list
+            update = {'$addToSet': {'contests': contestid}, "$currentDate": { "lastModified": True }}
+            if Admin().flexibleUpdate(update, username=author_username):
+                return response(200, "Author Added Successfully", [])
+
+            return response(200, "Unable to add author", [])       
 
         return response(200, "Check the contestid", [])    
 
@@ -233,10 +239,15 @@ class RemoveAuthor(Resource):
         author_username = input_data['authorusername']
 
         update = {'$pull': {'authors': author_username}, "$currentDate": { "lastModified": True }}
-        # also remove this contest from the admin's list
+        
+        # remove the admin from the author's list
         if Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)):
-            return response(200, "Author removed Successfully", [])
+            # also remove this contest from the admin's list
+            update = {'$pull': {'contests': contestid}, "$currentDate": { "lastModified": True }}
+            if Admin().flexibleUpdate(update, username=author_username):    
+                return response(200, "Author removed Successfully", [])
 
+          
         return response(200, "Check the contestid", [])  
 
 class GetContest(Resource):   
