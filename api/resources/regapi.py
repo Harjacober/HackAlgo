@@ -89,8 +89,7 @@ class UserUpdateProfile(Resource):
         return response(300, "Method not allowed", [])  
 
     def post(self):
-        data = profile_parser.parse_args()
-        print(data)
+        data = profile_parser.parse_args() 
         #update the profile(document) with unqiueid provided 
         uid = ObjectId(data['uniqueid']) #convert str id to a bson object
         if self.category.update(params=data, _id=uid):

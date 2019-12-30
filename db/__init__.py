@@ -4,8 +4,8 @@ from config import TESTING
 
 if TESTING:
     #making sure the database is empty before performing any operation
-    client = MongoClient('mongo', 27017)
+    client = MongoClient('localhost', 27017)
     client.drop_database("contestplatformtesting")
     client=client["contestplatformtesting"]
 else:
-    client = MongoClient('mongo', 27017)["contestplatform"]
+    client = MongoClient('localhost', 27017)["contestplatform"]

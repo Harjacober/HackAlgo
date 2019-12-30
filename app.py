@@ -12,7 +12,8 @@ from api.access.user import UserAPI
 from api.resources.regapi import AdminRegistration,UserRegistration,AdminLogin,UserLogin,AdminUpdateProfile,UserUpdateProfile,AdminProfile,UserProfile,SubmissionInfo,SubmissionList
 from api.resources.coding import RunCode,RunCodeStatus
 from api.access.problem import ProblemAdd,ProblemDetails,ProblemSet,ProblemSearch
-from api.access.contest import InitializeContest,UpdateContest,AddProblemForContest,UpdateProblemForContest,ApproveContest
+from api.access.contest import (InitializeContest,UpdateContest,AddProblemForContest
+,UpdateProblemForContest,ApproveContest,AddNewAuthor,RemoveAuthor,GetContest)
 
 
 app=Flask(__name__)
@@ -48,9 +49,12 @@ api.add_resource(ProblemSearch,'/get/problemset/')
 api.add_resource(ProblemSet,'/get/problemset/<string:category>/')
 
 api.add_resource(InitializeContest, '/contest/initialize/')
-api.add_resource(UpdateContest, '/contest/update/')
-api.add_resource(AddProblemForContest, '/contest/problem/add/')
-api.add_resource(UpdateProblemForContest, '/contest/problem/update/')
+api.add_resource(UpdateContest, '/contest/<string:ctype>/update/')
+api.add_resource(AddNewAuthor, '/contest/<string:ctype>/author/add/')
+api.add_resource(RemoveAuthor, '/contest/<string:ctype>/author/remove/')
+api.add_resource(AddProblemForContest, '/contest/<string:ctype>/problem/add/')
+api.add_resource(UpdateProblemForContest, '/contest/<string:ctype>/problem/update/')
+api.add_resource(GetContest, '/contest/<string:ctype>/<string:contestid>/')
 
 
 
