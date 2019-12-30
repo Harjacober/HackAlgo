@@ -30,16 +30,17 @@ def index():
     #server some home page here
     return "Hello who is there!!"
 
-api.add_resource(AdminRegistration, '/adminreg/')
-api.add_resource(UserRegistration, '/userreg/')
-api.add_resource(AdminLogin, '/adminlogin/')
-api.add_resource(UserLogin, '/userlogin/') 
-api.add_resource(AdminUpdateProfile, '/updateadminprofile/')
-api.add_resource(UserUpdateProfile, '/updateuserprofile/')
-api.add_resource(AdminProfile, '/adminprofile/')
-api.add_resource(UserProfile, '/userprofile/')
-api.add_resource(SubmissionInfo, '/userprofile/submissions/')
-api.add_resource(SubmissionList, '/userprofile/submissions/<string:problemid>/')
+api.add_resource(AdminRegistration, '/admin/registration/')
+api.add_resource(UserRegistration, '/user/registration/')
+api.add_resource(AdminLogin, '/admin/login/')
+api.add_resource(UserLogin, '/user/login/') 
+
+api.add_resource(AdminUpdateProfile, '/admin/profile/update/')
+api.add_resource(UserUpdateProfile, '/user/profile/update/')
+api.add_resource(AdminProfile, '/admin/profile/')
+api.add_resource(UserProfile, '/user/profile/')
+api.add_resource(SubmissionInfo, '/user/profile/submissions/')
+api.add_resource(SubmissionList, '/user/profile/submissions/<string:problemid>/')
 api.add_resource(UserAPI, '/<string:id>')
 
 api.add_resource(RunCode, '/run/code/')
