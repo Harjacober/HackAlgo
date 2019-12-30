@@ -11,7 +11,7 @@ ORIGINAL_DIR=os.getcwd()
 #So this would be different for each machine not sure how 
 #to go about this efficiently yet for unix. 
 py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe"
-#py_dir="/usr/local/bin/python"
+py_dir="/usr/local/bin/python"
 compilers={
     "go":"/usr/bin/go",
     "py":py_dir,
@@ -57,12 +57,13 @@ class Task(Thread):
             self.answercase=problem.getAnswerForSampleCases().split(",")
             self.result=[None]*int(problem.getSizeOfSampleCases()) 
         self.submission_id = None    
+        self.timelimit=problem.getTimeLimit()
+        self.memlimit=problem.getMemLimit()
         self.formatcase() # This method is temporal    
         self.enter()
 
     def toJson(self):
-        return {"state":self.state,"lang":self.lang,"userid":self.userid,
-        "_id":self.id,"submid":str(self.submission_id),"result":self.result}
+        return {"state":self.state,"lang":self.lang,"userid":self.userid,"_id":self.id,"submid":str(self.submission_id),"result":self.result}
 
     def __del___(self):
         #cleaning up
@@ -129,21 +130,35 @@ class Task(Thread):
 
     def runCompile(self,compiler_name,compile_options,run_options,n_cases,binary):
 
-        subprocess.run([compiler_name]+compile_options+[self.filepath])
+        compileans=subprocess.run([compiler_name]+compile_options+[self.filepath],
+                                            capture_output=True,encoding="utf-8")
+
+        #if while trying to compile there was an error 
+        if compileans.returncode >0 :
+            for cc in range(n_cases):
+                self.result[cc] ={"passed":False,"output":"","errput":compileans.stderr.strip()}
+            return
+
     
         for cc in range(n_cases):
-            ans=subprocess.\
-                run([binary]+run_options, capture_output=True,\
-                            input=self.cases[cc],encoding="utf-8")
+            try:
+                ans=subprocess.\
+                    run([binary]+run_options, capture_output=True,timeout= self.timelimit,\
+                                input=self.cases[cc],encoding="utf-8")
+            except subprocess.TimeoutExpired:
+                self.result[cc] ={"passed":False,"output":"Timeout","errput":"Timeout"}
+                return
 
             output=ans.stdout.strip()
             errput=ans.stderr.strip()
 
             self.result[cc] ={
-                            "passed":output==self.answercase[cc],
+                            "passed":output==self.answercase[cc] and ans.returncode==0,
                             "output":output,
                             "errput":errput
                             }
+            
+
 
     def run(self):
         l=len(self.result)
@@ -167,8 +182,13 @@ class Task(Thread):
                 args=[]
                 args.extend(self.resolveFolder(self.lang))
                 args.append(self.filepath) 
-                ans=subprocess.run(args,capture_output=True,
-                input=self.cases[cc],encoding="utf-8")
+                try:
+                    ans=subprocess.run(args,capture_output=True,timeout= self.timelimit,
+                            input=self.cases[cc],encoding="utf-8")
+                except subprocess.TimeoutExpired:
+                    self.result[cc] ={"passed":False,"output":"Timeout","errput":"Timeout"}
+                    self.verdict = "Failed"  
+                    continue
 
                 output=ans.stdout.strip()
                 errput=ans.stderr.strip()
@@ -176,7 +196,7 @@ class Task(Thread):
                 if output!=self.answercase[cc]:
                     self.verdict = "Failed"     
                 self.result[cc] = {
-                                "passed":output==self.answercase[cc],
+                                "passed":output==self.answercase[cc] and ans.returncode==0,
                                 "output":output,
                                 "errput":errput
                                 }             
@@ -185,7 +205,7 @@ class Task(Thread):
         if self.stype == "test":     
             category = Submission(self.userid)
             category.update(params={'result': self.result, 'verdict':self.verdict}, _id=self.submission_id)  
-        print(self.result)       
+       
         self.state=self.PossibelTasksState[2]
         os.remove(self.filepath)
 

@@ -1,15 +1,19 @@
 import json
 from time import sleep
 from os.path import join
+from platform import system
 
 class CodeRunTests:
     def __init__(self,problem_id):
         self.problem_id=problem_id
 
-    def pythonData(self):
-        win_path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/test.py"
-        path = "testcasefile/test.py"
-        with open(win_path) as f:
+    def pythonData(self,testtimeout=False):
+        timeoutfile =lambda : "testtimeout.py" if testtimeout else "test.py"
+        path = "testcasefile/"+timeoutfile()
+        if system()=='Windows':
+            path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/"+timeoutfile()
+       
+        with open(path) as f:
             code = f.read()
         data=dict(
             prblmid=self.problem_id,
@@ -20,10 +24,13 @@ class CodeRunTests:
         )
         return data
 
+
     def golangData(self):
-        win_path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/test.go"
         path = "testcasefile/test.go"
-        with open(win_path) as f:
+        if system()=='Windows':
+            path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/test.go"
+
+        with open(path) as f:
             code=f.read()
         data=dict(
             prblmid=self.problem_id,
@@ -34,10 +41,12 @@ class CodeRunTests:
         )
         return data
 
-    def javaData(self):
-        win_path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/test.java"
-        path = "testcasefile/test.java"
-        with open(win_path) as f:
+    def javaData(self,testtimeout=False):
+        timeoutfile =lambda : "testtimeout.java" if testtimeout else "test.java"
+        path = "testcasefile/"+timeoutfile()
+        if system()=='Windows':
+            path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/"+timeoutfile()
+        with open(path) as f:
             code=f.read()
         data=dict(
             prblmid=self.problem_id,
@@ -49,10 +58,12 @@ class CodeRunTests:
         return data
 
 
-    def cData(self):
-        win_path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/test.c"
-        path = "testcasefile/test.c"
-        with open(win_path) as f:
+    def cData(self,testtimeout=False):
+        timeoutfile =lambda : "testtimeout.c" if testtimeout else "test.c"
+        path = "testcasefile/"+timeoutfile()
+        if system()=='Windows':
+            path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/"+timeoutfile()
+        with open(path) as f:
             code=f.read()
         data=dict(
             prblmid=self.problem_id,
@@ -93,7 +104,7 @@ class CodeRunTests:
             stype = "test"
         )
 
-        sleep(3) # wait a second for result
+        sleep(3) # wait some second for result
 
         resp=appClient.post("/run/code/status/",data=data,headers=header)
 
