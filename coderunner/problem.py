@@ -5,7 +5,10 @@ class ProblemInstance:
 
     def getName(self):
         return self.problem["name"]
-
+    def getTimeLimit(self):
+        return self.problem["timelimit"]
+    def getMemLimit(self):
+        return self.problem["memorylimit"]
     def getAuthor(self):
         return self.problem["author"]
     
