@@ -9,7 +9,9 @@ from flask_restful import Api
 from flask_jwt_extended import JWTManager
 
 from api.access.user import UserAPI
-from api.resources.regapi import AdminRegistration,UserRegistration,AdminLogin,UserLogin,AdminUpdateProfile,UserUpdateProfile,AdminProfile,UserProfile,SubmissionInfo,SubmissionList
+from api.resources.regapi import AdminRegistration,UserRegistration,AdminLogin,UserLogin
+from api.resources.usersapi import UserProfile,UserUpdateProfile,SubmissionInfo,SubmissionList
+from api.resources.adminapi import AdminProfile, AdminUpdateProfile
 from api.resources.coding import RunCode,RunCodeStatus
 from api.access.problem import ProblemAdd,ProblemDetails,ProblemSet,ProblemSearch
 from api.access.contest import (InitializeContest,UpdateContest,AddProblemForContest
