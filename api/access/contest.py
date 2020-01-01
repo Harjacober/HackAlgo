@@ -83,7 +83,7 @@ class InitializeContest(Resource):
         input_data['enddate'] = 0  
         uid = Contest(ctype).addDoc(input_data)  
 
-        #TODO add this contest to the creator list
+        # add this contest to the creator list
         update = {'$addToSet': {'contests': str(uid)}, "$currentDate": { "lastModified": True }}
         if Admin().flexibleUpdate(update, username=creator):
             return response(200, "Contest Created Successfully", {'contestid':str(uid), 'contesttype':ctype})
@@ -109,8 +109,7 @@ class UpdateContest(Resource):
             return response(200, "check contestid", [])
         # check if author is authorized
         if author_username not in data.get('authors'):
-            return response(200, "Unauthorized author", [])
-        # confirm that start date is not less than 6hrs in the future
+            return response(200, "Unauthorized author", []) 
 
         # remove keys that are not needed
         input_data.pop('authors', None)

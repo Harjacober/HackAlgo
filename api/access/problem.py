@@ -130,6 +130,10 @@ class ProblemAdd(Resource):
     @jwt_required
     def post(self):
         input_data = add_prob_parser.parse_args()
+
+        author = input_data.get('author')
+        if not Admin().getBy(username=author):
+            return response(200, "author is not an admin, check the username", [])
         # Reads the cases from the uploaded files and decode the byte into a unicode string,
         # before saving it into the database
         testcases = input_data['testcases'].read().decode("utf-8")  
