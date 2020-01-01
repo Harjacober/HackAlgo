@@ -32,7 +32,7 @@ class Contest(base):
  
 class ContestProblem(Contest):
     def __init__(self, ctype, contestid):
-        super().__init__(self, ctype)   
+        Contest.__init__(self, ctype)   
         self.collection = self.collection[contestid]      
 
 if __name__ == "__main__":

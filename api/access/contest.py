@@ -9,6 +9,7 @@ from flask_jwt_extended import (
 from bson.objectid import ObjectId
 from db.models import Contest, ContestProblem, Admin
 from werkzeug.datastructures import FileStorage
+from datetime import datetime
 
 init_contest_parser = reqparse.RequestParser()
 init_contest_parser.add_argument('title', required=True)
@@ -20,9 +21,8 @@ init_contest_parser.add_argument('desc', required=False)
 update_contest_parser = reqparse.RequestParser()
 update_contest_parser.add_argument('title', required=True)  
 update_contest_parser.add_argument('desc', required=False)
-update_contest_parser.add_argument('duration', required=False)
-update_contest_parser.add_argument('startdate', help="start date in milliseconds", required=False)
-update_contest_parser.add_argument('enddate', help="end date in milliseconds", required=False) 
+update_contest_parser.add_argument('duration', help="Duration in milliseconds", required=False)
+update_contest_parser.add_argument('starttime',type=float, help="start date in milliseconds", required=False) 
 update_contest_parser.add_argument('authorusername', help="username of the author that wants to update a contest", required=False, store_missing=False)  
 update_contest_parser.add_argument('contestid', help="contest id assigned upon contest initialization", required=False, store_missing=False)  
 
@@ -68,17 +68,26 @@ class InitializeContest(Resource):
 
         input_data = init_contest_parser.parse_args()   
         ctype = input_data['contesttype']
+        creator = input_data.get('creator')
+        #check if creator is registered as an admin
+        admin = Admin().getBy(username=creator)
+        if not admin:
+            return response(200, "Username does not exist", [])
         # generates the roundnumber by simply incrementing the total number of rounds by one
         roundnum = Contest(ctype).getAll().count() + 1
         input_data['roundnum'] = roundnum
-        input_data['authors'] = [input_data['creator']]
+        input_data['authors'] = [creator]
         input_data['status'] = 0 # 0 means not approved, 1 means approved, -1 means contest is over
         input_data['duration'] = 0
         input_data['startdate'] = 0
         input_data['enddate'] = 0  
-        uid = Contest(ctype).addDoc(input_data) 
+        uid = Contest(ctype).addDoc(input_data)  
 
-        return response(200, "Contest Created Successfully", {'contestid':str(uid), 'contesttype':ctype})
+        #TODO add this contest to the creator list
+        update = {'$addToSet': {'contests': str(uid)}, "$currentDate": { "lastModified": True }}
+        if Admin().flexibleUpdate(update, username=creator):
+            return response(200, "Contest Created Successfully", {'contestid':str(uid), 'contesttype':ctype})
+        return response(200, "Contest not created", [])
 
 class UpdateContest(Resource):
     @jwt_required
@@ -89,13 +98,17 @@ class UpdateContest(Resource):
     def post(self, ctype):
         input_data = update_contest_parser.parse_args()
 
-        author_username = input_data['authorusername'] 
-        contestid = input_data['contestid']
+        author_username = input_data.get('authorusername') 
+        #check if author is registered as an admin
+        admin = Admin().getBy(username=author_username)
+        if not admin:
+            return response(200, "Username does not exist", [])
+        contestid = input_data.get('contestid')
         data = Contest(ctype).getBy(_id=ObjectId(contestid))
         if not data:
             return response(200, "check contestid", [])
         # check if author is authorized
-        if author_username not in data['authors']:
+        if author_username not in data.get('authors'):
             return response(200, "Unauthorized author", [])
         # confirm that start date is not less than 6hrs in the future
 
@@ -119,30 +132,37 @@ class AddProblemForContest(Resource):
     def post(self, ctype):    
         input_data = add_prob_parser.parse_args()
 
+        contestid = input_data.get('contestid')
         author_username = input_data['authorusername']
+        #check if author is registered as an admin
+        admin = Admin().getBy(username=author_username)
+        if not admin:
+            return response(200, "Username does not exist", [])
         # check if author is authorized
-        if author_username not in data['authors']:
+        data = Contest(ctype).getBy(_id=ObjectId(contestid))
+        if not data:
+            return response(200, "check the contestid", [])
+        if author_username not in data.get('authors'):
             return response(200, "Unauthorized author", [])
         # Reads the cases from the uploaded files and decode the byte into a unicode string,
         # before saving it into the database
-        testcases = input_data['testcases'].read().decode("utf-8")  
-        answercases = input_data['answercases'].read().decode("utf-8")  
-        samplecases = input_data['samplecases'].read().decode("utf-8")  
-        sampleanswercases = input_data['sampleanswercases'].read().decode("utf-8")  
+        testcases = input_data.get('testcases').read().decode("utf-8")  
+        answercases = input_data.get('answercases').read().decode("utf-8")  
+        samplecases = input_data.get('samplecases').read().decode("utf-8")  
+        sampleanswercases = input_data.get('sampleanswercases').read().decode("utf-8")  
 
         input_data['testcases'] = testcases 
         input_data['answercases'] = answercases 
         input_data['samplecases'] = samplecases 
         input_data['sampleanswercases'] = sampleanswercases 
 
-        input_data=dict(input_data) 
-        contestid = input_data['contestid']
+        input_data=dict(input_data)   
         # remove args that are not needed
         input_data.pop('prblmid', None) 
 
         uid = ContestProblem(ctype, contestid).addDoc(input_data)
 
-        return response(200, "Problem Added", {'contestid':contestid, 'prblmid': uid})
+        return response(200, "Problem Added", {'contestid':contestid, 'prblmid': str(uid)})
 
 class UpdateProblemForContest(Resource):
     @jwt_required
@@ -153,16 +173,26 @@ class UpdateProblemForContest(Resource):
     def post(self, ctype):    
         input_data = add_prob_parser.parse_args()
 
+        if 'prblmid' not in input_data:
+            return response(200, "prblmid is required", [])
+        contestid = input_data.get('contestid')
         author_username = input_data['authorusername']
+        #check if author is registered as an admin
+        admin = Admin().getBy(username=author_username)
+        if not admin:
+            return response(200, "Username does not exist", [])
         # check if author is authorized
-        if author_username not in data['authors']:
+        data = Contest(ctype).getBy(_id=ObjectId(contestid))
+        if not data:
+            return response(200, "check the contestid", [])
+        if author_username not in data.get('authors'):
             return response(200, "Unauthorized author", [])
         # Reads the cases from the uploaded files and decode the byte into a unicode string,
         # before saving it into the database
-        testcases = input_data['testcases'].read().decode("utf-8")  
-        answercases = input_data['answercases'].read().decode("utf-8")  
-        samplecases = input_data['samplecases'].read().decode("utf-8")  
-        sampleanswercases = input_data['sampleanswercases'].read().decode("utf-8")  
+        testcases = input_data.get('testcases').read().decode("utf-8")  
+        answercases = input_data.get('answercases').read().decode("utf-8")  
+        samplecases = input_data.get('samplecases').read().decode("utf-8")  
+        sampleanswercases = input_data.get('sampleanswercases').read().decode("utf-8")  
 
         input_data['testcases'] = testcases 
         input_data['answercases'] = answercases 
@@ -170,12 +200,12 @@ class UpdateProblemForContest(Resource):
         input_data['sampleanswercases'] = sampleanswercases 
 
         input_data=dict(input_data) 
-        contestid = input_data['contestid']
-        prblmid = input_data['prblmid']
+        contestid = input_data.get('contestid')
+        prblmid = input_data.get('prblmid')
         # remove args that are not needed
         input_data.pop('prblmid', None) 
 
-        if ContestProblem(ctype, contestid).update(input_data, _id=prblmid):
+        if ContestProblem(ctype, contestid).update(input_data, _id=ObjectId(prblmid)):
             return response(200, "Update Successful", [])
         return response(200, "problem id does not exist",[])      
 
@@ -193,13 +223,21 @@ class ApproveContest(Resource):
         creator = input_data['creator'] 
         contestid = input_data['contestid']
         data = Contest(ctype).getBy(_id=ObjectId(contestid))
-        if creator != data['creator']:
+        if creator != data.get('creator'):
             return response(200, "Not authorized", [])
 
         #TODO confirm that start date is not less than 6hrs in the future before approval 
+        mintime = 12
+        starttime = data.get('starttime')
+        currentime = datetime.now().timestamp()
+        sixhrs = mintime*60*60*1000.0
+        if starttime < currentime + sixhrs:
+            return response(200, "start time must be at least {}hrs in the future".format(mintime), [])
         params = {'status': 1}
         if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
-            return response(200, "Success", [])    
+            return response(200, "Success", [])  
+
+        return response(200, "check the contestid",[])         
 
 class AddNewAuthor(Resource): 
     @jwt_required
@@ -254,10 +292,12 @@ class RemoveAuthor(Resource):
 
 class GetContestById(Resource):   
     @jwt_required
-    def get(self, ctype, contestid):
+    def get(self, ctype, contestid):  
         exclude = {'_id':0, 'lastModified':0}
         data = Contest(ctype).getBy(params=exclude, _id=ObjectId(contestid))
         if data:
+            problems = ContestProblem(ctype, contestid).getAll(params=exclude)
+            data['problems'] = list(problems)
             return response(200, "Success", data)
         return response(200, "Check the contestid", [])    
 
@@ -266,7 +306,9 @@ class GetContestById(Resource):
         exclude = {'_id':0, 'lastModified':0}
         data = Contest(ctype).getBy(params=exclude, _id=ObjectId(contestid))
         if data:
-            return response(200, "Success", data ) 
+            problems = ContestProblem(ctype, contestid).getAll(params=exclude)
+            data['problems'] = list(problems)
+            return response(200, "Success", data)
         return response(200, "Check the contestid", [])   
 
 class GetContest(Resource):   
