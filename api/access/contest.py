@@ -315,7 +315,7 @@ class GetContest(Resource):
     def get(self, ctype, status):
         status_code = {'active':1, 'inreview':0, 'completed':-1}
         if ctype == "all":
-            #TODO handle this
+            #TODO(jacob) handle this
             pass
         exclude = {'_id':0, 'lastModified':0}
         data = Contest(ctype).getAll(params=exclude, status=status_code[status])

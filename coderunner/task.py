@@ -3,6 +3,8 @@ from random import randint
 from time import time
 import subprocess
 from threading import Thread
+from datetime import datetime
+from shutil import rmtree
 
 from db.models import Submission
 
@@ -10,6 +12,7 @@ ORIGINAL_DIR=os.getcwd()
 
 #So this would be different for each machine not sure how 
 #to go about this efficiently yet for unix. 
+
 py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe"
 py_dir="/usr/local/bin/python"
 compilers={
@@ -56,20 +59,22 @@ class Task(Thread):
             self.cases=problem.getSampleCases().split(",")
             self.answercase=problem.getAnswerForSampleCases().split(",")
             self.result=[None]*int(problem.getSizeOfSampleCases()) 
-        self.submission_id = None    
         self.timelimit=problem.getTimeLimit()
         self.memlimit=problem.getMemLimit()
         self.formatcase() # This method is temporal    
         self.enter()
 
     def toJson(self):
-        return {"state":self.state,"lang":self.lang,"userid":self.userid,"_id":self.id,"submid":str(self.submission_id),"result":self.result}
+        return {"state":self.state,"lang":self.lang,"userid":self.userid,"_id":self.id,"result":self.result}
 
     def __del___(self):
         #cleaning up
-        os.remove(self.filepath)
-        if self.lang.lower()=="java":
-            os.rmdir(self.folder)
+        try:
+            os.remove(self.filepath)
+            if self.lang.lower()=="java":
+                rmtree(self.folder,ignore_errors=True)
+        except FileNotFoundError:
+            pass
 
     def __lt__(self,other):
         return ~self.PossibelTasksState.index(self.state)< ~other.PossibelTasksState.index(other.state)
@@ -99,8 +104,6 @@ class Task(Thread):
         #And modify verdict in the `Task` Class once the task is done. 
         if self.stype == "test":
             self.input_data['verdict'] = 'running'
-            category = Submission(self.userid)
-            self.submission_id = category.addDoc(self.input_data) 
         self.filename=self.randomFilename()
         if self.lang.lower()=="java":
             filename=os.path.join(*self.filename.split(".")[:-1])
@@ -112,6 +115,7 @@ class Task(Thread):
         self.file = open(self.filepath,"w+")
         self.file.write(self.content) 
         self.file.close()
+        self.input_data["timesubmitted"]=str(datetime.now())
     
     def resolveFolder(self,lang):
         #python is py,java is java e.t.c.This function exist if need be resolve the name later
@@ -201,12 +205,14 @@ class Task(Thread):
                                 "errput":errput
                                 }             
 
-        #update submission in the database    
-        if self.stype == "test":     
-            category = Submission(self.userid)
-            category.update(params={'result': self.result, 'verdict':self.verdict}, _id=self.submission_id)  
-       
         self.state=self.PossibelTasksState[2]
+        #create a submission in the database    
+        if self.stype == "test":   
+            #self.input_data["submissionscore"]=
+            Submission(self.userid).addDoc(self.input_data) 
+       
         os.remove(self.filepath)
+        if self.lang.lower()=="java":
+            rmtree(self.folder,ignore_errors=True)
 
 

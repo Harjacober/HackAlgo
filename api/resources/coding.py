@@ -21,12 +21,14 @@ run_code_parser.add_argument('codecontent', help = 'This field cannot be blank',
 run_code_parser.add_argument('codefile', type=FileStorage, location='files', required = False, store_missing=False)
 run_code_parser.add_argument('lang', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('stype', help = 'This field cannot be blank', required = True)
+run_code_parser.add_argument('contestid', help = 'contest id .if submission is made for a contest')
 
 run_code_status_parser = reqparse.RequestParser()
 run_code_status_parser.add_argument('taskid', help = 'This field cannot be blank.', required = True)
 run_code_status_parser.add_argument('lang', help = 'This field cannot be blank.', required = True)
 run_code_status_parser.add_argument('prblmid', help = 'This field cannot be blank', required = True)
 run_code_status_parser.add_argument('userid', help = 'This field cannot be blank', required = True)
+
 
 
 
@@ -44,7 +46,6 @@ class RunCode(Resource):
         if not problem:
             return {"code":"404","msg":"Invalid Problem ID","data":[]}
  
-        
         task_id=queue.generateID()
        
         task=Task(ProblemInstance(problem),task_id,input_data)
@@ -54,7 +55,7 @@ class RunCode(Resource):
 
     @jwt_required
     def get(self):
-        return  {"code":"300","msg":"Use A Post Request","data":[]}
+        return  {"code":"301","msg":"Use A Post Request","data":[]}
 
 
 class RunCodeStatus(Resource):

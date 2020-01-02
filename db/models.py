@@ -15,20 +15,26 @@ class User(base):
 class Problem(base):
     def __init__(self):
         super().__init__(self)
-        self.collection = client["problem"]  
+        self.collection = client["problem"]
+
 class Submission(base):
     def __init__(self, userid):
         super().__init__(self)
         usercollection = client["user"]
-        submissioncollection = usercollection["submission"]  
-        collection = submissioncollection[userid]
-        self.collection = submissioncollection[userid]  
+        submissioncollection = usercollection["submission"]
+        self.collection = submissioncollection[userid]
+
 class Contest(base):
     def __init__(self, ctype):
         super().__init__(self)
         contest = client['contest']
         types = contest[ctype]     
         self.collection = types 
+
+class UserRegiteredContest(base):
+    def __init__(self, userid):
+        super().__init__(self)
+        self.collection = client['contestreg'][userid]
  
 class ContestProblem(Contest):
     def __init__(self, ctype, contestid):

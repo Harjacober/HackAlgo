@@ -34,10 +34,11 @@ class AdminRegistration(Resource):
     def post(self):
         data=reg_parser.parse_args()
         
-        if self.category.getBy(email=data["email"]): #check if email already exist
-            return response(200,"email taken",[])
-        if self.category.getBy(username=data["username"]): #check if username already exist
-            return response(200,"usernname taken",[])    
+        for category in [Admin(),User()]: #Admin && User name should be unique
+            if category.getBy(email=data["email"]): #check if email already exist
+                return response(200,"email taken",[])
+            if category.getBy(username=data["username"]): #check if username already exist
+                return response(200,"usernname taken",[])    
 
         data["pswd"]=sha256.hash(data["pswd"]) #replace the old pswd arg with new hash passowrd
         uid = self.category.addDoc(data) #finally add registration data to database

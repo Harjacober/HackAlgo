@@ -4,8 +4,9 @@ from os.path import join
 from platform import system
 
 class CodeRunTests:
-    def __init__(self,problem_id):
+    def __init__(self,problem_id,user_id):
         self.problem_id=problem_id
+        self.user_id=user_id
 
     def pythonData(self,testtimeout=False):
         timeoutfile =lambda : "testtimeout.py" if testtimeout else "test.py"
@@ -17,10 +18,10 @@ class CodeRunTests:
             code = f.read()
         data=dict(
             prblmid=self.problem_id,
-            userid="wkgs426haqie6yvnacswteelkjsndteaqp",
+            userid=self.user_id,
             codecontent=code,
             lang="py",
-            stype = "sample"
+            stype = "test"
         )
         return data
 
@@ -34,10 +35,10 @@ class CodeRunTests:
             code=f.read()
         data=dict(
             prblmid=self.problem_id,
-            userid="wkgs426haqie6yvnacswteelkjsndteaqp",
+            userid=self.user_id,
             codecontent=code,
             lang="go",
-            stype = "sample"
+            stype = "test"
         )
         return data
 
@@ -50,10 +51,10 @@ class CodeRunTests:
             code=f.read()
         data=dict(
             prblmid=self.problem_id,
-            userid="wkgs426haqie6yvnacswteelkjsndteaqp",
+            userid=self.user_id,
             codecontent=code,
             lang="java",
-            stype = "sample"
+            stype = "test"
         )
         return data
 
@@ -67,10 +68,10 @@ class CodeRunTests:
             code=f.read()
         data=dict(
             prblmid=self.problem_id,
-            userid="wkgs426haqie6yvnacswteelkjsndteaqp",
+            userid=self.user_id,
             codecontent=code,
             lang="c",
-            stype = "sample"
+            stype = "test"
         )
         return data
 
@@ -98,7 +99,7 @@ class CodeRunTests:
       
         data=dict(
             prblmid=self.problem_id,
-            userid="wkgs426haqie6yvnacswteelkjsndteaqp",
+            userid=self.user_id,
             taskid=task_id,
             lang="py",
             stype = "test"

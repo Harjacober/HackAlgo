@@ -16,3 +16,5 @@
   ```docker-compose up -d (This restart the container in the backgroud)```  
 - it is expected that the current directory where the project is , is mounted on the container so changes are in sync from your ide  
 - This an only developement setup 
+#  code formatting  
+install yapf with ```pip install yapf``` then run ```yapf -i -r *.py```

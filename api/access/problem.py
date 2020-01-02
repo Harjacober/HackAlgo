@@ -19,6 +19,8 @@ add_prob_parser.add_argument('problemstatement', help = 'This field cannot be bl
 add_prob_parser.add_argument('category', help = 'This field cannot be blank', required = True)
 add_prob_parser.add_argument('timelimit', type=float, help = 'Time in seconds', required = True)
 add_prob_parser.add_argument('memorylimit', type=float, help = 'Memory limit in Megabytes', required = True)
+add_prob_parser.add_argument('score', type=int, help = 'Highest score obtainable for problem', required = True)
+add_prob_parser.add_argument('contestid', help = 'contest id if problem is for a contest')
 
 
 req_show_problem_details=reqparse.RequestParser()
@@ -146,7 +148,7 @@ class ProblemAdd(Resource):
         input_data['samplecases'] = samplecases 
         input_data['sampleanswercases'] = sampleanswercases 
 
-        input_data=dict(input_data) 
+        input_data=dict(input_data)
 
         uid = str(Problem().addDoc(input_data))  
         input_data['prblmid'] = uid
