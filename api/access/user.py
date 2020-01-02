@@ -1,6 +1,6 @@
 from db.models import User
 from flask_restful import Resource,reqparse
-from db.models import User,UserRegiteredContest,User,Contest,ContestProblem,Problem,Submission
+from db.models import User,UserRegisteredContest,User,Contest,ContestProblem,Problem,Submission
 from flask_jwt_extended import jwt_required
 from datetime import datetime
 from bson.objectid import ObjectId
@@ -8,7 +8,7 @@ from bson.objectid import ObjectId
 enter_contest_parser = reqparse.RequestParser()
 enter_contest_parser.add_argument('userid', required=True)
 enter_contest_parser.add_argument('contesttype', help="The type of the contest and contest id are required fields",required=True)
-enter_contest_parser.add_argument('contestid', help="the username of the admin that created the contest", required=True)
+enter_contest_parser.add_argument('contestid', help="the contestid", required=True)
 
 user_contest_history_parser = reqparse.RequestParser()
 user_contest_history_parser.add_argument('userid', required=True)
@@ -28,7 +28,7 @@ def response(code,msg,data,access_token=""):
 class UserEnterContest(Resource):
     @jwt_required
     def get(self,id):
-        return response("301","Use a Post Request",[])
+        return response("300","Use a Post Request",[])
 
     @jwt_required
     def post(self):
@@ -36,23 +36,28 @@ class UserEnterContest(Resource):
         req_data["timeentered"]=str(datetime.now())
      
         #TODO(ab|jacob) move all this to a caching db. REDIS?
-        if not Contest(req_data["contesttype"]).getBy(
-                _id=ObjectId(req_data["contestid"])
-            ):
+        contest = Contest(req_data["contesttype"]).getBy(
+                _id=ObjectId(req_data["contestid"]))
+        if not contest:
             return response(400,"Contest not found",{})
+        else:
+            if contest['status'] == -1:
+                return response(400,"Contest has ended",{})
+            elif contest['status'] == 0:
+                return response(400,"Contest is not active yet",{})
 
         if not User().getBy(
                 _id=ObjectId(req_data["userid"])
             ):
             return response(400,"User Id not found",{})
 
-        UserRegiteredContest(req_data["userid"]).addDoc(req_data)
+        UserRegisteredContest(req_data["userid"]).addDoc(req_data)
         return response(200,"Contest participation history updated",{})
 
 class UserContestHistory(Resource):
     @jwt_required
     def get(self):
-        return response("301","Use a Post Request",[])
+        return response("300","Use a Post Request",[])
 
     @jwt_required
     def post(self):
@@ -68,14 +73,15 @@ class UserContestHistory(Resource):
         return response(
             200,
             "User Contests",
-            [ctest for ctest in UserRegiteredContest(req_data["userid"]).getAll(params=exclude)]
+            list(UserRegisteredContest
+            (req_data["userid"]).getAll(params=exclude))
         )
 
 
 class UserSubmissionHistory(Resource):
     @jwt_required
     def get(self,id):
-        return response("301","Use a Post Request",[])
+        return response("300","Use a Post Request",[])
 
     @jwt_required
     def post(self):
@@ -91,8 +97,8 @@ class UserSubmissionHistory(Resource):
             ):
                 return response(400,"Contest not found a",{})
 
-            submissions=[subs for subs in Submission(req_data["userid"]).\
-                                getAll(params=exclude,contestid=req_data["contestid"])]
+            submissions= list(Submission(req_data["userid"]).\
+                                getAll(params=exclude,contestid=req_data["contestid"]))
 
             return response(200,"Submisions ",submissions)
 

@@ -31,7 +31,7 @@ class Contest(base):
         types = contest[ctype]     
         self.collection = types 
 
-class UserRegiteredContest(base):
+class UserRegisteredContest(base):
     def __init__(self, userid):
         super().__init__(self)
         self.collection = client['contestreg'][userid]

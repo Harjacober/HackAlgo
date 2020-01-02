@@ -46,6 +46,8 @@ class ProblemDetails(Resource):
 
         exclude = {'answercases':0, 'sampleanswercases':0}
         pb=Problem().getBy(params=exclude, _id=ObjectId(input_data["prblmid"]))
+        if not pb:
+            return response(400, "Problem id does not exist", [])
         pb["_id"]=str(pb["_id"])
 
         return response(200, "Success", pb)  
@@ -57,7 +59,7 @@ class ProblemDetails(Resource):
         exclude = {'answercases':0, 'sampleanswercases':0}
         pb=Problem().getBy(params=exclude, _id=ObjectId(input_data["prblmid"]))
         if not pb:
-            return response(200, "Problem id does not exist", [])
+            return response(400, "Problem id does not exist", [])
         pb["_id"]=str(pb["_id"])
 
         return response(200, "Success", pb)  
@@ -135,7 +137,7 @@ class ProblemAdd(Resource):
 
         author = input_data.get('author')
         if not Admin().getBy(username=author):
-            return response(200, "author is not an admin, check the username", [])
+            return response(400, "author is not an admin, check the username", [])
         # Reads the cases from the uploaded files and decode the byte into a unicode string,
         # before saving it into the database
         testcases = input_data['testcases'].read().decode("utf-8")  
@@ -157,4 +159,4 @@ class ProblemAdd(Resource):
         if Admin().flexibleUpdate(update, username=input_data['author']):
             return response(200, "New Problem Added", {"prblmid":uid})  
 
-        return response(200, "Problem not Added", [])      
+        return response(400, "Problem not Added", [])      
