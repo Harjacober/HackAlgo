@@ -3,6 +3,8 @@ class ProblemInstance:
         assert isinstance(problem_ds,dict)
         self.problem=problem_ds
 
+    def getprblmid(self):
+        return str(self.problem.get('_id'))
     def getName(self):
         return self.problem["name"]
     def getTimeLimit(self):

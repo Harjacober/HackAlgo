@@ -22,6 +22,7 @@ run_code_parser.add_argument('codefile', type=FileStorage, location='files', req
 run_code_parser.add_argument('lang', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('stype', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('contestid', help = 'contest id .if submission is made for a contest')
+run_code_parser.add_argument('ctype', help = 'contest type .if submission is made for a contest')
 
 run_code_status_parser = reqparse.RequestParser()
 run_code_status_parser.add_argument('taskid', help = 'This field cannot be blank.', required = True)
@@ -47,8 +48,14 @@ class RunCode(Resource):
             return {"code":"404","msg":"Invalid Problem ID","data":[]}
  
         task_id=queue.generateID()
-       
-        task=Task(ProblemInstance(problem),task_id,input_data)
+        codecontent = input_data.get('codecontent')
+        userid = input_data.get('userid')
+        stype = input_data.get('stype')
+        lang = input_data.get('lang')
+        codefile = input_data.get('codefile')
+        contestid = input_data.get('contestid')
+        ctype = input_data['ctype']
+        task=Task(lang,content,userid,ProblemInstance(problem),task_id,stype,codefile,bool(contestid),ctype)
         queue.add(task_id,task) 
 
         return {"code":"200","msg":"Task started ","data":[task.toJson()]}
@@ -73,7 +80,7 @@ class RunCodeStatus(Resource):
         language=input_data["lang"]
 
         task=queue.getById(task_id)
-
+ 
         if task is None:
             return {"code":"404","msg":"Task not found","data":[]}
 

@@ -5,7 +5,7 @@ import subprocess
 from threading import Thread
 from datetime import datetime
 from shutil import rmtree
-
+from api.access import user
 from db.models import Submission
 
 ORIGINAL_DIR=os.getcwd()
@@ -32,7 +32,7 @@ class Task(Thread):
     Handles running of submitted code and updates the submission details in the database
     """
     PossibelTasksState=["initialize","running","finished"]
-    def __init__(self,problem,id,input_data):
+    def __init__(self,lang,content,userid,problem,id,stype,codefile,contestid,ctype):
         """
         :param stype: the type of submission. differentiates actual 
                       test cases from sample cases.
@@ -40,25 +40,33 @@ class Task(Thread):
         :param problem: an Instance of :class: `ProblemInstance`.
         """
         Thread.__init__(self)
-        self.input_data = input_data
-        self.userid = self.input_data["userid"]  
-        if 'codefile' in self.input_data:
+        self.state=Task.PossibelTasksState[0]
+        self.lang=lang
+        self.stype = stype 
+        if codefile is not None:
             self.content = self.input_data['codefile'].read().decode("utf-8") 
         else:
-            self.content = self.input_data["codecontent"] # get submitted code content    
-        self.lang = self.input_data["lang"]  
-        self.stype = self.input_data["stype"]  
+            self.content = content # get submitted code content   
+        self.userid=userid
+        self.cases=problem.getCases().split("\n")
+        self.answercase=problem.getAnswerForCases().split("\n")
+        self.result=[None]*int(problem.getNCases())
+        self.id=id 
         self.state=Task.PossibelTasksState[0]  
-        self.id=id
         self.verdict = "Passed"
+        self.contestid = contestid
+        self.ctype = ctype
+        self.problem = problem
+
         if self.stype == "test":
-            self.cases=problem.getTestCases().split(",")
-            self.answercase=problem.getAnswerForTestCases().split(",") 
-            self.result=[None]*int(problem.getSizeOfTestCases())
+            self.cases=self.problem.getTestCases().split(",")
+            self.answercase=self.problem.getAnswerForTestCases().split(",") 
+            self.result=[None]*int(self.problem.getSizeOfTestCases())
         elif self.stype == "sample":
-            self.cases=problem.getSampleCases().split(",")
-            self.answercase=problem.getAnswerForSampleCases().split(",")
-            self.result=[None]*int(problem.getSizeOfSampleCases()) 
+            self.cases=self.problem.getSampleCases().split(",")
+            self.answercase=self.problem.getAnswerForSampleCases().split(",")
+            self.result=[None]*int(self.problem.getSizeOfSampleCases()) 
+
         self.timelimit=problem.getTimeLimit()
         self.memlimit=problem.getMemLimit()
         self.formatcase() # This method is temporal    
@@ -207,9 +215,16 @@ class Task(Thread):
 
         self.state=self.PossibelTasksState[2]
         #create a submission in the database    
+        submission_data = {'prblmid':self.getprblmid(),'userid':self.userid,'contestid':self.contestid,'ctype':self.ctype',codecontent':self.codecontent,
+        'codefile':self.codefile,'lang':self.lang,'stype':self.stype,'result': self.result,'verdict': self.verdict}
         if self.stype == "test":   
-            #self.input_data["submissionscore"]=
-            Submission(self.userid).addDoc(self.input_data) 
+            if not bool(contestid):
+                submission_data.pop('userid', None)
+                submission_data.pop('contestid', None)
+                submission_data.pop('ctype', None)
+                Submission(self.userid).addDoc(submission_data) 
+            else:
+                user.gradeSubmission(submission_data)    
        
         os.remove(self.filepath)
         if self.lang.lower()=="java":
