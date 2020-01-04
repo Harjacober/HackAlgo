@@ -4,9 +4,11 @@ from os.path import join
 from platform import system
 
 class CodeRunTests:
-    def __init__(self,problem_id,user_id):
+    def __init__(self,problem_id,user_id,contestid="",ctype=""):
         self.problem_id=problem_id
         self.user_id=user_id
+        self.contestid = contestid
+        self.ctype = ctype
 
     def pythonData(self,testtimeout=False):
         timeoutfile =lambda : "testtimeout.py" if testtimeout else "test.py"
@@ -21,7 +23,9 @@ class CodeRunTests:
             userid=self.user_id,
             codecontent=code,
             lang="py",
-            stype = "test"
+            stype = "test",
+            contestid = self.contestid,
+            ctype = self.ctype
         )
         return data
 
@@ -38,7 +42,9 @@ class CodeRunTests:
             userid=self.user_id,
             codecontent=code,
             lang="go",
-            stype = "test"
+            stype = "test",
+            contestid = self.contestid,
+            ctype = self.ctype
         )
         return data
 
@@ -54,7 +60,9 @@ class CodeRunTests:
             userid=self.user_id,
             codecontent=code,
             lang="java",
-            stype = "test"
+            stype = "test",
+            contestid = self.contestid,
+            ctype = self.ctype
         )
         return data
 
@@ -71,7 +79,9 @@ class CodeRunTests:
             userid=self.user_id,
             codecontent=code,
             lang="c",
-            stype = "test"
+            stype = "test",
+            contestid = self.contestid,
+            ctype = self.ctype
         )
         return data
 
@@ -87,12 +97,12 @@ class CodeRunTests:
 
         }
 
-    def run(self,apiKey,appClient,requestData):
+    def run(self,url,apiKey,appClient,requestData):
 
         header={"Authorization":"Bearer "+apiKey}
         
-        resp=appClient.post("/run/code/",data=requestData,headers=header)
-
+        resp=appClient.post(url,data=requestData,headers=header)
+        print(resp.data.decode())
         resp=json.loads(resp.data.decode())["data"][0]
 
         task_id=resp["_id"]

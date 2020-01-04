@@ -22,6 +22,7 @@ class AppTests(unittest.TestCase):
     contest_id = ""
     user_id=""
     admin_id=""
+    contest_prblmid = ""
     
     @classmethod
     def setTokenUser(cls,api_token):
@@ -47,6 +48,10 @@ class AppTests(unittest.TestCase):
     def setContestIdandType(cls,contest_type, contest_id):
         cls.contest_type = contest_type
         cls.contest_id = contest_id    
+
+    @classmethod    
+    def setContestProblemId(cls, uid): 
+        cls.contest_prblmid = uid    
 
     def test_1_folder_avail(self): 
         for lgn in langs:
@@ -182,7 +187,11 @@ class AppTests(unittest.TestCase):
  
         self.assertTrue("200" in resp.data.decode())
         self.assertTrue("contestid" in resp.data.decode())
-        self.assertTrue("prblmid" in resp.data.decode())  
+        self.assertTrue("prblmid" in resp.data.decode()) 
+
+        resp=json.loads(resp.data.decode()) 
+        contest_prblmid=resp["data"]["prblmid"]
+        self.setContestProblemId(contest_prblmid)
 
     def test_5_problem_add(self):
        
@@ -249,45 +258,45 @@ class AppTests(unittest.TestCase):
         self.assertTrue(len(self.user_id)>0)
 
         codeRun=CodeRunTests(self.problem_id,self.user_id)
-
+        url = "/run/code/"
         #testing python
-        resp=codeRun.run(self.api_token_user,app_client,codeRun.pythonData())
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.pythonData())
         data=json.loads(resp.data.decode())
         self.assertTrue(data["data"][0]["result"][0]["passed"])
 
         #testingtimeout py code
-        resp=codeRun.run(self.api_token_user,app_client,codeRun.pythonData(testtimeout=True))
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.pythonData(testtimeout=True))
         data=json.loads(resp.data.decode())
         self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
         
         #testing golang
-        resp=codeRun.run(self.api_token_user,app_client,codeRun.golangData())
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.golangData())
         data=json.loads(resp.data.decode())
         if not data["data"][0]["result"][0]["passed"]:
             print(data["data"][0]["result"][0]["errput"])
         self.assertTrue(data["data"][0]["result"][0]["passed"])
 
         #rtesting c
-        resp=codeRun.run(self.api_token_user,app_client,codeRun.cData())
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.cData())
         data=json.loads(resp.data.decode())
         if not data["data"][0]["result"][0]["passed"]:
             print(data["data"][0]["result"][0]["errput"])
         self.assertTrue(data["data"][0]["result"][0]["passed"])
 
          #rtesting timeout c
-        resp=codeRun.run(self.api_token_user,app_client,codeRun.cData(testtimeout=True))
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.cData(testtimeout=True))
         data=json.loads(resp.data.decode())
         self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
 
         #testing java
-        resp=codeRun.run(self.api_token_user,app_client,codeRun.javaData())
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.javaData())
         data=json.loads(resp.data.decode())
         if not data["data"][0]["result"][0]["passed"]:
             print(data["data"][0]["result"][0]["errput"])
         self.assertTrue(data["data"][0]["result"][0]["passed"])
 
         #testing java timeout
-        resp=codeRun.run(self.api_token_user,app_client,codeRun.javaData(testtimeout=True))
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.javaData(testtimeout=True))
         data=json.loads(resp.data.decode())
         self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
 
@@ -330,6 +339,56 @@ class AppTests(unittest.TestCase):
 
         self.assertTrue("Submisions" in resp.data.decode())
         self.assertTrue(len(json.loads(resp.data.decode())["data"])>0)
+
+    def test_8_run_contest_code(self):
+        self.assertTrue(len(self.contest_prblmid)>0)
+        self.assertTrue(len(self.user_id)>0)
+        self.assertTrue(len(self.contest_id)>0)
+        self.assertTrue(len(self.contest_type)>0)
+
+        codeRun=CodeRunTests(self.contest_prblmid,self.user_id,self.contest_id,self.contest_type)
+
+        url = "/contest/run/code/"
+        #testing python
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.pythonData())
+        data=json.loads(resp.data.decode())
+        self.assertTrue(data["data"][0]["result"][0]["passed"])
+
+        #testingtimeout py code
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.pythonData(testtimeout=True))
+        data=json.loads(resp.data.decode())
+        self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
+        
+        #testing golang
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.golangData())
+        data=json.loads(resp.data.decode())
+        if not data["data"][0]["result"][0]["passed"]:
+            print(data["data"][0]["result"][0]["errput"])
+        self.assertTrue(data["data"][0]["result"][0]["passed"])
+
+        #rtesting c
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.cData())
+        data=json.loads(resp.data.decode())
+        if not data["data"][0]["result"][0]["passed"]:
+            print(data["data"][0]["result"][0]["errput"])
+        self.assertTrue(data["data"][0]["result"][0]["passed"])
+
+         #rtesting timeout c
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.cData(testtimeout=True))
+        data=json.loads(resp.data.decode())
+        self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
+
+        #testing java
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.javaData())
+        data=json.loads(resp.data.decode())
+        if not data["data"][0]["result"][0]["passed"]:
+            print(data["data"][0]["result"][0]["errput"])
+        self.assertTrue(data["data"][0]["result"][0]["passed"])
+
+        #testing java timeout
+        resp=codeRun.run(url,self.api_token_user,app_client,codeRun.javaData(testtimeout=True))
+        data=json.loads(resp.data.decode())
+        self.assertTrue(data["data"][0]["result"][0]["passed"]==False)    
 
 if __name__ == "__main__":
     unittest.main()
