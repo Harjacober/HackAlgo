@@ -97,7 +97,7 @@ class CodeRunTests:
 
         }
 
-    def run(self,url,apiKey,appClient,requestData):
+    def run(self,url,url_status,apiKey,appClient,requestData):
 
         header={"Authorization":"Bearer "+apiKey}
         
@@ -112,11 +112,13 @@ class CodeRunTests:
             userid=self.user_id,
             taskid=task_id,
             lang="py",
-            stype = "test"
+            stype = "test",
+            contestid = self.contestid,
+            contesttype = self.ctype
         )
 
         sleep(3) # wait some second for result
 
-        resp=appClient.post("/run/code/status/",data=data,headers=header)
+        resp=appClient.post(url_status,data=data,headers=header)
 
         return resp
