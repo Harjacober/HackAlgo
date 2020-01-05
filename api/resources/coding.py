@@ -20,9 +20,7 @@ run_code_parser.add_argument('userid', help = 'This field cannot be blank', requ
 run_code_parser.add_argument('codecontent', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('codefile', type=FileStorage, location='files', required = False, store_missing=False)
 run_code_parser.add_argument('lang', help = 'This field cannot be blank', required = True)
-run_code_parser.add_argument('stype', help = 'This field cannot be blank', required = True)
-run_code_parser.add_argument('contestid', help = 'contest id .if submission is made for a contest')
-run_code_parser.add_argument('ctype', help = 'contest type .if submission is made for a contest')
+run_code_parser.add_argument('stype', help = 'This field cannot be blank', required = True) 
 
 run_code_status_parser = reqparse.RequestParser()
 run_code_status_parser.add_argument('taskid', help = 'This field cannot be blank.', required = True)
@@ -45,17 +43,15 @@ class RunCode(Resource):
         problem_id=input_data["prblmid"] #get id
         problem = Problem().getBy(_id= ObjectId(problem_id))#fetch the actual problem from database with the problemId 
         if not problem:
-            return {"code":"404","msg":"Invalid Problem ID","data":[]}
+            return {"code":"404","msg":"Invalid Problem Id","data":[]}
  
         task_id=queue.generateID()
         codecontent = input_data.get('codecontent')
         userid = input_data.get('userid')
         stype = input_data.get('stype')
         lang = input_data.get('lang')
-        codefile = input_data.get('codefile')
-        contestid = input_data.get('contestid')
-        ctype = input_data['ctype']
-        task=Task(lang,content,userid,ProblemInstance(problem),task_id,stype,codefile,bool(contestid),ctype)
+        codefile = input_data.get('codefile') 
+        task=Task(lang,codecontent,userid,ProblemInstance(problem),task_id,stype,codefile)
         queue.add(task_id,task) 
 
         return {"code":"200","msg":"Task started ","data":[task.toJson()]}
@@ -73,7 +69,7 @@ class RunCodeStatus(Resource):
         problem_id=input_data["prblmid"]
         problem= Problem().getBy(_id= ObjectId(problem_id))
         if not problem:
-            return {"code":"404","msg":"Invalid Problem ID","data":[]}
+            return {"code":"404","msg":"Invalid Problem Id","data":[]}
 
         user_id=input_data["userid"]
         task_id=input_data["taskid"]

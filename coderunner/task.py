@@ -4,23 +4,30 @@ from time import time
 import subprocess
 from threading import Thread
 from datetime import datetime
-from shutil import rmtree
-from api.access.user import gradeSubmission
-from db.models import Submission
+from shutil import rmtree 
+from db.models import UserRegisteredContest,Contest,ContestProblem,Problem,Submission
+from bson.objectid import ObjectId
+from platform import system
 
 ORIGINAL_DIR=os.getcwd()
 
-#So this would be different for each machine not sure how 
-#to go about this efficiently yet for unix. 
 
-py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe"
-py_dir="/usr/local/bin/python"
+if system()=='Windows':
+    py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe"
+    go_dir = "C:/Go/bin/go.exe"
+    c_dir = "C:/Program Files (x86)/CodeBlocks/MinGW/bin/gcc.exe"
+    cplus_dir = "C:/Program Files (x86)/CodeBlocks/MinGW/bin/g++.exe"
+else:
+    py_dir="/usr/local/bin/python"
+    go_dir="/usr/bin/go"
+    cplus_dir="/usr/bin/g++"
+    c_dir="/usr/bin/gcc"
 compilers={
-    "go":"/usr/bin/go",
+    "go":go_dir,
     "py":py_dir,
     "java":"/usr/bin/java",
-    "c":"/usr/bin/gcc",
-    "c++":"/usr/bin/g++",
+    "c":c_dir,
+    "c++":cplus_dir,
     "python":py_dir,
     "python2":"/usr/bin/python2",
     "php":"/usr/bin/php",
@@ -32,7 +39,7 @@ class Task(Thread):
     Handles running of submitted code and updates the submission details in the database
     """
     PossibelTasksState=["initialize","running","finished"]
-    def __init__(self,lang,content,userid,problem,id,stype,codefile,contestid,ctype):
+    def __init__(self,lang,content,userid,problem,id,stype,codefile,contestid="",ctype=""):
         """
         :param stype: the type of submission. differentiates actual 
                       test cases from sample cases.
@@ -47,10 +54,7 @@ class Task(Thread):
             self.content = self.input_data['codefile'].read().decode("utf-8") 
         else:
             self.content = content # get submitted code content   
-        self.userid=userid
-        self.cases=problem.getCases().split("\n")
-        self.answercase=problem.getAnswerForCases().split("\n")
-        self.result=[None]*int(problem.getNCases())
+        self.userid=userid  
         self.id=id 
         self.state=Task.PossibelTasksState[0]  
         self.verdict = "Passed"
@@ -107,11 +111,7 @@ class Task(Thread):
                     arr.append(e)
             self.answercase[i] = "".join(arr) 
 
-    def enter(self):
-        #add the submission to database as the task has started. 
-        #And modify verdict in the `Task` Class once the task is done. 
-        if self.stype == "test":
-            self.input_data['verdict'] = 'running'
+    def enter(self): 
         self.filename=self.randomFilename()
         if self.lang.lower()=="java":
             filename=os.path.join(*self.filename.split(".")[:-1])
@@ -123,7 +123,7 @@ class Task(Thread):
         self.file = open(self.filepath,"w+")
         self.file.write(self.content) 
         self.file.close()
-        self.input_data["timesubmitted"]=str(datetime.now())
+        self.timeofsubmission=str(datetime.now())
     
     def resolveFolder(self,lang):
         #python is py,java is java e.t.c.This function exist if need be resolve the name later
@@ -215,19 +215,58 @@ class Task(Thread):
 
         self.state=self.PossibelTasksState[2]
         #create a submission in the database    
-        submission_data = {'prblmid':self.getprblmid(),'userid':self.userid,'contestid':self.contestid,'ctype':self.ctype,'codecontent':self.codecontent,
-                                            'codefile':self.codefile,'lang':self.lang,'stype':self.stype,'result': self.result,'verdict': self.verdict}
+        submission_data = {'prblmid':self.problem.getprblmid(),'userid':self.userid,'contestid':self.contestid,'ctype':self.ctype,'codecontent':self.content,
+        'lang':self.lang,'stype':self.stype,'result': self.result,'verdict': self.verdict,'timesubmitted':self.timeofsubmission}
         if self.stype == "test":   
-            if not contestid:
+            if not bool(self.contestid):
                 submission_data.pop('userid', None)
                 submission_data.pop('contestid', None)
                 submission_data.pop('ctype', None)
                 Submission(self.userid).addDoc(submission_data) 
             else:
-                gradeSubmission(submission_data)    
+                self.gradeSubmission(submission_data)    
        
         os.remove(self.filepath)
         if self.lang.lower()=="java":
             rmtree(self.folder,ignore_errors=True)
 
+    def gradeSubmission(self, data):
+        """
+        This method is called in :class: `Task' in task.py to make necessary 
+        updates to the database when submission code to a problem in the contest has be run
+        """
+        userid = data.get('userid')
+        contestid = data.get('contestid')
+        ctype = data.get('ctype')
+        prblmid = data.get('prblmid')
+        verdict = data.get('verdict')
+        contest_problem = ContestProblem(ctype, contestid).getBy(_id=ObjectId(prblmid))
 
+        if verdict != "Passed": 
+            score = 0 
+            penalty = -10
+            # update the penalty field
+            update = {'$inc': {'penalty': penalty}}
+            UserRegisteredContest(userid).flexibleUpdate(update, contestid=contestid)  
+        else:
+            score = contest_problem.get('prblmscore')
+            penalty = 0
+
+        # update the user score for that problem if the new score is greater than the prev one
+        update = {'$set': {'problemscore.{}'.format(prblmid): score}} 
+        prblmscorefield = 'problemscore.{}'.format(prblmid)
+        UserRegisteredContest(userid).flexibleUpdate(update, contestid=contestid,prblmscorefield={'$gte': score})  
+        # calculate the total score
+        reg_contest = UserRegisteredContest(userid).getBy(contestid=contestid)
+        problemscore = reg_contest.get('problemscore')
+        total_pen = reg_contest.get('penalty')
+        totalscore = total_pen
+        for each in problemscore:
+            totalscore += problemscore[each]
+        # update the total score
+        update = {"$set": {'totalscore': totalscore}}
+        UserRegisteredContest(userid).flexibleUpdate(update, contestid=contestid)   
+
+        #TODO update the contest document to reflect this participants current score and current rank  
+        update = {"$set": {'participant.{}.currscore'.format(userid): totalscore}}
+        Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)) 

@@ -21,7 +21,7 @@ init_contest_parser.add_argument('desc', required=False)
 update_contest_parser = reqparse.RequestParser()
 update_contest_parser.add_argument('title', required=True)  
 update_contest_parser.add_argument('desc', required=False)
-update_contest_parser.add_argument('duration', help="Duration in milliseconds", required=False)
+update_contest_parser.add_argument('duration',type=float, help="Duration in milliseconds", required=False)
 update_contest_parser.add_argument('starttime',type=float, help="start date in milliseconds", required=False) 
 update_contest_parser.add_argument('authorusername', help="username of the author that wants to update a contest", required=False, store_missing=False)  
 update_contest_parser.add_argument('contestid', help="contest id assigned upon contest initialization", required=False, store_missing=False)  
@@ -78,9 +78,9 @@ class InitializeContest(Resource):
         input_data['roundnum'] = roundnum
         input_data['authors'] = [creator]
         input_data['status'] = 0 # 0 means not approved, 1 means approved, -1 means contest is over
-        input_data['duration'] = 0
-        input_data['startdate'] = 0
-        input_data['enddate'] = 0  
+        input_data['duration'] = 0.0
+        input_data['starttime'] = 0.0 
+        input_data['participants'] = {}  
         uid = Contest(ctype).addDoc(input_data)  
 
         # add this contest to the creator list
@@ -225,7 +225,7 @@ class ApproveContest(Resource):
         if creator != data.get('creator'):
             return response(4, "Not authorized", [])
 
-        #TODO confirm that start date is not less than 6hrs in the future before approval 
+        # confirm that start date is not less than 12hrs in the future before approval 
         mintime = 12
         starttime = data.get('starttime')
         currentime = datetime.now().timestamp()

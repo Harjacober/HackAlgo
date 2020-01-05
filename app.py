@@ -16,7 +16,7 @@ from api.access.contest import (InitializeContest, UpdateContest,
                                 AddProblemForContest, UpdateProblemForContest,
                                 ApproveContest, AddNewAuthor, RemoveAuthor,
                                 GetContest, GetContestById)
-from api.access.user import UserEnterContest, UserContestHistory, UserSubmissionHistory
+from api.access.user import UserEnterContest, UserContestHistory, UserSubmissionHistory, RunContestCode, ContestRunCodeStatus
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -64,6 +64,8 @@ api.add_resource(GetContestById, '/contest/<string:ctype>/<string:contestid>/')
 api.add_resource(GetContest, '/contest/many/<string:ctype>/<string:status>/')
 
 api.add_resource(UserEnterContest, '/enter/contest/')
+api.add_resource(RunContestCode, '/contest/run/code/')
+api.add_resource(ContestRunCodeStatus, '/contest/run/code/status/')
 api.add_resource(UserContestHistory, '/my/contest/history/')
 api.add_resource(UserSubmissionHistory, '/my/submission/history/')
 
