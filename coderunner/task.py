@@ -5,7 +5,7 @@ import subprocess
 from threading import Thread
 from datetime import datetime
 from shutil import rmtree
-from api.access import user
+from api.access.user import gradeSubmission
 from db.models import Submission
 
 ORIGINAL_DIR=os.getcwd()
@@ -215,16 +215,16 @@ class Task(Thread):
 
         self.state=self.PossibelTasksState[2]
         #create a submission in the database    
-        submission_data = {'prblmid':self.getprblmid(),'userid':self.userid,'contestid':self.contestid,'ctype':self.ctype',codecontent':self.codecontent,
-        'codefile':self.codefile,'lang':self.lang,'stype':self.stype,'result': self.result,'verdict': self.verdict}
+        submission_data = {'prblmid':self.getprblmid(),'userid':self.userid,'contestid':self.contestid,'ctype':self.ctype,'codecontent':self.codecontent,
+                                            'codefile':self.codefile,'lang':self.lang,'stype':self.stype,'result': self.result,'verdict': self.verdict}
         if self.stype == "test":   
-            if not bool(contestid):
+            if not contestid:
                 submission_data.pop('userid', None)
                 submission_data.pop('contestid', None)
                 submission_data.pop('ctype', None)
                 Submission(self.userid).addDoc(submission_data) 
             else:
-                user.gradeSubmission(submission_data)    
+                gradeSubmission(submission_data)    
        
         os.remove(self.filepath)
         if self.lang.lower()=="java":

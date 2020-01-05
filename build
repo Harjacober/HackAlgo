@@ -1,4 +1,11 @@
 #!/bin/sh
 python db/create.py
-python test/test_app.py
+#python test/test_app.py
+mkdir -p /var/run/celery
+mkdir -p /var/log/celery
+#celery -A app worker --loglevel=info -D
+cd /
+celery multi start w1 -A coderunner.celerytasks -l info --pidfile=/var/run/celery/%n.pid \
+                                        --logfile=/var/log/celery/%n%I.log
+cd /home
 python app.py 
