@@ -102,7 +102,7 @@ class CodeRunTests:
         header={"Authorization":"Bearer "+apiKey}
         
         resp=appClient.post(url,data=requestData,headers=header)
-        print(resp.data.decode())
+        
         resp=json.loads(resp.data.decode())["data"][0]
 
         task_id=resp["_id"]

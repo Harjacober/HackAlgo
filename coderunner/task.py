@@ -7,17 +7,21 @@ from datetime import datetime
 from shutil import rmtree 
 from db.models import UserRegisteredContest,Contest,ContestProblem,Problem,Submission
 from bson.objectid import ObjectId
+from platform import system
 
 ORIGINAL_DIR=os.getcwd()
 
-#So this would be different for each machine not sure how 
-#to go about this efficiently yet for unix. 
 
-py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe"
-go_dir = "C:/Go/bin/go.exe"
-c_dir = "C:/Program Files (x86)/CodeBlocks/MinGW/bin/gcc.exe"
-cplus_dir = "C:/Program Files (x86)/CodeBlocks/MinGW/bin/g++.exe"
-#py_dir="/usr/local/bin/python"
+if system()=='Windows':
+    py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe"
+    go_dir = "C:/Go/bin/go.exe"
+    c_dir = "C:/Program Files (x86)/CodeBlocks/MinGW/bin/gcc.exe"
+    cplus_dir = "C:/Program Files (x86)/CodeBlocks/MinGW/bin/g++.exe"
+else:
+    py_dir="/usr/local/bin/python"
+    go_dir="/usr/bin/go"
+    cplus_dir="/usr/bin/g++"
+    c_dir="/usr/bin/gcc"
 compilers={
     "go":go_dir,
     "py":py_dir,
@@ -225,18 +229,6 @@ class Task(Thread):
         os.remove(self.filepath)
         if self.lang.lower()=="java":
             rmtree(self.folder,ignore_errors=True)
-
-
-
-
-
-
-
-
-
-
-
-
 
     def gradeSubmission(self, data):
         """

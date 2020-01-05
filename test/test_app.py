@@ -179,7 +179,7 @@ class AppTests(unittest.TestCase):
             sampleanswercases = (io.BytesIO(as2), 'answersampletest.in'), 
             problemstatement="Read the input and print them",
             contestid = contest_id,
-            timelimit=1000,
+            timelimit=1,
             memorylimit=1024,
             prblmscore=900
         )
@@ -283,7 +283,7 @@ class AppTests(unittest.TestCase):
         #testing golang
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.golangData())
         data=json.loads(resp.data.decode())
-        print(data)
+       
         if not data["data"][0]["result"][0]["passed"]:
             print(data["data"][0]["result"][0]["errput"])
         self.assertTrue(data["data"][0]["result"][0]["passed"])
