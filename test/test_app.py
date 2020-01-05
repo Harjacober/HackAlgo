@@ -5,14 +5,26 @@ import os,io
 from pymongo import MongoClient
 from app import  *
 from db.models import *
-from coderun import CodeRunTests 
+from test.coderun import CodeRunTests
 from datetime import datetime
+from coderunner.celerytasks import *
 
 app_client=app.test_client()
 
 #On furst run, Run create.py first before this test file
 #Note note note!!!! test functions are run in alphabetical order. So we are makking them by numbers
 langs=['go', 'py', 'java', 'c', 'c++', 'python', 'python2', 'php', 'js']
+
+def celery_task_test():
+    #schedules f for one second
+    sch=celeryScheduler(1)
+    def f():
+       with open("testingcelery.in","w+") as f:
+           f.write("a")
+    sch.schedule(f)
+
+#schdule task the check if it is ran in test
+celery_task_test()
 
 class AppTests(unittest.TestCase):
     api_token_user=""
@@ -401,6 +413,16 @@ class AppTests(unittest.TestCase):
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.javaData(testtimeout=True))
         data=json.loads(resp.data.decode())
         self.assertTrue(data["data"][0]["result"][0]["passed"]==False)    
+
+    def test_9_celery_task(self):
+        
+        with open("testingcelery.in") as f:
+            self.assertTrue(f.read()=="a")
+        try:
+            os.remove("testingcelery.in")
+        except Exception:
+            pass
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -12,16 +12,17 @@ from platform import system
 ORIGINAL_DIR=os.getcwd()
 
 
-if system()=='Windows':
-    py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe"
-    go_dir = "C:/Go/bin/go.exe"
-    c_dir = "C:/Program Files (x86)/CodeBlocks/MinGW/bin/gcc.exe"
-    cplus_dir = "C:/Program Files (x86)/CodeBlocks/MinGW/bin/g++.exe"
-else:
+if system()=='Linux':
     py_dir="/usr/local/bin/python"
     go_dir="/usr/bin/go"
     cplus_dir="/usr/bin/g++"
     c_dir="/usr/bin/gcc"
+else:
+    py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe"
+    go_dir = "C:/Go/bin/go.exe"
+    c_dir = "C:/Program Files (x86)/CodeBlocks/MinGW/bin/gcc.exe"
+    cplus_dir = "C:/Program Files (x86)/CodeBlocks/MinGW/bin/g++.exe"
+
 compilers={
     "go":go_dir,
     "py":py_dir,

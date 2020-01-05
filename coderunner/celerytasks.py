@@ -3,8 +3,8 @@ import config
 
 
 # Initialize Celery
-#include should contain app.py module path
-celery = Celery("celerytasks" ,broker=config.CELERY_BROKER_URL,include=['home.app'])
+#include should contain app.py module path.
+celery = Celery(__name__ ,broker=config.CELERY_BROKER_URL,include=['app','test.test_app'])
 celery.config_from_object(config)
 
 
@@ -29,13 +29,10 @@ class celeryScheduler:
 if __name__=="__main__":
     none=None
     import os
-    sch=celeryScheduler(10)
+    sch=celeryScheduler(1)
     
     def setNone():
-        global none
-        none="Im no longer none"
-        os.environ['NONE']=none 
-        print(os.environ['NONE'])
+        print("starting ")
 
     print(sch.schedule(setNone))
 

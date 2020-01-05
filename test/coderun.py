@@ -111,13 +111,13 @@ class CodeRunTests:
             prblmid=self.problem_id,
             userid=self.user_id,
             taskid=task_id,
-            lang="py",
+            lang=resp["lang"],
             stype = "test",
             contestid = self.contestid,
             contesttype = self.ctype
         )
-
-        sleep(3) # wait some second for result
+        sleepseconds=5 if resp["lang"]=='java' else 3
+        sleep(sleepseconds) # wait some second for result
 
         resp=appClient.post(url_status,data=data,headers=header)
 

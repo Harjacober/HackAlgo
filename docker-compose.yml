@@ -1,6 +1,13 @@
 version: '3'
 
 services:
+  redis:
+    container_name: redis
+    image: redis:alpine
+    restart: on-failure
+    ports:
+      - "6379:6379"
+
   mongodb:
     container_name: mongo
     image: mongo
@@ -20,4 +27,5 @@ services:
       - "9000:9000"
     depends_on:
       - mongodb
+      - redis
     restart: on-failure

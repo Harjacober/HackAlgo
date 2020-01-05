@@ -18,6 +18,8 @@ from api.access.contest import (InitializeContest, UpdateContest,
                                 GetContest, GetContestById)
 from api.access.user import UserEnterContest, UserContestHistory, UserSubmissionHistory, RunContestCode, ContestRunCodeStatus
 
+from coderunner.celerytasks import celeryScheduler
+
 app = Flask(__name__)
 app.config.from_object('config')
 
@@ -29,7 +31,6 @@ jwt = JWTManager(app)
 def index():
     #server some home page here
     return "Hello who is there!!"
-
 
 api.add_resource(AdminRegistration, '/admin/registration/')
 api.add_resource(UserRegistration, '/user/registration/')

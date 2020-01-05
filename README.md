@@ -18,3 +18,12 @@
 - This an only developement setup 
 #  code formatting  
 install yapf with ```pip install yapf``` then run ```yapf -i -r *.py```
+#  Software Requirement  
+Redis  
+Mongo  
+celery  
+#  running celery  
+use ```celery multi start w1 -A coderunner.celerytasks -l info --pidfile=/var/run/celery/%n.pid \
+                                        --logfile=/var/log/celery/%n%I.log```  
+or whatever works for you  
+check test 9 for sample usage
