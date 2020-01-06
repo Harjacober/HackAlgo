@@ -1,0 +1,10 @@
+Strong,
+Weak,
+Strong,
+Strong,
+Weak,
+Strong,
+Weak,
+Strong,
+Strong,
+Strong

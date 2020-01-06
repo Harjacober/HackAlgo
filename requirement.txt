@@ -3,3 +3,5 @@ pymongo
 flask-restful
 passlib
 flask-jwt-extended
+Celery
+redis
