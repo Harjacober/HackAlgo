@@ -5,7 +5,7 @@ import os,io
 from pymongo import MongoClient
 from app import  *
 from db.models import *
-from test.coderun import CodeRunTests
+from coderun import CodeRunTests
 from datetime import datetime
 from coderunner.celerytasks import *
 

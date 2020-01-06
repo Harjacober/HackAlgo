@@ -271,3 +271,4 @@ class Task(Thread):
         #TODO update the contest document to reflect this participants current score and current rank  
         update = {"$set": {'participant.{}.currscore'.format(userid): totalscore}}
         Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)) 
+        #TODO effeciently handle rank updating as users make submission

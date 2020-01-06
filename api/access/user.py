@@ -95,7 +95,7 @@ class UserEnterContest(Resource):
         rating = user.get('contest.rating', default_rating)
         volatility = user.get('contest.volatility', default_volatility)
         timesplayed = user.get('contest.timesplayed', 0)
-        userdata = {'rating':rating, 'volatility':volatility, 
+        userdata = {'rating':rating, 'volatility':volatility, 'new_rating': None, 'new_volatility': None, 
         'timesplayed':timesplayed, 'currrank': 1, 'currscore': 0}
 
         update = {"$set": {'participant.{}'.format(userid): userdata}}

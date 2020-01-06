@@ -19,8 +19,8 @@ class Rating:
         return math.log(self.N/(erank-1))/math.log(4)
 
     def actualPerformace(self):
-        arank = self.owner.arank 
-        return math.log(self.N/(arank-1))/math.log(4)
+        currrank = self.owner.currrank 
+        return math.log(self.N/(currrank-1))/math.log(4)
 
     def ratingAverage(self):
         return sum(self.participants[key].rating for key in self.participants) / self.N

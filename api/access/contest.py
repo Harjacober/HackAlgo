@@ -10,6 +10,8 @@ from bson.objectid import ObjectId
 from db.models import Contest, ContestProblem, Admin
 from werkzeug.datastructures import FileStorage
 from datetime import datetime
+from coderunner.celerytasks import *
+from api.access.utils import Rating
 
 init_contest_parser = reqparse.RequestParser()
 init_contest_parser.add_argument('title', required=True)
@@ -228,15 +230,42 @@ class ApproveContest(Resource):
         # confirm that start date is not less than 12hrs in the future before approval 
         mintime = 12
         starttime = data.get('starttime')
+        duration = data.get('duration')
         currentime = datetime.now().timestamp()
         sixhrs = mintime*60*60*1000.0
+        task_start_time = starttime + duration # start the task when the contest is over
         if starttime < currentime + sixhrs:
             return response(400, "start time must be at least {}hrs in the future".format(mintime), [])
         params = {'status': 1}
         if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
+            # schedule task here
+            self.scheduleTask(task_start_time, contestid, ctype)
             return response(200, "Success", [])  
 
-        return response(400, "check the contestid",[])         
+        return response(400, "check the contestid",[])    
+
+    def scheduleTask(self, task_start_time, contestid, ctype):
+        #schedules f for task_start_time in second
+        task_start_time = task_start_time/1000.0
+        sch=celeryScheduler(task_start_time)
+        def f():
+            # update the status field to indicate that the contest is over
+            params = {'status': -1}
+            Contest(ctype).update(params=params, _id=ObjectId(contestid)) 
+            # compute the rating of the contest participants
+            contest = Contest(ctype).getBy(_id=ObjectId(contestid))
+            participants = contest.get('participants')
+            updated_participants = Rating(participants).calculateRatings()
+            # update each participants rating,volatility & timesplayed in their respective collections
+            for userid in updated_participants:
+                update = {'$inc': {'contest.timesplayed': 1},
+                '$set': {'contest.rating': updated_participants[userid].new_rating,
+                'contest.volatility': updated_participants[userid].new_volatility}}
+                User().flexibleUpdate(update, _id=ObjectId(userid))
+
+        sch.schedule(f)
+        
+
 
 class AddNewAuthor(Resource): 
     @jwt_required
