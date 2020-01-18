@@ -10,8 +10,43 @@ from bson.objectid import ObjectId
 from db.models import Contest, ContestProblem, Admin
 from werkzeug.datastructures import FileStorage
 from datetime import datetime
-from coderunner.celerytasks import *
 from api.access.utils import Rating
+from flask import current_app
+
+from celery import Celery
+import config
+
+# Initialize Celery
+#include should contain app.py module path.
+celery = Celery(__name__ ,broker=config.CELERY_BROKER_URL,include=['test.test_app','api.access.contest','app'])
+celery.config_from_object(config)
+
+@celery.task
+def updateRank(contestid, ctype):
+    if config.CELERY_TEST:
+        #JUST write to a file and see if it is updated
+        with open("/home/celerytestfile.in","w+") as f:
+            f.write("a")
+        return
+    # This function is going to be run in another process celery's
+    # so dont worry much about this imports performances
+    from db.models import Contest, ContestProblem, Admin
+    from bson.objectid import ObjectId
+    from api.access.utils import Rating
+
+    # update the status field to indicate that the contest is over
+    params = {'status': -1}
+    Contest(ctype).update(params=params, _id=ObjectId(contestid)) 
+    # compute the rating of the contest participants
+    contest = Contest(ctype).getBy(_id=ObjectId(contestid))
+    participants = contest.get('participants')
+    updated_participants = Rating(participants).calculateRatings()
+    # update each participants rating,volatility & timesplayed in their respective collections
+    for userid in updated_participants:
+            update = {'$inc': {'contest.timesplayed': 1},
+            '$set': {'contest.rating': updated_participants[userid].new_rating,
+            'contest.volatility': updated_participants[userid].new_volatility}}
+            User().flexibleUpdate(update, _id=ObjectId(userid))
 
 init_contest_parser = reqparse.RequestParser()
 init_contest_parser.add_argument('title', required=True)
@@ -52,6 +87,8 @@ approval_parser.add_argument("contestid", required=True)
 manage_author_parser = reqparse.RequestParser()
 manage_author_parser.add_argument("contestid", required=True) 
 manage_author_parser.add_argument("authorusername", required=True)
+
+
 
 def response(code,msg,data,access_token=""):
     return {"code":code,"msg":msg,"data":data,"access_token":access_token}
@@ -225,47 +262,28 @@ class ApproveContest(Resource):
         contestid = input_data['contestid']
         data = Contest(ctype).getBy(_id=ObjectId(contestid))
         if creator != data.get('creator'):
-            return response(4, "Not authorized", [])
-
+            return response(404, "Not authorized", [])
         # confirm that start date is not less than 12hrs in the future before approval 
         mintime = 12
         starttime = data.get('starttime')
         duration = data.get('duration')
         currentime = datetime.now().timestamp()
         sixhrs = mintime*60*60*1000.0
-        task_start_time = starttime + duration # start the task when the contest is over
+        task_start_time = starttime + duration/1000 # start the task when the contest is over 
         if starttime < currentime + sixhrs:
             return response(400, "start time must be at least {}hrs in the future".format(mintime), [])
+
+        task_start_time=3*60
+        if config.CELERY_TEST:
+            #to test the rank function we set this to 1
+            task_start_time=2*60
         params = {'status': 1}
         if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
             # schedule task here
-            self.scheduleTask(task_start_time, contestid, ctype)
+            updateRank.apply_async(countdown=task_start_time,args=[contestid, ctype])
             return response(200, "Success", [])  
 
         return response(400, "check the contestid",[])    
-
-    def scheduleTask(self, task_start_time, contestid, ctype):
-        #schedules f for task_start_time in second
-        task_start_time = task_start_time/1000.0
-        sch=celeryScheduler(task_start_time)
-        def f():
-            # update the status field to indicate that the contest is over
-            params = {'status': -1}
-            Contest(ctype).update(params=params, _id=ObjectId(contestid)) 
-            # compute the rating of the contest participants
-            contest = Contest(ctype).getBy(_id=ObjectId(contestid))
-            participants = contest.get('participants')
-            updated_participants = Rating(participants).calculateRatings()
-            # update each participants rating,volatility & timesplayed in their respective collections
-            for userid in updated_participants:
-                update = {'$inc': {'contest.timesplayed': 1},
-                '$set': {'contest.rating': updated_participants[userid].new_rating,
-                'contest.volatility': updated_participants[userid].new_volatility}}
-                User().flexibleUpdate(update, _id=ObjectId(userid))
-
-        sch.schedule(f)
-        
-
 
 class AddNewAuthor(Resource): 
     @jwt_required

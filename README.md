@@ -16,8 +16,6 @@
   ```docker-compose up -d (This restart the container in the backgroud)```  
 - it is expected that the current directory where the project is , is mounted on the container so changes are in sync from your ide  
 - This an only developement setup 
-<<<<<<< HEAD
-=======
 #  code formatting  
 install yapf with ```pip install yapf``` then run ```yapf -i -r *.py```
 #  Software Requirement  
@@ -29,4 +27,3 @@ use ```celery multi start w1 -A coderunner.celerytasks -l info --pidfile=/var/ru
                                         --logfile=/var/log/celery/%n%I.log```  
 or whatever works for you  
 check test 9 for sample usage
->>>>>>> 5bacea9f8f1505386c2261bd4cad430d18307fc6

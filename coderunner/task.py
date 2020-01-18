@@ -2,7 +2,6 @@ import os
 from random import randint
 from time import time
 import subprocess
-from threading import Thread
 from datetime import datetime
 from shutil import rmtree 
 from db.models import UserRegisteredContest,Contest,ContestProblem,Problem,Submission
@@ -35,7 +34,7 @@ compilers={
     "js":"/usr/bin/node"
 }
 
-class Task(Thread):
+class Task:
     """
     Handles running of submitted code and updates the submission details in the database
     """
@@ -47,7 +46,6 @@ class Task(Thread):
         :param content: code content
         :param problem: an Instance of :class: `ProblemInstance`.
         """
-        Thread.__init__(self)
         self.state=Task.PossibelTasksState[0]
         self.lang=lang
         self.stype = stype 
@@ -271,4 +269,3 @@ class Task(Thread):
         #TODO update the contest document to reflect this participants current score and current rank  
         update = {"$set": {'participant.{}.currscore'.format(userid): totalscore}}
         Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)) 
-        #TODO effeciently handle rank updating as users make submission

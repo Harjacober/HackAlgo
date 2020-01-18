@@ -12,7 +12,7 @@ class Queue:
         if id in Queue.tasks:
             print("WARN: id in task")
         Queue.tasks[id]=task
-        Queue.tasks[id].start()
+        Queue.tasks[id].run()
 
 
     def getById(self,id):

@@ -1,30 +1,21 @@
 import unittest
 import json
 import os,io
+from time import sleep
 
 from pymongo import MongoClient
 from app import  *
 from db.models import *
-from coderun import CodeRunTests
+from test.coderun import CodeRunTests
 from datetime import datetime
-from coderunner.celerytasks import *
+import config
 
-app_client=app.test_client()
+app_client=contestplatfrom.test_client()
 
-#On furst run, Run create.py first before this test file
+#On first run, Run create.py first before this test file
 #Note note note!!!! test functions are run in alphabetical order. So we are makking them by numbers
 langs=['go', 'py', 'java', 'c', 'c++', 'python', 'python2', 'php', 'js']
 
-def celery_task_test():
-    #schedules f for one second
-    sch=celeryScheduler(1)
-    def f():
-       with open("testingcelery.in","w+") as f:
-           f.write("a")
-    sch.schedule(f)
-
-#schdule task the check if it is ran in test
-celery_task_test()
 
 class AppTests(unittest.TestCase):
     api_token_user=""
@@ -131,8 +122,6 @@ class AppTests(unittest.TestCase):
         self.reg_test("/admin/registration/","marlians","aburunakamaki","nairamarley@yahoo.com")
         self.login_test("/admin/login/","marlians","aburunakamaki")
 
-
-
     def test_4_contest_create(self):
        
         self.assertTrue(len(self.api_token_admin)>0)
@@ -213,7 +202,8 @@ class AppTests(unittest.TestCase):
         resp=app_client.post("/contest/{}/approve/".format(contest_type), data=data, headers=header)
 
         self.assertTrue("200" in resp.data.decode())
-        self.assertTrue("Success" in resp.data.decode()) 
+        self.assertTrue("Success" in resp.data.decode())
+        
 
     def test_5_problem_add(self):
        
@@ -268,7 +258,6 @@ class AppTests(unittest.TestCase):
         self.assertTrue("samplecases" in resp.data.decode())
 
         resp=app_client.get("/get/problem/?prblmid="+problem_id,headers=header)
-
 
         self.assertTrue("200" in resp.data.decode())
         self.assertTrue("author" in resp.data.decode())
@@ -412,17 +401,18 @@ class AppTests(unittest.TestCase):
         #testing java timeout
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.javaData(testtimeout=True))
         data=json.loads(resp.data.decode())
-        self.assertTrue(data["data"][0]["result"][0]["passed"]==False)    
-
-    def test_9_celery_task(self):
-        
-        with open("testingcelery.in") as f:
-            self.assertTrue(f.read()=="a")
-        try:
-            os.remove("testingcelery.in")
-        except Exception:
-            pass
-
-
+        self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
+        if config.CELERY_TEST:
+            #see if it is updated
+            print("did i even run")
+            with open("/home/celerytestfile.in") as f:
+                self.assertTrue(f.read()=="a")
+            # try:
+            #     os.remove("/home/celerytestfile.in")
+            # except Exception:
+            #     pass
+        else:
+            print("I didn't run because CELERY_TEST was set to False in config.py")   
+ 
 if __name__ == "__main__":
     unittest.main()

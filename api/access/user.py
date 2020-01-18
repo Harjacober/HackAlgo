@@ -98,7 +98,7 @@ class UserEnterContest(Resource):
         userdata = {'rating':rating, 'volatility':volatility, 'new_rating': None, 'new_volatility': None, 
         'timesplayed':timesplayed, 'currrank': 1, 'currscore': 0}
 
-        update = {"$set": {'participant.{}'.format(userid): userdata}}
+        update = {"$set": {'participants.{}'.format(userid): userdata}}
         if Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)):
             return response(200,"Contest participation history updated",{})
 

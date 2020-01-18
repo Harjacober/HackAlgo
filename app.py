@@ -18,19 +18,23 @@ from api.access.contest import (InitializeContest, UpdateContest,
                                 GetContest, GetContestById)
 from api.access.user import UserEnterContest, UserContestHistory, UserSubmissionHistory, RunContestCode, ContestRunCodeStatus
 
-from coderunner.celerytasks import celeryScheduler
-
-app = Flask(__name__)
-app.config.from_object('config')
-
-api = Api(app)
-jwt = JWTManager(app)
+from celery import Celery
+import config
 
 
-@app.route("/")
+
+contestplatfrom = Flask(__name__)
+contestplatfrom.config.from_object('config')
+
+
+api = Api(contestplatfrom)
+jwt = JWTManager(contestplatfrom)
+
+
+@contestplatfrom.route("/")
 def index():
     #server some home page here
-    return "Hello who is there!!"
+    return "Welcome to HackAlgo!!"
 
 api.add_resource(AdminRegistration, '/admin/registration/')
 api.add_resource(UserRegistration, '/user/registration/')
@@ -71,4 +75,4 @@ api.add_resource(UserContestHistory, '/my/contest/history/')
 api.add_resource(UserSubmissionHistory, '/my/submission/history/')
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True, port="9000")
+    contestplatfrom.run(host="0.0.0.0", debug=True, port="9000")
