@@ -7,6 +7,8 @@ from shutil import rmtree
 from db.models import UserRegisteredContest,Contest,ContestProblem,Problem,Submission
 from bson.objectid import ObjectId
 from platform import system
+from flask import current_app
+
 
 ORIGINAL_DIR=os.getcwd()
 
@@ -259,9 +261,8 @@ class Task:
         # calculate the total score
         reg_contest = UserRegisteredContest(userid).getBy(contestid=contestid)
         problemscore = reg_contest.get('problemscore')
-        total_pen = reg_contest.get('penalty')
+        total_score = reg_contest.get('penalty')
         timepenalty = reg_contest.get('timepenalty')
-        totalscore = total_pen
         for each in problemscore: 
             totalscore += problemscore[each]
         # update the total score
@@ -273,3 +274,5 @@ class Task:
         update = {"$set": {'participants.{}.currscore'.format(userid): totalscore,
         'participants.{}.timepenalty'.format(userid): timepenalty}}
         Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)) 
+        data['score'] = totalscore
+        current_app.socketio.emit('newscore', {'data':totalscore})

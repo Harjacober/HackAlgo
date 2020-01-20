@@ -10,7 +10,7 @@ from test.coderun import CodeRunTests
 from datetime import datetime
 import config
 
-app_client=contestplatfrom.test_client()
+app_client=contestplatform.test_client()
 
 #On first run, Run create.py first before this test file
 #Note note note!!!! test functions are run in alphabetical order. So we are makking them by numbers
