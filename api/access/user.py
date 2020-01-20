@@ -67,8 +67,12 @@ class UserEnterContest(Resource):
         req_data["totalscore"]=0
         req_data["penalty"]=0
         req_data["problemscore"]={}
-        req_data["rank"]=1
-     
+        req_data["rank"]=2 
+ 
+        problems = list(ContestProblem(req_data['contesttype'], req_data['contestid']).getAll())  # get all problems
+        for each in problems:
+            req_data["problemscore"][str(each['_id'])] = 0
+
         #TODO(ab|jacob) move all this to a caching db. REDIS?
         contestid = req_data.get('contestid')
         ctype = req_data.get('contesttype')
@@ -89,14 +93,14 @@ class UserEnterContest(Resource):
 
         UserRegisteredContest(userid).addDoc(req_data)
 
-        # Update the contest collection with this new participant info
+        # Update the contest collection with this new participant info 
         default_rating = 1500
         default_volatility = 125
         rating = user.get('contest.rating', default_rating)
         volatility = user.get('contest.volatility', default_volatility)
         timesplayed = user.get('contest.timesplayed', 0)
-        userdata = {'rating':rating, 'volatility':volatility, 'new_rating': None, 'new_volatility': None, 
-        'timesplayed':timesplayed, 'currrank': 1, 'currscore': 0}
+        userdata = {'uid':userid, 'rating':rating, 'volatility':volatility, 
+        'timesplayed':timesplayed, 'currrank': 2, 'currscore': 0}
 
         update = {"$set": {'participants.{}'.format(userid): userdata}}
         if Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)):

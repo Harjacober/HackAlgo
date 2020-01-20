@@ -15,12 +15,7 @@ if system()=='Linux':
     py_dir="/usr/local/bin/python"
     go_dir="/usr/bin/go"
     cplus_dir="/usr/bin/g++"
-    c_dir="/usr/bin/gcc"
-else:
-    py_dir = "C:/Users/Harjacober/AppData/Local/Programs/Python/Python37/python.exe"
-    go_dir = "C:/Go/bin/go.exe"
-    c_dir = "C:/Program Files (x86)/CodeBlocks/MinGW/bin/gcc.exe"
-    cplus_dir = "C:/Program Files (x86)/CodeBlocks/MinGW/bin/g++.exe"
+    c_dir="/usr/bin/gcc" 
 
 compilers={
     "go":go_dir,
@@ -240,32 +235,41 @@ class Task:
         prblmid = data.get('prblmid')
         verdict = data.get('verdict')
         contest_problem = ContestProblem(ctype, contestid).getBy(_id=ObjectId(prblmid))
+        contest = Contest(ctype).getBy(_id=ObjectId(contestid))
+        contest_start_time = contest.get('starttime')
+        submission_time = datetime.now().timestamp() - contest_start_time
 
+        prblmscorefield = 'problemscore.{}'.format(prblmid)
         if verdict != "Passed": 
-            score = 0 
+            score = 0  
             penalty = -10
             # update the penalty field
-            update = {'$inc': {'penalty': penalty}}
-            UserRegisteredContest(userid).flexibleUpdate(update, contestid=contestid)  
+            update = {'$inc': {'penalty': penalty}} 
+            pScore = contest_problem.get('prblmscore')
+            argDict={"contestid":contestid, prblmscorefield:{'$ne': pScore}}
+            UserRegisteredContest(userid).flexibleUpdate(update, **argDict)  
         else:
             score = contest_problem.get('prblmscore')
             penalty = 0
 
-        # update the user score for that problem if the new score is greater than the prev one
-        update = {'$set': {'problemscore.{}'.format(prblmid): score}} 
-        prblmscorefield = 'problemscore.{}'.format(prblmid)
-        UserRegisteredContest(userid).flexibleUpdate(update, contestid=contestid,prblmscorefield={'$gte': score})  
+        # update the user score for that problem and time penalty, if the new score is greater than the prev one
+        update = {'$set': {'problemscore.{}'.format(prblmid): score}, '$inc': {'timepenalty': submission_time}}  
+        argDict={"contestid":contestid,prblmscorefield:{'$lte': score}}
+        UserRegisteredContest(userid).flexibleUpdate(update, **argDict)  
         # calculate the total score
         reg_contest = UserRegisteredContest(userid).getBy(contestid=contestid)
         problemscore = reg_contest.get('problemscore')
         total_pen = reg_contest.get('penalty')
+        timepenalty = reg_contest.get('timepenalty')
         totalscore = total_pen
-        for each in problemscore:
+        for each in problemscore: 
             totalscore += problemscore[each]
         # update the total score
         update = {"$set": {'totalscore': totalscore}}
         UserRegisteredContest(userid).flexibleUpdate(update, contestid=contestid)   
 
-        #TODO update the contest document to reflect this participants current score and current rank  
-        update = {"$set": {'participant.{}.currscore'.format(userid): totalscore}}
+        # update the contest document to reflect this participants current score. the rank will be updated on
+        # the scoreboard in the front end using dynamic tables.
+        update = {"$set": {'participants.{}.currscore'.format(userid): totalscore,
+        'participants.{}.timepenalty'.format(userid): timepenalty}}
         Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)) 

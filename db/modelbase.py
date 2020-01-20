@@ -26,8 +26,9 @@ class base:
             "$currentDate": { "lastModified": True }}
         ).modified_count > 0
 
-    def flexibleUpdate(self, update, **kwargs):
+    def flexibleUpdate(self, update, upsert=False, **kwargs):
         return self.collection.update_one(
             kwargs,
-            update
+            update,
+            upsert=upsert
         ).modified_count > 0     

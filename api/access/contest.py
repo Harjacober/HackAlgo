@@ -7,7 +7,7 @@ from flask_jwt_extended import (
     get_jwt_identity, get_raw_jwt
     )
 from bson.objectid import ObjectId
-from db.models import Contest, ContestProblem, Admin
+from db.models import Contest, ContestProblem, Admin, User
 from werkzeug.datastructures import FileStorage
 from datetime import datetime
 from api.access.utils import Rating
@@ -20,6 +20,23 @@ import config
 #include should contain app.py module path.
 celery = Celery(__name__ ,broker=config.CELERY_BROKER_URL,include=['test.test_app','api.access.contest','app'])
 celery.config_from_object(config)
+
+def scoreBoard(participants):
+    userScores = ((key, participants[key]['currscore'], participants[key]['timepenalty']) for key in participants)
+    sortedScores = sorted(userScores, key=lambda x : (-x[1],x[2])) 
+    rank, i = 2, 0
+    ans = []
+    while i < len(sortedScores):
+        ans.append((sortedScores[i][0], rank))
+        j = i+1
+        count = 1
+        while j < len(sortedScores) and sortedScores[i][1] == sortedScores[j][1] and sortedScores[i][2] == sortedScores[j][2]: 
+            ans.append((sortedScores[j][0], rank))
+            count += 1
+            j += 1
+        rank += count
+        i = j
+    return ans
 
 @celery.task
 def updateRank(contestid, ctype):
@@ -39,14 +56,18 @@ def updateRank(contestid, ctype):
     Contest(ctype).update(params=params, _id=ObjectId(contestid)) 
     # compute the rating of the contest participants
     contest = Contest(ctype).getBy(_id=ObjectId(contestid))
-    participants = contest.get('participants')
-    updated_participants = Rating(participants).calculateRatings()
+    participants = contest.get('participants') # get participants information
+    computedRank = scoreBoard(participants) # compute the current rank of each participants
+    for uid,rank in computedRank:
+        participants[uid]['currrank'] = rank
+    updated_participants = Rating(participants).calculateRatings() # let the Rating class handle the rest
     # update each participants rating,volatility & timesplayed in their respective collections
     for userid in updated_participants:
             update = {'$inc': {'contest.timesplayed': 1},
-            '$set': {'contest.rating': updated_participants[userid].new_rating,
-            'contest.volatility': updated_participants[userid].new_volatility}}
+            '$set': {'contest.rating': updated_participants[userid]['new_rating'],
+            'contest.volatility': updated_participants[userid]['new_volatility']}}
             User().flexibleUpdate(update, _id=ObjectId(userid))
+
 
 init_contest_parser = reqparse.RequestParser()
 init_contest_parser.add_argument('title', required=True)
@@ -273,7 +294,7 @@ class ApproveContest(Resource):
         if starttime < currentime + sixhrs:
             return response(400, "start time must be at least {}hrs in the future".format(mintime), [])
 
-        task_start_time=3*60
+        task_start_time=10*60
         if config.CELERY_TEST:
             #to test the rank function we set this to 1
             task_start_time=2*60
@@ -341,9 +362,12 @@ class GetContestById(Resource):
     def get(self, ctype, contestid):  
         exclude = {'_id':0, 'lastModified':0}
         data = Contest(ctype).getBy(params=exclude, _id=ObjectId(contestid))
-        if data:
-            problems = ContestProblem(ctype, contestid).getAll(params=exclude)
-            data['problems'] = list(problems)
+        if data: 
+            exclude = {'lastModified':0}
+            problems = list(ContestProblem(ctype, contestid).getAll(params=exclude))  
+            for problem in problems:
+                problem['_id'] = str(problem['_id'])
+            data['problems'] = problems
             return response(200, "Success", data)
         return response(400, "Check the contestid", [])    
 
@@ -352,7 +376,12 @@ class GetContestById(Resource):
         exclude = {'_id':0, 'lastModified':0}
         data = Contest(ctype).getBy(params=exclude, _id=ObjectId(contestid))
         if data:
-            problems = ContestProblem(ctype, contestid).getAll(params=exclude)
+            exclude = {'lastModified':0}
+            problems = list(ContestProblem(ctype, contestid).getAll(params=exclude)) 
+            problems = list(problems)
+            for each in problems:
+                each['_id'] = str(each.get('_id'))
+            data['problems'] = problems
             data['problems'] = list(problems)
             return response(200, "Success", data)
         return response(400, "Check the contestid", [])   
