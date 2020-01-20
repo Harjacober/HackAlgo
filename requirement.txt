@@ -5,3 +5,4 @@ passlib
 flask-jwt-extended
 Celery
 redis
+flask-socketio
