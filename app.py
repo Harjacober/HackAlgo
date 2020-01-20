@@ -17,21 +17,24 @@ from api.access.contest import (InitializeContest, UpdateContest,
                                 ApproveContest, AddNewAuthor, RemoveAuthor,
                                 GetContest, GetContestById)
 from api.access.user import UserEnterContest, UserContestHistory, UserSubmissionHistory, RunContestCode, ContestRunCodeStatus
+from flask_socketio import SocketIO
 
 from celery import Celery
 import config
 
 
 
-contestplatfrom = Flask(__name__)
-contestplatfrom.config.from_object('config')
+contestplatform = Flask(__name__)
+contestplatform.config.from_object('config')
 
 
-api = Api(contestplatfrom)
-jwt = JWTManager(contestplatfrom)
+api = Api(contestplatform)
+jwt = JWTManager(contestplatform)
 
 
-@contestplatfrom.route("/")
+contestplatform.socketio = SocketIO(contestplatform)
+
+@contestplatform.route("/")
 def index():
     #server some home page here
     return "Welcome to HackAlgo!!"
@@ -75,4 +78,4 @@ api.add_resource(UserContestHistory, '/my/contest/history/')
 api.add_resource(UserSubmissionHistory, '/my/submission/history/')
 
 if __name__ == "__main__":
-    contestplatfrom.run(host="0.0.0.0", debug=True, port="9000")
+    contestplatform.socketio.run(contestplatform,host="0.0.0.0", debug=True, port="9000")
