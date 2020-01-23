@@ -402,7 +402,7 @@ class GetContestById(Resource):
 class GetContest(Resource):   
     @jwt_required
     def get(self, ctype, status):
-        status_code = {'active':1, 'inreview':0, 'completed':-1}
+        status_code = {'started':1, 'inreview':0, 'completed':-1, 'active':00}
         if ctype == "all":
             #TODO(jacob) handle this
             pass
@@ -413,11 +413,5 @@ class GetContest(Resource):
         return response(400, "Check the contestid", [])    
 
     @jwt_required
-    def post(self, ctype, status): 
-        status_code = {'active':1, 'inreview':0, 'completed':-1}
-        exclude = {'_id':0, 'lastModified':0}
-        data = Contest(ctype).getBy(params=exclude, _id=ObjectId(contestid))
-        data = Contest(ctype).getAll(params=exclude, status=status_code[status])
-        if data:
-            return response(200, "Success", list(data)) 
-        return response(400, "Check the contestid", [])   
+    def post(self, ctype, status):  
+        return response(300, "Not allowed, Use a GET Request", [])   
