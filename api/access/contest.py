@@ -410,7 +410,8 @@ class GetContest(Resource):
         data = Contest(ctype).getAll(params=exclude, status=status_code[status])
         if data:
             return response(200, "Success", list(data))
-        return response(400, "Check the contestid", [])    
+        return response(400, "Check the contestid", [])  
+        
 
     @jwt_required
     def post(self, ctype, status):  
