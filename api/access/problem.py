@@ -20,6 +20,11 @@ add_prob_parser.add_argument('category', help = 'This field cannot be blank')
 add_prob_parser.add_argument('timelimit', type=float, help = 'Time in seconds')
 add_prob_parser.add_argument('memorylimit', type=float, help = 'Memory limit in Megabytes') 
 add_prob_parser.add_argument('tags', help = 'Enter tags separated by comma') #TODO complete implementation
+add_prob_parser.add_argument('prblmid', help = 'for updating problem') 
+
+submit_prob_parser = reqparse.RequestParser()
+submit_prob_parser.add_argument('author', help = 'username of the admin adding the problem', required=True)
+submit_prob_parser.add_argument('prblmid', help = 'cannot be empty', required=True)
 
 req_show_problem_details=reqparse.RequestParser()
 req_show_problem_details.add_argument('prblmid', help = 'This field cannot be blank', required = True) 
@@ -36,13 +41,13 @@ def response(code,msg,data):
 
 class ProblemDetails(Resource):
     """
-    Returns full desciption of a problem excluding answercases and sampleanswercase
+    Returns full description of a problem excluding answercases and sampleanswercase
     """
     @jwt_required
     def get(self):
         input_data=req_show_problem_details.parse_args()
 
-        exclude = {'answercases':0, 'sampleanswercases':0}
+        exclude = {'answercases':0, 'sampleanswercases':0, 'lastModified':0}
         pb=Problem().getBy(params=exclude, _id=ObjectId(input_data["prblmid"]))
         if not pb:
             return response(400, "Problem id does not exist", [])
@@ -51,16 +56,8 @@ class ProblemDetails(Resource):
         return response(200, "Success", pb)  
 
     @jwt_required
-    def post(self):
-        input_data=req_show_problem_details.parse_args()
- 
-        exclude = {'answercases':0, 'sampleanswercases':0}
-        pb=Problem().getBy(params=exclude, _id=ObjectId(input_data["prblmid"]))
-        if not pb:
-            return response(400, "Problem id does not exist", [])
-        pb["_id"]=str(pb["_id"])
-
-        return response(200, "Success", pb)  
+    def post(self): 
+        return response(300, "Method not Allowed", [])  
 
 class ProblemSet(Resource):
     """
@@ -71,12 +68,13 @@ class ProblemSet(Resource):
         input_data = req_show_problem.parse_args()
 
         exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
-         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
+         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0, 'lastModified':0}
 
         if category == "all":
             data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'])
         else:
-            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'], category=category)
+            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'], 
+            category=category, status=1)
             
         data = list(data)
         return response(200, "Success", data)
@@ -86,12 +84,13 @@ class ProblemSet(Resource):
         input_data = req_show_problem.parse_args()
 
         exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
-         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
+         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0, 'lastModified':0} 
 
         if category == "all":
             data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'])
         else:
-            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'], category=category)
+            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'], 
+            category=category, status=1)
             
         data = list(data)
         return response(200, "Success", data)
@@ -105,10 +104,10 @@ class ProblemSearch(Resource):
         input_data = req_show_problem.parse_args()
 
         exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
-         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
+         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0, 'lastModified':0}
 
         data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'],
-        category=input_data['category'], author=input_data['author'], name=input_data['name'])
+        category=input_data['category'], author=input_data['author'], name=input_data['name'], status=1)
         data = list(data)
         return response(200, "Success", data)
 
@@ -117,10 +116,10 @@ class ProblemSearch(Resource):
         input_data = req_show_problem.parse_args()
 
         exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
-         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
+         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0, 'lastModified':0} 
 
         data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'],
-        category=input_data['category'], author=input_data['author'], name=input_data['name']) 
+        category=input_data['category'], author=input_data['author'], name=input_data['name'], status=1) 
         data = list(data) 
         return response(200, "Success", data)
  
@@ -149,13 +148,14 @@ class ProblemAdd(Resource):
         input_data['sampleanswercases'] = sampleanswercases 
         tags = input_data.get('tags').split(',') # create an array of tags 
         input_data['tags'] = tags
+        input_data['status'] = 0
 
         uid = str(Problem().addDoc(input_data))  
         input_data['prblmid'] = uid
 
         # update the problems tags list
         update = {'$addToSet': {'problemtags': {'$each': tags}}, "$currentDate": { "lastModified": True }}
-        problem().flexibleUpdate(update, upsert=True, _id="tags")
+        Problem().flexibleUpdate(update, upsert=True, _id="tags")
         # add reference to the problems field in the admin collection
         update = {'$addToSet': {'problems': uid}, "$currentDate": { "lastModified": True }}
         if Admin().flexibleUpdate(update, username=input_data['author']):
@@ -197,8 +197,8 @@ class ProblemUpdate(Resource):
         if Problem().update(params=input_data, _id=ObjectId(input_data.get('prblmid'))):
             # update the problems tags list
             update = {'$addToSet': {'problemtags': {'$each': tags}}, "$currentDate": { "lastModified": True }}
-            problem().flexibleUpdate(update, upsert=True, _id="tags")
-            return response(200, "update successful",[],access_token=create_access_token(data['uniqueid']))
+            Problem().flexibleUpdate(update, upsert=True, _id="tags")
+            return response(200, "update successful",[])
 
         return response(400, "Problem not updated", [])              
 
@@ -212,3 +212,21 @@ class GetAllProblemTags(Resource):
     @jwt_required    
     def post(self, problemid):
         return response(300, "Method not allowed", [])
+
+class SubmitProblem(Resource):
+    @jwt_required
+    def get(self):
+        return response(300, "Use A POST Request", [])  
+
+    @jwt_required
+    def post(self):
+        input_data = submit_prob_parser.parse_args()
+
+        author = input_data.get('author')
+        if author != Problem().getBy(_id=ObjectId(input_data["prblmid"])).get('author') 
+            return response(400, "not the author of the problem", [])  
+         
+        params = {"status": 1}
+        Problem().update(params=params, _id=ObjectId(input_data['prblmid'])) 
+
+        return response(400, "Problem not submitted", [])     

@@ -6,9 +6,9 @@ from flask_jwt_extended import jwt_required
 from bson.objectid import ObjectId
 
 get_all_added_prob_parser = reqparse.RequestParser()
-
 get_all_added_prob_parser.add_argument('uniqueid', help="Admin unique Id", required=True)
 
+get_all_involved_contest_parser = reqparse.RequestParser()
 get_all_involved_contest_parser.add_argument('uniqueid', help="Admin unique Id", required=True)
 get_all_involved_contest_parser.add_argument('contesttype', help="contest type", required=True)
 
