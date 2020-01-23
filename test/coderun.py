@@ -13,8 +13,22 @@ class CodeRunTests:
     def pythonData(self,testtimeout=False):
         timeoutfile =lambda : "testtimeout.py" if testtimeout else "test.py"
         path = "testcasefile/"+timeoutfile()
-        if system()=='Windows':
-            path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/"+timeoutfile()
+       
+        with open(path) as f:
+            code = f.read()
+        data=dict(
+            prblmid=self.problem_id,
+            userid=self.user_id,
+            codecontent=code,
+            lang="py",
+            stype = "test",
+            contestid = self.contestid,
+            ctype = self.ctype
+        )
+        return data
+
+    def testMemory(self):
+        path = "testcasefile/memoryconsuption.py"
        
         with open(path) as f:
             code = f.read()
@@ -32,9 +46,6 @@ class CodeRunTests:
 
     def golangData(self):
         path = "testcasefile/test.go"
-        if system()=='Windows':
-            path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/test.go"
-
         with open(path) as f:
             code=f.read()
         data=dict(
@@ -51,8 +62,7 @@ class CodeRunTests:
     def javaData(self,testtimeout=False):
         timeoutfile =lambda : "testtimeout.java" if testtimeout else "test.java"
         path = "testcasefile/"+timeoutfile()
-        if system()=='Windows':
-            path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/"+timeoutfile()
+
         with open(path) as f:
             code=f.read()
         data=dict(
@@ -70,8 +80,7 @@ class CodeRunTests:
     def cData(self,testtimeout=False):
         timeoutfile =lambda : "testtimeout.c" if testtimeout else "test.c"
         path = "testcasefile/"+timeoutfile()
-        if system()=='Windows':
-            path = "C:/Users/Harjacober/Desktop/PythonProjects/Contest-Platform/testcasefile/"+timeoutfile()
+   
         with open(path) as f:
             code=f.read()
         data=dict(

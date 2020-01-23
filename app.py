@@ -18,10 +18,11 @@ from api.access.contest import (InitializeContest, UpdateContest,
                                 GetContest, GetContestById)
 from api.access.user import UserEnterContest, UserContestHistory, UserSubmissionHistory, RunContestCode, ContestRunCodeStatus
 from flask_socketio import SocketIO
+from flask_mail import Mail
+
 
 from celery import Celery
 import config
-
 
 
 contestplatform = Flask(__name__)
@@ -31,8 +32,12 @@ contestplatform.config.from_object('config')
 api = Api(contestplatform)
 jwt = JWTManager(contestplatform)
 
+mail = Mail()
+mail.init_app(contestplatform)
+contestplatform.mail=mail
 
 contestplatform.socketio = SocketIO(contestplatform)
+contestplatform.unregisteredusers={}
 
 @contestplatform.route("/")
 def index():

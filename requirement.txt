@@ -6,3 +6,4 @@ flask-jwt-extended
 Celery
 redis
 flask-socketio
+Flask-Mail
