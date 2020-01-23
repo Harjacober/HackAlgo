@@ -47,7 +47,7 @@ class Task:
         self.lang=lang
         self.stype = stype 
         if codefile is not None:
-            self.content = self.input_data['codefile'].read().decode("utf-8") 
+            self.content = codefile.read().decode("utf-8") 
         else:
             self.content = content # get submitted code content   
         self.userid=userid  
@@ -261,7 +261,7 @@ class Task:
         # calculate the total score
         reg_contest = UserRegisteredContest(userid).getBy(contestid=contestid)
         problemscore = reg_contest.get('problemscore')
-        total_score = reg_contest.get('penalty')
+        totalscore = reg_contest.get('penalty')
         timepenalty = reg_contest.get('timepenalty')
         for each in problemscore: 
             totalscore += problemscore[each]

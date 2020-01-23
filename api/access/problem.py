@@ -18,10 +18,8 @@ add_prob_parser.add_argument('sampleanswercases', type=FileStorage, location = '
 add_prob_parser.add_argument('problemstatement', help = 'This field cannot be blank', required = True)
 add_prob_parser.add_argument('category', help = 'This field cannot be blank', required = True)
 add_prob_parser.add_argument('timelimit', type=float, help = 'Time in seconds', required = True)
-add_prob_parser.add_argument('memorylimit', type=float, help = 'Memory limit in Megabytes', required = True)
-add_prob_parser.add_argument('score', type=int, help = 'Highest score obtainable for problem', required = True)
-add_prob_parser.add_argument('contestid', help = 'contest id if problem is for a contest')
-
+add_prob_parser.add_argument('memorylimit', type=float, help = 'Memory limit in Megabytes', required = True) 
+add_prob_parser.add_argument('tags', type=float, help = 'Enter tags separated by comma') #TODO complete implementation
 
 req_show_problem_details=reqparse.RequestParser()
 req_show_problem_details.add_argument('prblmid', help = 'This field cannot be blank', required = True) 
