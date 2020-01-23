@@ -20,7 +20,7 @@ add_prob_parser.add_argument('category', help = 'This field cannot be blank')
 add_prob_parser.add_argument('timelimit', type=float, help = 'Time in seconds')
 add_prob_parser.add_argument('memorylimit', type=float, help = 'Memory limit in Megabytes') 
 add_prob_parser.add_argument('tags', help = 'Enter tags separated by comma') #TODO complete implementation
-add_prob_parser.add_argument('prblmid', help = 'for updating problem') 
+add_prob_parser.add_argument('prblmid', help = 'for updating problem', store_missing=False) 
 
 submit_prob_parser = reqparse.RequestParser()
 submit_prob_parser.add_argument('author', help = 'username of the admin adding the problem', required=True)
@@ -71,7 +71,7 @@ class ProblemSet(Resource):
          'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0, 'lastModified':0}
 
         if category == "all":
-            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'])
+            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'], status=1)
         else:
             data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'], 
             category=category, status=1)
@@ -87,7 +87,7 @@ class ProblemSet(Resource):
          'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0, 'lastModified':0} 
 
         if category == "all":
-            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'])
+            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'],status=1)
         else:
             data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'], 
             category=category, status=1)
@@ -154,7 +154,7 @@ class ProblemAdd(Resource):
         input_data['prblmid'] = uid
 
         # update the problems tags list
-        update = {'$addToSet': {'problemtags': {'$each': tags}}, "$currentDate": { "lastModified": True }}
+        update = {"$set":{'_id':"tags"},'$addToSet': {'problemtags': {'$each': tags}}, "$currentDate": { "lastModified": True }}
         Problem().flexibleUpdate(update, upsert=True, _id="tags")
         # add reference to the problems field in the admin collection
         update = {'$addToSet': {'problems': uid}, "$currentDate": { "lastModified": True }}
@@ -194,7 +194,7 @@ class ProblemUpdate(Resource):
             tags = input_data.get('tags').split(',') # create an array of tags 
             input_data['tags'] = tags 
 
-        if Problem().update(params=input_data, _id=ObjectId(input_data.get('prblmid'))):
+        if Problem().update(params=input_data, _id=ObjectId(input_data.get('prblmid')), status=0):
             # update the problems tags list
             update = {'$addToSet': {'problemtags': {'$each': tags}}, "$currentDate": { "lastModified": True }}
             Problem().flexibleUpdate(update, upsert=True, _id="tags")
@@ -204,7 +204,7 @@ class ProblemUpdate(Resource):
 
 class GetAllProblemTags(Resource):
     @jwt_required
-    def get(self, problemid): 
+    def get(self): 
 
         data = Problem().getBy(_id="tags").get("problemtags")
         return response(200, "Success", data)
@@ -223,10 +223,14 @@ class SubmitProblem(Resource):
         input_data = submit_prob_parser.parse_args()
 
         author = input_data.get('author')
-        if author != Problem().getBy(_id=ObjectId(input_data["prblmid"])).get('author') 
+        pb = Problem().getBy(_id=ObjectId(input_data["prblmid"]))
+        if not pb:
+            return response(400, "Problem not found", [])
+        if author != pb.get('author'): 
             return response(400, "not the author of the problem", [])  
          
         params = {"status": 1}
-        Problem().update(params=params, _id=ObjectId(input_data['prblmid'])) 
+        if Problem().update(params=params, _id=ObjectId(input_data['prblmid'])):
+            return response(400, "Problem submitted", [])     
 
         return response(400, "Problem not submitted", [])     
