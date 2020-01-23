@@ -16,6 +16,11 @@ enter_contest_parser.add_argument('userid', required=True)
 enter_contest_parser.add_argument('contesttype', help="The type of the contest and contest id are required fields",required=True)
 enter_contest_parser.add_argument('contestid', help="the contestid", required=True)
 
+register_for_contest_parser = reqparse.RequestParser()
+register_for_contest_parser.add_argument('userid', required=True)
+register_for_contest_parser.add_argument('contesttype', help="The type of the contest and contest id are required fields",required=True)
+register_for_contest_parser.add_argument('contestid', help="the contestid", required=True)
+
 user_contest_history_parser = reqparse.RequestParser()
 user_contest_history_parser.add_argument('userid', required=True)
 
@@ -82,7 +87,9 @@ class UserEnterContest(Resource):
         if not contest:
             return response(400,"Contest not found",{})
         else:
-            if contest['status'] == -1:
+            if contest['status'] == 00:
+                return response(400,"Contest is yet to start",{})
+            elif contest['status'] == -1:
                 return response(400,"Contest has ended",{})
             elif contest['status'] == 0:
                 return response(400,"Contest is not active yet",{})
@@ -239,4 +246,41 @@ class ContestRunCodeStatus(Resource):
     def get(self):
         return  {"code":"300","msg":"Use A Post Request","data":[]}
 
-    
+
+class UserRegisterForContest(Resource):
+    """
+    When user choose to register for a contest, it doesn't guarantee they will paritcipate in the contest.
+    """
+    @jwt_required
+    def get(self,id):
+        return response("300","Use a Post Request",[])
+
+    @jwt_required
+    def post(self):
+        req_data=register_for_contest_parser.parse_args() 
+
+        #TODO(ab|jacob) move all this to a caching db. REDIS?
+        contestid = req_data.get('contestid')
+        ctype = req_data.get('contesttype')
+        userid = req_data.get("userid")
+        contest = Contest(ctype).getBy( _id=ObjectId(contestid))
+        if not contest:
+            return response(400,"Contest not found",{})
+        else:
+            if contest['status'] == 1:
+                return response(400,"Contest has already started",{})
+            elif contest['status'] == -1:
+                return response(400,"Contest has ended",{})
+            elif contest['status'] == 0:
+                return response(400,"Contest is not active yet",{})
+
+        user = User().getBy(_id=ObjectId(userid))
+        if not user:
+            return response(400,"User Id not found",{})
+ 
+        # Update the contest collection with this new registered participant info   
+        update = {"$addToSet": {'registeredUsers': userid}}
+        if Contest(ctype).flexibleUpdate(update, upsert=True, _id=ObjectId(contestid)):
+            return response(200,"Registration Success",{})
+
+        return response(400,"Unable to register for contest",[])    
