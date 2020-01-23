@@ -106,6 +106,7 @@ approval_parser.add_argument("creator", help="username of the admin that initial
 approval_parser.add_argument("contestid", required=True) 
 
 manage_author_parser = reqparse.RequestParser()
+manage_author_parser.add_argument("creator", required=True) 
 manage_author_parser.add_argument("contestid", required=True) 
 manage_author_parser.add_argument("authorusername", required=True)
 
@@ -298,7 +299,7 @@ class ApproveContest(Resource):
         if config.CELERY_TEST:
             #to test the rank function we set this to 1
             task_start_time=2*60
-        params = {'status': 1}
+        params = {'status': 00}
         if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
             # schedule task here
             updateRank.apply_async(countdown=task_start_time,args=[contestid, ctype])
@@ -317,6 +318,11 @@ class AddNewAuthor(Resource):
 
         contestid = input_data['contestid']
         author_username = input_data['authorusername']
+        creator = input_data['creator']  
+
+        data = Contest(ctype).getBy(_id=ObjectId(contestid))
+        if creator != data.get('creator'):
+            return response(404, "Not authorized", [])
 
         admin = Admin().getBy(username=author_username)
         if not admin:
@@ -344,9 +350,16 @@ class RemoveAuthor(Resource):
         
         contestid = input_data['contestid']
         author_username = input_data['authorusername']
-
-        update = {'$pull': {'authors': author_username}, "$currentDate": { "lastModified": True }}
+        creator = input_data['creator']  
         
+        data = Contest(ctype).getBy(_id=ObjectId(contestid))
+        if creator != data.get('creator'):
+            return response(404, "Not authorized", [])
+
+        admin = Admin().getBy(username=author_username)
+        if not admin:
+            return response(400, "Username does not exist", [])    
+        update = {'$pull': {'authors': author_username}, "$currentDate": { "lastModified": True }}
         # remove the admin from the author's list
         if Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)):
             # also remove this contest from the admin's list
