@@ -19,6 +19,7 @@ add_prob_parser.add_argument('problemstatement', help = 'This field cannot be bl
 add_prob_parser.add_argument('category', help = 'This field cannot be blank')
 add_prob_parser.add_argument('timelimit', type=float, help = 'Time in seconds')
 add_prob_parser.add_argument('memorylimit', type=float, help = 'Memory limit in Megabytes') 
+add_prob_parser.add_argument('score', type=float, help = 'score denotes the difficulty of the problem') 
 add_prob_parser.add_argument('tags', help = 'Enter tags separated by comma') #TODO complete implementation
 add_prob_parser.add_argument('prblmid', help = 'for updating problem', store_missing=False) 
 
@@ -131,6 +132,7 @@ class ProblemAdd(Resource):
     @jwt_required
     def post(self):
         input_data = add_prob_parser.parse_args()
+        difficulty = {"800-1100":"easy", "1200-1500":"medium", "1600-2000":"hard", "2100-2500":"advanced"} #TODO make this global
 
         author = input_data.get('author')
         if not Admin().getBy(username=author):
@@ -149,6 +151,13 @@ class ProblemAdd(Resource):
         tags = input_data.get('tags').split(',') # create an array of tags 
         input_data['tags'] = tags
         input_data['status'] = 0
+        # process difficulty
+        score = input_data.get('score')
+        for key in difficulty:
+            lower,upper = list(map(int, key.split("-")))
+            if int(score) >= lower and score <= upper:
+                input_data['difficulty'] = difficulty[key]
+                break
 
         uid = str(Problem().addDoc(input_data))  
         input_data['prblmid'] = uid
@@ -171,7 +180,7 @@ class ProblemUpdate(Resource):
     @jwt_required
     def post(self):
         input_data = add_prob_parser.parse_args()
-
+        difficulty = {"800-1100":"easy", "1200-1500":"medium", "1600-2000":"hard", "2100-2500":"advanced"} #TODO make this global
         author = input_data.get('author')
         if not Admin().getBy(username=author):
             return response(400, "author is not an admin, check the username", [])
@@ -193,6 +202,15 @@ class ProblemUpdate(Resource):
         if input_data.get('tags') is not None: 
             tags = input_data.get('tags').split(',') # create an array of tags 
             input_data['tags'] = tags 
+        # process difficulty
+        score = input_data.get('score')
+        if score is not None:
+            for key in difficulty:
+                lower,upper = list(map(int, key.split("-")))
+                if int(score) >= lower and score <= upper:
+                    input_data['difficulty'] = difficulty[key]
+                    break
+                
 
         if Problem().update(params=input_data, _id=ObjectId(input_data.get('prblmid')), status=0):
             # update the problems tags list
@@ -231,6 +249,6 @@ class SubmitProblem(Resource):
          
         params = {"status": 1}
         if Problem().update(params=params, _id=ObjectId(input_data['prblmid'])):
-            return response(400, "Problem submitted", [])     
+            return response(200, "Problem submitted", [])     
 
         return response(400, "Problem not submitted", [])     

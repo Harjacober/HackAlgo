@@ -9,7 +9,7 @@ from flask_jwt_extended import JWTManager
 
 from api.resources.regapi import AdminRegistration, UserRegistration, AdminLogin, UserLogin
 from api.resources.usersapi import UserProfile, UserUpdateProfile, SubmissionInfo, SubmissionList
-from api.resources.adminapi import AdminProfile, AdminUpdateProfile
+from api.resources.adminapi import AdminProfile, AdminUpdateProfile,GetAllAddedProblems, GetAllInvolvedContest
 from api.resources.coding import RunCode, RunCodeStatus
 from api.access.problem import ProblemAdd, ProblemDetails, ProblemSet, ProblemSearch, ProblemUpdate, SubmitProblem, GetAllProblemTags
 from api.access.contest import (InitializeContest, UpdateContest,
@@ -44,6 +44,8 @@ api.add_resource(UserRegistration, '/user/registration/')
 api.add_resource(AdminLogin, '/admin/login/')
 api.add_resource(UserLogin, '/user/login/')
 
+api.add_resource(GetAllAddedProblems, '/admin/get/addedproblems/all/')
+api.add_resource(GetAllInvolvedContest, '/admin/get/involvedcontests/all/')
 api.add_resource(AdminUpdateProfile, '/admin/profile/update/')
 api.add_resource(UserUpdateProfile, '/user/profile/update/')
 api.add_resource(AdminProfile, '/admin/profile/')

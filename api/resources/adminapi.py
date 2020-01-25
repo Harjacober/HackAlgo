@@ -1,6 +1,6 @@
 
 from api.resources.usersapi import UserProfile,UserUpdateProfile
-from db.models import Admin
+from db.models import Admin, Problem, Contest
 from flask_restful import Resource,reqparse
 from flask_jwt_extended import jwt_required
 from bson.objectid import ObjectId
@@ -32,8 +32,8 @@ class GetAllAddedProblems(Resource):
         uid = ObjectId(data['uniqueid'])  
         allProblemsId = Admin().getBy(_id=uid).get('problems')
         # query all problem information using the IDs before sending to the frontend
-        exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
-         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0}
+        exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0,'timelimit':0, 'samplecases':0,
+         'sizeofsamplecases':0, 'sampleanswercases':0, 'memorylimit':0, 'problemstatement':0, 'lastModified':0}
         problemList = [] 
         for problemId in allProblemsId:  
             problemList.append(Problem().getBy(params=exclude, _id=ObjectId(problemId)))
@@ -51,9 +51,9 @@ class GetAllInvolvedContest(Resource):
         data = get_all_involved_contest_parser.parse_args()  
         uid = ObjectId(data['uniqueid'])  
         ctype = data.get('contesttype')
-        allcontestsId = Admin().getBy(_id=uid).get('contest')
+        allcontestsId = Admin().getBy(_id=uid).get('contests')
         # query all contests information using the IDs before sending to the frontend
-        include = {'_id':1, 'title':1, 'creator':1, 'contesttype':1, 'status':1}
+        include = {'_id':0, 'title':1, 'creator':1, 'contesttype':1, 'status':1}
         problemList = [] 
         for contestid in allcontestsId:  
             problemList.append(Contest(ctype).getBy(params=include, _id=ObjectId(contestid)))
