@@ -200,7 +200,7 @@ class ProblemUpdate(Resource):
             input_data['sampleanswercases'] = sampleanswercases 
         tags = []
         if input_data.get('tags') is not None: 
-            tags = input_data.get('tags').split(',') # create an array of tags 
+            tags = input_data.get('tags').split(',') # create an array of tags 1
             input_data['tags'] = tags 
         # process difficulty
         score = input_data.get('score')
@@ -211,7 +211,8 @@ class ProblemUpdate(Resource):
                     input_data['difficulty'] = difficulty[key]
                     break
                 
-
+        # status = 0 to ensure problem can't be edited after submission, but.. does that make sense? I'm not sure.
+        # perhaps changes should be allowed when the problem has been submitted.
         if Problem().update(params=input_data, _id=ObjectId(input_data.get('prblmid')), status=0):
             # update the problems tags list
             update = {'$addToSet': {'problemtags': {'$each': tags}}, "$currentDate": { "lastModified": True }}
