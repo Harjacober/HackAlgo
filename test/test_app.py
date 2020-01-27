@@ -24,7 +24,9 @@ class AppTests(unittest.TestCase):
     contest_type=""
     contest_id = ""
     user_id=""
+    user_id2=""
     admin_id=""
+    admin_id2=""
     contest_prblmid = ""
     
     @classmethod
@@ -41,11 +43,19 @@ class AppTests(unittest.TestCase):
 
     @classmethod
     def setUserID(cls,id):
-        cls.user_id=id
+        cls.user_id=id 
 
     @classmethod
     def setAdminID(cls,id):
-        cls.admin_id=id
+        cls.admin_id=id 
+
+    @classmethod
+    def setUserID2(cls,id2):
+        cls.user_id2=id2
+
+    @classmethod
+    def setAdminID2(cls,id2):
+        cls.admin_id2=id2
 
     @classmethod
     def setContestIdandType(cls,contest_type, contest_id):
@@ -64,7 +74,7 @@ class AppTests(unittest.TestCase):
     def getValidTime(self):
         return datetime.now().timestamp() + 13*60*60*1000.0        
 
-    def reg_test(self,url,username,password,email):
+    def reg_test(self,url,username,password,email,first=True):
         resp=app_client.post(url, data=dict(
             username=username,
             pswd=password
@@ -90,10 +100,16 @@ class AppTests(unittest.TestCase):
         if url=="/user/registration/":
             self.setTokenUser(resp["access_token"])
             checkid=resp["data"]["uniqueid"]
-            self.setUserID(resp["data"]["uniqueid"])
+            if first:
+                self.setUserID(resp["data"]["uniqueid"])
+            else:
+                self.setUserID2(resp["data"]["uniqueid"])  
         else:
             self.setTokenAdmin(resp["access_token"])
-            self.setAdminID(resp["data"]["uniqueid"])
+            if first:
+                self.setAdminID(resp["data"]["uniqueid"])
+            else:
+                self.setAdminID2(resp["data"]["uniqueid"])    
         
         resp=app_client.post(url, data=dict(
             username=username,
@@ -120,12 +136,18 @@ class AppTests(unittest.TestCase):
 
 
     def test_2_user_reg(self):
+        # register two users
         self.reg_test("/user/registration/","abraham","akerele","abrahamakerele38@gmail.com")
         self.login_test("/user/login/","abraham","akerele")
+        self.reg_test("/user/registration/","harjacober","harjoshuaer","harjacober@gmail.com",False)
+        self.login_test("/user/login/","harjacober","harjoshuaer")
 
     def test_3_admin_reg(self):
+        # register two admins
         self.reg_test("/admin/registration/","marlians","aburunakamaki","abrahamadeniyi38@gmail.com")
         self.login_test("/admin/login/","marlians","aburunakamaki")
+        self.reg_test("/admin/registration/","admin","adminpassword","jacob.auduu@gmail.com",False)
+        self.login_test("/admin/login/","admin","adminpassword")
 
     def test_4_contest_create(self):
        
@@ -184,9 +206,10 @@ class AppTests(unittest.TestCase):
             sizeofsamplecases="1",
             sampleanswercases = (io.BytesIO(as2), 'answersampletest.in'), 
             problemstatement="Read the input and print them",
+            tags = "bfs,dfs",
             contestid = contest_id,
             timelimit=1,
-            memorylimit=1024,
+            memorylimit=250,
             prblmscore=900
         )
         resp=app_client.post("/contest/{}/problem/add/".format(contest_type), data=data,headers=header,content_type='multipart/form-data')
@@ -199,6 +222,8 @@ class AppTests(unittest.TestCase):
         contest_prblmid=resp["data"]["prblmid"]
         self.setContestProblemId(contest_prblmid)
 
+
+        # Approve contest
         data=dict(
             creator = "marlians", 
             contestid = self.contest_id
@@ -237,7 +262,8 @@ class AppTests(unittest.TestCase):
             category="test",
             timelimit=1,
             memorylimit=250,
-            score=25,
+            score=2500,
+            tags = "bfs,dfs",
             contestid=self.contest_id
         )
 
@@ -255,7 +281,7 @@ class AppTests(unittest.TestCase):
             prblmid=problem_id
         )
 
-        resp=app_client.post("/get/problem/",data=data,headers=header)
+        resp=app_client.get("/get/problem/",data=data,headers=header)
 
         self.assertTrue("200" in resp.data.decode())
         self.assertTrue("author" in resp.data.decode())
@@ -291,7 +317,7 @@ class AppTests(unittest.TestCase):
         data=json.loads(resp.data.decode())
        
         if not data["data"][0]["result"][0]["passed"]:
-            print(data["data"][0]["result"][0]["errput"])
+            print(data["data"][0]["result"][0]["errput"]) 
         self.assertTrue(data["data"][0]["result"][0]["passed"])
 
         #rtesting c
@@ -330,6 +356,30 @@ class AppTests(unittest.TestCase):
         # Authorization: Bearer <token>
         header={"Authorization":"Bearer "+self.api_token_user}
 
+        #Register at least 2 users for contest
+        data=dict(
+            userid = self.user_id, 
+            contesttype = self.contest_type,
+            contestid = self.contest_id
+
+        )
+        # /register/ccontest/
+        resp=app_client.post("/register/contest/",data=data,headers=header)   
+        self.assertTrue("Registration Success" in resp.data.decode())
+        data=dict(
+            userid = self.user_id2, 
+            contesttype = self.contest_type,
+            contestid = self.contest_id
+        )
+        # /register/ccontest/
+        resp=app_client.post("/register/contest/",data=data,headers=header)  
+        self.assertTrue("Registration Success" in resp.data.decode())
+
+        # Contest must have started before users can enter
+        # force start contest
+        resp=app_client.post("/contest/{}/{}/True/".format(self.contest_type, self.contest_id),headers=header) 
+        self.assertTrue("Contest forcefully started" in resp.data.decode())  
+
         #/enter/contest/
         data=dict(
             userid=self.user_id,
@@ -337,8 +387,19 @@ class AppTests(unittest.TestCase):
             contestid=self.contest_id
         )
 
-        resp=app_client.post("/enter/contest/",data=data,headers=header) 
-        self.assertTrue("participation history" in resp.data.decode())
+        resp=app_client.post("/enter/contest/",data=data,headers=header)  
+        self.assertTrue("Contest participation history updated" in resp.data.decode())
+
+        #/enter/contest/
+        data=dict(
+            userid=self.user_id2,
+            contesttype=self.contest_type,
+            contestid=self.contest_id
+        )
+
+        resp=app_client.post("/enter/contest/",data=data,headers=header)  
+        self.assertTrue("Contest participation history updated" in resp.data.decode())
+
 
         #/my/contest/history/"
         data=dict(
@@ -385,13 +446,12 @@ class AppTests(unittest.TestCase):
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.golangData())
         data=json.loads(resp.data.decode())  
         if not data["data"][0]["result"][0]["passed"]:
-            print(data["data"][0]["result"][0]["errput"])
+            print(data["data"][0]["result"][0]["errput"]) 
         self.assertTrue(data["data"][0]["result"][0]["passed"])
-
 
         #rtesting c
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.cData())
-        data=json.loads(resp.data.decode())
+        data=json.loads(resp.data.decode()) 
         if not data["data"][0]["result"][0]["passed"]:
             print(data["data"][0]["result"][0]["errput"])
         self.assertTrue(data["data"][0]["result"][0]["passed"])

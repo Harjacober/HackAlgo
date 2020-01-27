@@ -299,13 +299,34 @@ class ApproveContest(Resource):
         if config.CELERY_TEST:
             #to test the rank function we set this to 1
             task_start_time=2*60
-        params = {'status': 00}
+        params = {'status': 2}
         if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
             # schedule task here
             updateRank.apply_async(countdown=task_start_time,args=[contestid, ctype])
             return response(200, "Success", [])  
 
         return response(400, "check the contestid",[])    
+
+class ForceStartOrEndContest(Resource):
+    @jwt_required
+    def get(self):
+        return response(300, "Use a POST Request", [])
+    @jwt_required
+    def post(self, ctype, contestid, start): 
+        if bool(start):
+            params = {'status': 1}
+            if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
+                return response(200, "Contest forcefully started", [])
+
+            return response(200, "Unable to start contest", [])    
+        else:
+            params = {'status': -1}
+            if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
+                return response(200, "Contest forcefully ended", [])
+
+            return response(200, "Unable to end contest", [])   
+
+
 
 class AddNewAuthor(Resource): 
     @jwt_required

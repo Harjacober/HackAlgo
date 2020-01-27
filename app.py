@@ -15,7 +15,7 @@ from api.access.problem import ProblemAdd, ProblemDetails, ProblemSet, ProblemSe
 from api.access.contest import (InitializeContest, UpdateContest,
                                 AddProblemForContest, UpdateProblemForContest,
                                 ApproveContest, AddNewAuthor, RemoveAuthor,
-                                GetContest, GetContestById)
+                                GetContest, GetContestById, ForceStartOrEndContest)
 from api.access.user import UserRegisterForContest, UserEnterContest, UserContestHistory, UserSubmissionHistory, RunContestCode, ContestRunCodeStatus
 from api.resources.internship import AddInternship,GetInternships,ViewInternship
 from flask_socketio import SocketIO
@@ -81,6 +81,7 @@ api.add_resource(UpdateProblemForContest,
 api.add_resource(ApproveContest, '/contest/<string:ctype>/approve/')
 api.add_resource(GetContestById, '/contest/<string:ctype>/<string:contestid>/')
 api.add_resource(GetContest, '/contest/many/<string:ctype>/<string:status>/')
+api.add_resource(ForceStartOrEndContest, '/contest/<string:ctype>/<string:contestid>/<string:start>/')
 
 api.add_resource(UserEnterContest, '/enter/contest/')
 api.add_resource(UserRegisterForContest, '/register/contest/')

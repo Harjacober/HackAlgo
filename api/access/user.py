@@ -87,7 +87,7 @@ class UserEnterContest(Resource):
         if not contest:
             return response(400,"Contest not found",{})
         else:
-            if contest['status'] == 00:
+            if contest['status'] == 2:
                 return response(400,"Contest is yet to start",{})
             elif contest['status'] == -1:
                 return response(400,"Contest has ended",{})
@@ -273,7 +273,7 @@ class UserRegisterForContest(Resource):
                 return response(400,"Contest has ended",{})
             elif contest['status'] == 0:
                 return response(400,"Contest is not active yet",{})
-
+ 
         user = User().getBy(_id=ObjectId(userid))
         if not user:
             return response(400,"User Id not found",{})
