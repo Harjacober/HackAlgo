@@ -3,3 +3,7 @@ pymongo
 flask-restful
 passlib
 flask-jwt-extended
+Celery
+redis
+flask-socketio
+Flask-Mail

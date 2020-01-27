@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  redis:
+    container_name: redis
+    image: redis:alpine
+    restart: on-failure
+    ports:
+      - "6379:6379"
+
+  mongodb:
+    container_name: mongo
+    image: mongo
+    restart: on-failure
+    ports:
+      - "27017:27017"
+  web:
+    container_name: platform
+    build:
+      context: .
+      dockerfile: Dockerfile
+    links:
+      - mongodb
+    volumes:
+      - ./:/home
+    ports:
+      - "9000:9000"
+    depends_on:
+      - mongodb
+      - redis
+    restart: on-failure

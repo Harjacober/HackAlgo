@@ -1,7 +1,17 @@
 import pymongo
 from pymongo import MongoClient
+from config import TESTING
+from platform import system
+ 
+host="mongo"
 
+if system() =="Windows":
+    host="localhost"
 
-client = MongoClient('localhost', 27017)["contestplatform"]
-
-print(client)
+if TESTING:
+    #making sure the database is empty before performing any operation
+    client = MongoClient(host, 27017)
+    client.drop_database("contestplatformtesting")
+    client=client["contestplatformtesting"]
+else:
+    client = MongoClient(host, 27017)["contestplatform"]

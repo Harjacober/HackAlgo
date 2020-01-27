@@ -1,0 +1,11 @@
+#!/bin/sh
+mkdir -p /var/run/celery
+mkdir -p /var/log/celery
+python db/create.py
+touch /var/log/celery/log.log
+#celery multi start w1 -A coderunner.celerytasks -l info --pidfile=/var/run/celery/%n.pid \
+#                                        --logfile=/var/log/celery/log.log --loglevel=DEBUG --verbose
+
+celery -A api.access.contest worker -l info --loglevel=DEBUG &
+python test/test_app.py
+#python app.py 

@@ -9,53 +9,56 @@ from flask_jwt_extended import (
 
 from coderunner.taskqueue import queue
 from coderunner.task import Task
-from db.models import Problem
+from db.models import Problem,Submission
 from bson.objectid import ObjectId
+from coderunner.problem import ProblemInstance
+from werkzeug.datastructures import FileStorage
 
 run_code_parser = reqparse.RequestParser()
 run_code_parser.add_argument('prblmid', help = 'This field cannot be blank. It also accept email', required = True)
-run_code_parser.add_argument('usermail', help = 'This field cannot be blank', required = True)
+run_code_parser.add_argument('userid', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('codecontent', help = 'This field cannot be blank', required = True)
+run_code_parser.add_argument('codefile', type=FileStorage, location='files', required = False, store_missing=False)
 run_code_parser.add_argument('lang', help = 'This field cannot be blank', required = True)
+run_code_parser.add_argument('stype', help = 'This field cannot be blank', required = True) 
 
 run_code_status_parser = reqparse.RequestParser()
 run_code_status_parser.add_argument('taskid', help = 'This field cannot be blank.', required = True)
 run_code_status_parser.add_argument('lang', help = 'This field cannot be blank.', required = True)
 run_code_status_parser.add_argument('prblmid', help = 'This field cannot be blank', required = True)
-run_code_status_parser.add_argument('usermail', help = 'This field cannot be blank', required = True)
+run_code_status_parser.add_argument('userid', help = 'This field cannot be blank', required = True)
 
 
-class RunCode(Resource):
+
+
+class RunCode(Resource): 
+    """
+    prepares submitted code and passes it to the :class: `Task` to run submission. 
+    Handles adding of the partial submission info to the database.
+    """
     @jwt_required
     def post(self):
-        input_data=run_code_parser.parse_args()
+        input_data = run_code_parser.parse_args()
 
-        for required in ["prblmid","usermail","codecontent","lang"]:        
-            if not (required in input_data):
-                return  {"code":"400","msg":"{} not in request".format(required),"data":[]}
-    
-        
-        problem_id=input_data["prblmid"]
-        problem= Problem.getBy(_id= ObjectId(problem_id))
+        problem_id=input_data["prblmid"] #get id
+        problem = Problem().getBy(_id= ObjectId(problem_id))#fetch the actual problem from database with the problemId 
         if not problem:
-            return {"code":"404","msg":"Invalid Problem ID","data":[]}
-
-        user_mail=input_data["usermail"]
-        code_content=input_data["codecontent"]
-        language=input_data["lang"]
-
-        task_id=queue.Queue.generateID()
-       
-        task=Task(language,code_content,user_mail,problem,task_id)
-        queue.queue.add(task)
+            return {"code":"404","msg":"Invalid Problem Id","data":[]}
+ 
+        task_id=queue.generateID()
+        codecontent = input_data.get('codecontent')
+        userid = input_data.get('userid')
+        stype = input_data.get('stype')
+        lang = input_data.get('lang')
+        codefile = input_data.get('codefile') 
+        task=Task(lang,codecontent,userid,ProblemInstance(problem),task_id,stype,codefile)
+        queue.add(task_id,task) 
 
         return {"code":"200","msg":"Task started ","data":[task.toJson()]}
 
-
-
     @jwt_required
     def get(self):
-        return  {"code":"300","msg":"Use A Post Request","data":[]}
+        return  {"code":"301","msg":"Use A Post Request","data":[]}
 
 
 class RunCodeStatus(Resource):
@@ -63,28 +66,21 @@ class RunCodeStatus(Resource):
     def post(self):
         input_data = run_code_status_parser.parse_args()
 
-        for required in ["prblmid","usermail","taskid","lang"]:        
-            if not (required in input_data):
-                return  {"code":"400","msg":"{} not in request".format(required),"data":[]}
-
         problem_id=input_data["prblmid"]
-        problem= Problem.getBy(_id= ObjectId(problem_id))
+        problem= Problem().getBy(_id= ObjectId(problem_id))
         if not problem:
-            return {"code":"404","msg":"Invalid Problem ID","data":[]}
+            return {"code":"404","msg":"Invalid Problem Id","data":[]}
 
-        user_mail=input_data["usermail"]
+        user_id=input_data["userid"]
         task_id=input_data["taskid"]
         language=input_data["lang"]
 
-        task=queue.queue.getById(task_id)
-
+        task=queue.getById(task_id)
+ 
         if task is None:
             return {"code":"404","msg":"Task not found","data":[]}
 
-        return {"code":"404","msg":"Task state is {} ".format(task.status()),"data":[task.toJson()]}
-
-
-            
+        return {"code":"200","msg":"Task state is {} ".format(task.status()),"data":[task.toJson()]}
 
     @jwt_required
     def get(self):

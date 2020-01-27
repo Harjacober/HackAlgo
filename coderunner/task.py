@@ -2,101 +2,312 @@ import os
 from random import randint
 from time import time
 import subprocess
-from threading import Thread
-from coderunner.problem import problem
+from datetime import datetime
+from shutil import rmtree 
+from db.models import UserRegisteredContest,Contest,ContestProblem,Problem,Submission
+from bson.objectid import ObjectId
+from platform import system
+from flask import current_app
+
 
 ORIGINAL_DIR=os.getcwd()
 
-#So this would be different for each machine not sure how to about this efficiently yet
-#for unix we might use which to find binary but mehn i dont know brah
+
+if system()=='Linux':
+    py_dir="/usr/local/bin/python"
+    go_dir="/usr/bin/go"
+    cplus_dir="/usr/bin/g++"
+    c_dir="/usr/bin/gcc" 
+    import resource
+
 compilers={
-    "go":"/usr/local/go/bin/go",
-    "py":"/usr/bin/python3",
-    "java":"",
-    "c":"",
-    "c++":"/usr/bin/g++",
-    "python":"/usr/bin/python3",
-    "python2":"/usr/bin/python3",
-    "php":"php",
-    "js":"node"
+    "go":go_dir,
+    "py":py_dir,
+    "java":"/usr/bin/java",
+    "c":c_dir,
+    "c++":cplus_dir,
+    "python":py_dir,
+    "python2":"/usr/bin/python2",
+    "php":"/usr/bin/php",
+    "js":"/usr/bin/node"
 }
 
-class Task(Thread):
+def runCommand(*popenargs,input=None, capture_output=False, timeout=None, check=False,memorylimit=300,**kwargs):
+    #mocking the standard implementation of subprocess.run
+    #so we can set memory limit
+    if input is not None:
+        if kwargs.get('stdin') is not None:
+            raise ValueError('stdin and input arguments may not both be used.')
+        kwargs['stdin'] = subprocess.PIPE
+
+    if capture_output:
+        if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+            raise ValueError('stdout and stderr arguments may not be used '
+                             'with capture_output.')
+        kwargs['stdout'] = subprocess.PIPE
+        kwargs['stderr'] = subprocess.PIPE
+
+    with subprocess.Popen(*popenargs, **kwargs) as process:
+        if system()=='Linux':
+            memorylimithard=memorylimit*1024**2+10024
+            resource.prlimit(process.pid,resource.RLIMIT_STACK,(memorylimit*1024**2,memorylimithard))
+            resource.prlimit(process.pid,resource.RLIMIT_DATA,(memorylimit*1024**2,memorylimithard))
+        try:
+            stdout, stderr = process.communicate(input, timeout=timeout)
+        except subprocess.TimeoutExpired as exc:
+            process.kill()
+            if subprocess._mswindows:
+                # Windows accumulates the output in a single blocking
+                # read() call run on child threads, with the timeout
+                # being done in a join() on those threads.  communicate()
+                # _after_ kill() is required to collect that and add it
+                # to the exception.
+                exc.stdout, exc.stderr = process.communicate()
+            else:
+                # POSIX _communicate already populated the output so
+                # far into the TimeoutExpired exception.
+                process.wait()
+            raise
+        except:  # Including KeyboardInterrupt, communicate handled that.
+            process.kill()
+            # We don't call process.wait() as .__exit__ does that for us.
+            raise
+        retcode = process.poll()
+        if check and retcode:
+            raise subprocess.CalledProcessError(retcode, process.args,
+                                     output=stdout, stderr=stderr)
+    return subprocess.CompletedProcess(process.args, retcode, stdout, stderr)
+
+
+class Task:
+    """
+    Handles running of submitted code and updates the submission details in the database
+    """
     PossibelTasksState=["initialize","running","finished"]
-    def __init__(self,lang,content,person_email,problem,id):
+    def __init__(self,lang,content,userid,problem,id,stype,codefile,contestid="",ctype=""):
+        """
+        :param stype: the type of submission. differentiates actual 
+                      test cases from sample cases.
+        :param content: code content
+        :param problem: an Instance of :class: `ProblemInstance`.
+        """
         self.state=Task.PossibelTasksState[0]
         self.lang=lang
-        self.content=content
-        self.person_email=person_email
-        self.cases=problem.getCases()
-        self.answercase=problem.getAnswerForCases
-        self.result=[None]*len(self.answercase)
-        self.id=id
+        self.stype = stype 
+        self.codefile = codefile
+        if self.codefile is not None:
+            self.content = self.codefile.read().decode("utf-8") 
+        else:
+            self.content = content # get submitted code content   
+        self.userid=userid  
+        self.id=id 
+        self.state=Task.PossibelTasksState[0]  
+        self.verdict = "Passed"
+        self.contestid = contestid
+        self.ctype = ctype
+        self.problem = problem
+
+        if self.stype == "test":
+            self.cases=self.problem.getTestCases().split(",")
+            self.answercase=self.problem.getAnswerForTestCases().split(",") 
+            self.result=[None]*int(self.problem.getSizeOfTestCases())
+        elif self.stype == "sample":
+            self.cases=self.problem.getSampleCases().split(",")
+            self.answercase=self.problem.getAnswerForSampleCases().split(",")
+            self.result=[None]*int(self.problem.getSizeOfSampleCases()) 
+
+        self.timelimit=problem.getTimeLimit()
+        self.memlimit=problem.getMemLimit()
         self.enter()
 
     def toJson(self):
-        return {"state":self.state,"lang":self.lang,"email":self.person_email,"_id":self.id,"result":self.result}
+        return {"state":self.state,"lang":self.lang,"userid":self.userid,"_id":self.id,"result":self.result}
 
     def __del___(self):
-        self.file.close()
-        os.remove(self.filepath)
+        #cleaning up
+        try:
+            os.remove(self.filepath)
+            if self.lang.lower()=="java":
+                rmtree(self.folder,ignore_errors=True)
+        except FileNotFoundError:
+            pass
 
     def __lt__(self,other):
         return ~self.PossibelTasksState.index(self.state)< ~other.PossibelTasksState.index(other.state)
 
-    def enter(self):
+
+    def enter(self): 
         self.filename=self.randomFilename()
-        self.folder="/tmp/{}/".format(self.lang)
+        if self.lang.lower()=="java":
+            filename=os.path.join(*self.filename.split(".")[:-1])
+            self.folder="/tmp/{}/{}/".format(self.lang,filename)
+            os.makedirs(self.folder,exist_ok=True)
+        else:
+            self.folder="/tmp/{}/".format(self.lang)
         self.filepath=self.folder+self.filename
-        self.file=open(self.filepath,"w+")
-        self.file.write(self.content)
+        self.file = open(self.filepath,"w+")
+        self.file.write(self.content) 
+        self.file.close()
+        self.timeofsubmission=str(datetime.now())
     
     def resolveFolder(self,lang):
         #python is py,java is java e.t.c.This function exist if need be resolve the name later
+    
         if lang not in compilers:
-            raise NotImplementedError("Not yet suported")
-        return compilers[lang]
+            raise NotImplementedError("Not yet supported")
+        if lang.lower()=="go":
+            return [compilers[lang],"run"]
+        return [compilers[lang]]
 
     def randomFilename(self):
-        return self.person_email+"{}{}".format(time(),hash(self))
+        return self.userid+"{}{}.{}".format(hash(time()),hash(self),self.lang)
 
     def status(self):
         return self.state
 
-    def runCompile(self,compiler_name,compile_options,run_options,n_cases,compile_file_ext,binary):
+    def runCompile(self,compiler_name,compile_options,run_options,n_cases,binary):
 
-        subprocess.run([compiler_name]+compile_options+[self.filepath])
+        compileans=runCommand([compiler_name]+compile_options+[self.filepath],
+                                            capture_output=True,encoding="utf-8")
+
+        #if while trying to compile and there was an error 
+        if compileans.returncode >0 :
+            for cc in range(n_cases):
+                self.result[cc] ={"passed":False,"output":"","errput":compileans.stderr.strip()}
+            return
+
     
         for cc in range(n_cases):
-            ans=subprocess.\
-                run([binary]+run_options+[self.filepath+compile_file_ext], capture_output=True,\
-                            input=self.cases[cc],encoding="utf-8").stdout.decode()
+            try:
+                ans=runCommand([binary]+run_options, capture_output=True,timeout= self.timelimit,\
+                                input=self.cases[cc],encoding="utf-8")
+            except subprocess.TimeoutExpired:
+                self.result[cc] ={"passed":False,"output":"Timeout","errput":"Timeout"}
+                self.verdict = "Failed" 
+                return
+            except MemoryError:
+                self.result[cc] ={"passed":False,"output":"Memory Error","errput":"Memory Error"}
+                self.verdict = "Failed"
+                return
 
-            self.result[l]=ans==self.answercase[cc] #would scrutinize this line soon cos answer formatting might be disimilar to stored answrer
+            output=ans.stdout.strip()
+            errput=ans.stderr.strip()
+
+            self.result[cc] ={
+                            "passed":output==self.answercase[cc] and ans.returncode==0,
+                            "output":output,
+                            "errput":errput
+                            }
 
     def run(self):
-        l=len(self.cases)
-        self.state=self.PossibelTasksState[2]
+        l=len(self.result)
+        self.state=self.PossibelTasksState[1]
         #some languagues have to compile then run 
         if self.lang == "java":
             options_compile=["-d",self.folder,"-s",self.folder,"-h",self.folder]
-            options_run=[]
-            self.runCompile("javac",options_compile,options_run,l,".class","java")
+            options_run=["-classpath",self.folder,"Solution"]
+            self.runCompile("javac",options_compile,options_run,l,"java")
         elif self.lang == "c":
-            options_compile=["-o",self.filepath+"CP"]
+            options_compile=["-o",self.filepath+".out"]
             options_run=[]
-            self.runCompile("g++",options_compile,options_run,l,"",self.filepath+"CP")
+            self.runCompile("gcc",options_compile,options_run,l,self.filepath+".out")
         elif self.lang=="c++":
-            options_compile=["-o",self.filepath+"CP"]
+            options_compile=["-o",self.filepath+".out"]
             options_run=[]
-            self.runCompile("g++",options_compile,options_run,l,"",self.filepath+"CP")
+            self.runCompile("g++",options_compile,options_run,l,self.filepath+".out")
         else:
             # languages like python, js, php should be fine.
             for cc in range(l):
-                ans=subprocess.\
-                        run([self.resolveFolder(self.lang),self.filepath], capture_output=True,\
-                        input=self.cases[cc],encoding="utf-8").stdout.decode()
-                self.result[l]=ans==self.answercase[cc] #would scrutinize this line soon
-        self.state=self.PossibelTasksState[3]
+                args=[]
+                args.extend(self.resolveFolder(self.lang))
+                args.append(self.filepath) 
+                try:
+                    ans=runCommand(args,capture_output=True,timeout= self.timelimit,
+                            input=self.cases[cc],encoding="utf-8")
+                except subprocess.TimeoutExpired:
+                    self.result[cc] ={"passed":False,"output":"Timeout","errput":"Timeout"}
+                    self.verdict = "Failed"
+                    break
+                except MemoryError:
+                    self.result[cc] ={"passed":False,"output":"Memory Error","errput":"Memory Error"}
+                    self.verdict = "Failed"
+                    break
 
+                output=ans.stdout.strip()
+                errput=ans.stderr.strip()
+                if self.lang.lower()=="go":
+                    pass
+                    #print(self.answercase[cc].strip(),output+"theoutput")
+                self.result[cc] = {
+                                "passed":output==self.answercase[cc] and ans.returncode==0,
+                                "output":output,
+                                "errput":errput
+                                }             
 
+        self.state=self.PossibelTasksState[2]
+        #create a submission in the database    
+        submission_data = {'prblmid':self.problem.getprblmid(),'userid':self.userid,'contestid':self.contestid,'ctype':self.ctype,'codecontent':self.content,
+        'lang':self.lang,'stype':self.stype,'result': self.result,'verdict': self.verdict,'timesubmitted':self.timeofsubmission}
+        if self.stype == "test":   
+            if not bool(self.contestid):
+                submission_data.pop('userid', None)
+                submission_data.pop('contestid', None)
+                submission_data.pop('ctype', None)
+                Submission(self.userid).addDoc(submission_data) 
+            else:
+                self.gradeSubmission(submission_data)    
+       
+        os.remove(self.filepath)
+        if self.lang.lower()=="java":
+            rmtree(self.folder,ignore_errors=True)
+
+    def gradeSubmission(self, data):
+        """
+        This method is called in :class: `Task' in task.py to make necessary 
+        updates to the database when submission code to a problem in the contest has be run
+        """
+        userid = data.get('userid')
+        contestid = data.get('contestid')
+        ctype = data.get('ctype')
+        prblmid = data.get('prblmid')
+        verdict = data.get('verdict')
+        contest_problem = ContestProblem(ctype, contestid).getBy(_id=ObjectId(prblmid))
+        contest = Contest(ctype).getBy(_id=ObjectId(contestid))
+        contest_start_time = contest.get('starttime')
+        submission_time = datetime.now().timestamp() - contest_start_time
+
+        prblmscorefield = 'problemscore.{}'.format(prblmid)
+        if verdict != "Passed": 
+            score = 0  
+            penalty = -10
+            # update the penalty field
+            update = {'$inc': {'penalty': penalty}} 
+            pScore = contest_problem.get('prblmscore')
+            argDict={"contestid":contestid, prblmscorefield:{'$ne': pScore}}
+            UserRegisteredContest(userid).flexibleUpdate(update, **argDict)  
+        else:
+            score = contest_problem.get('prblmscore')
+            penalty = 0
+
+        # update the user score for that problem and time penalty, if the new score is greater than the prev one
+        update = {'$set': {'problemscore.{}'.format(prblmid): score}, '$inc': {'timepenalty': submission_time}}  
+        argDict={"contestid":contestid,prblmscorefield:{'$lte': score}}
+        UserRegisteredContest(userid).flexibleUpdate(update, **argDict)  
+        # calculate the total score
+        reg_contest = UserRegisteredContest(userid).getBy(contestid=contestid)
+        problemscore = reg_contest.get('problemscore')
+        totalscore = reg_contest.get('penalty')
+        timepenalty = reg_contest.get('timepenalty')
+        for each in problemscore: 
+            totalscore += problemscore[each]
+        # update the total score
+        update = {"$set": {'totalscore': totalscore}}
+        UserRegisteredContest(userid).flexibleUpdate(update, contestid=contestid)   
+
+        # update the contest document to reflect this participants current score. the rank will be updated on
+        # the scoreboard in the front end using dynamic tables.
+        update = {"$set": {'participants.{}.currscore'.format(userid): totalscore,
+        'participants.{}.timepenalty'.format(userid): timepenalty}}
+        Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)) 
+        data['score'] = totalscore
+        current_app.socketio.emit('newscore', {'data':totalscore})
