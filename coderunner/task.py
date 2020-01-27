@@ -18,6 +18,7 @@ if system()=='Linux':
     go_dir="/usr/bin/go"
     cplus_dir="/usr/bin/g++"
     c_dir="/usr/bin/gcc" 
+    import resource
 
 compilers={
     "go":go_dir,
@@ -30,6 +31,53 @@ compilers={
     "php":"/usr/bin/php",
     "js":"/usr/bin/node"
 }
+
+def runCommand(*popenargs,input=None, capture_output=False, timeout=None, check=False,memorylimit=300,**kwargs):
+    #mocking the standard implementation of subprocess.run
+    #so we can set memory limit
+    if input is not None:
+        if kwargs.get('stdin') is not None:
+            raise ValueError('stdin and input arguments may not both be used.')
+        kwargs['stdin'] = subprocess.PIPE
+
+    if capture_output:
+        if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+            raise ValueError('stdout and stderr arguments may not be used '
+                             'with capture_output.')
+        kwargs['stdout'] = subprocess.PIPE
+        kwargs['stderr'] = subprocess.PIPE
+
+    with subprocess.Popen(*popenargs, **kwargs) as process:
+        if system()=='Linux':
+            memorylimithard=memorylimit*1024**2+10024
+            resource.prlimit(process.pid,resource.RLIMIT_STACK,(memorylimit*1024**2,memorylimithard))
+            resource.prlimit(process.pid,resource.RLIMIT_DATA,(memorylimit*1024**2,memorylimithard))
+        try:
+            stdout, stderr = process.communicate(input, timeout=timeout)
+        except subprocess.TimeoutExpired as exc:
+            process.kill()
+            if subprocess._mswindows:
+                # Windows accumulates the output in a single blocking
+                # read() call run on child threads, with the timeout
+                # being done in a join() on those threads.  communicate()
+                # _after_ kill() is required to collect that and add it
+                # to the exception.
+                exc.stdout, exc.stderr = process.communicate()
+            else:
+                # POSIX _communicate already populated the output so
+                # far into the TimeoutExpired exception.
+                process.wait()
+            raise
+        except:  # Including KeyboardInterrupt, communicate handled that.
+            process.kill()
+            # We don't call process.wait() as .__exit__ does that for us.
+            raise
+        retcode = process.poll()
+        if check and retcode:
+            raise subprocess.CalledProcessError(retcode, process.args,
+                                     output=stdout, stderr=stderr)
+    return subprocess.CompletedProcess(process.args, retcode, stdout, stderr)
+
 
 class Task:
     """
@@ -70,7 +118,6 @@ class Task:
 
         self.timelimit=problem.getTimeLimit()
         self.memlimit=problem.getMemLimit()
-        self.formatcase() # This method is temporal    
         self.enter()
 
     def toJson(self):
@@ -88,25 +135,6 @@ class Task:
     def __lt__(self,other):
         return ~self.PossibelTasksState.index(self.state)< ~other.PossibelTasksState.index(other.state)
 
-    def formatcase(self):
-        # The two for loops should be removed else an efficient way to the
-        # processing should be found.
-        # In the future, there should be no need to remove \r as the reading
-        # of the file in `ProblemAdd` method will be fixed to not read in \r
-        for i in range(len(self.cases)):
-            string = self.cases[i].lstrip("\r\n")   
-            arr = []
-            for e in string:
-                if e != "\r":
-                    arr.append(e)
-            self.cases[i] = "".join(arr)   
-        for i in range(len(self.answercase)):
-            string = self.answercase[i].lstrip("\r\n")   
-            arr = []
-            for e in string:
-                if e != "\r":
-                    arr.append(e)
-            self.answercase[i] = "".join(arr) 
 
     def enter(self): 
         self.filename=self.randomFilename()
@@ -139,10 +167,10 @@ class Task:
 
     def runCompile(self,compiler_name,compile_options,run_options,n_cases,binary):
 
-        compileans=subprocess.run([compiler_name]+compile_options+[self.filepath],
+        compileans=runCommand([compiler_name]+compile_options+[self.filepath],
                                             capture_output=True,encoding="utf-8")
 
-        #if while trying to compile there was an error 
+        #if while trying to compile and there was an error 
         if compileans.returncode >0 :
             for cc in range(n_cases):
                 self.result[cc] ={"passed":False,"output":"","errput":compileans.stderr.strip()}
@@ -151,11 +179,15 @@ class Task:
     
         for cc in range(n_cases):
             try:
-                ans=subprocess.\
-                    run([binary]+run_options, capture_output=True,timeout= self.timelimit,\
+                ans=runCommand([binary]+run_options, capture_output=True,timeout= self.timelimit,\
                                 input=self.cases[cc],encoding="utf-8")
             except subprocess.TimeoutExpired:
                 self.result[cc] ={"passed":False,"output":"Timeout","errput":"Timeout"}
+                self.verdict = "Failed" 
+                return
+            except MemoryError:
+                self.result[cc] ={"passed":False,"output":"Memory Error","errput":"Memory Error"}
+                self.verdict = "Failed"
                 return
 
             output=ans.stdout.strip()
@@ -166,8 +198,6 @@ class Task:
                             "output":output,
                             "errput":errput
                             }
-            
-
 
     def run(self):
         l=len(self.result)
@@ -192,18 +222,22 @@ class Task:
                 args.extend(self.resolveFolder(self.lang))
                 args.append(self.filepath) 
                 try:
-                    ans=subprocess.run(args,capture_output=True,timeout= self.timelimit,
+                    ans=runCommand(args,capture_output=True,timeout= self.timelimit,
                             input=self.cases[cc],encoding="utf-8")
                 except subprocess.TimeoutExpired:
                     self.result[cc] ={"passed":False,"output":"Timeout","errput":"Timeout"}
-                    self.verdict = "Failed"  
-                    continue
+                    self.verdict = "Failed"
+                    break
+                except MemoryError:
+                    self.result[cc] ={"passed":False,"output":"Memory Error","errput":"Memory Error"}
+                    self.verdict = "Failed"
+                    break
 
                 output=ans.stdout.strip()
                 errput=ans.stderr.strip()
-
-                if output!=self.answercase[cc]:
-                    self.verdict = "Failed"     
+                if self.lang.lower()=="go":
+                    pass
+                    #print(self.answercase[cc].strip(),output+"theoutput")
                 self.result[cc] = {
                                 "passed":output==self.answercase[cc] and ans.returncode==0,
                                 "output":output,

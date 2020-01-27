@@ -1,6 +1,6 @@
 
 from passlib.hash import pbkdf2_sha256 as sha256
-from flask_restful import Resource,reqparse
+from flask_restful import Resource,reqparse,request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -10,6 +10,15 @@ from flask_jwt_extended import (
     )
 from bson.objectid import ObjectId
 from db.models import Admin,User,Submission
+import re
+from flask import current_app
+from random import randint
+import config
+from flask_mail import Message
+
+
+resString=r"""(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"""
+testEmailRe=re.compile(resString)
 
 
 login_parser = reqparse.RequestParser()
@@ -29,11 +38,23 @@ def response(code,msg,data,access_token=""):
 class AdminRegistration(Resource):
     category=Admin()
     def get(self):
-        return response(300,"Method not allowed",[]) 
-        
+        id=request.args.get("id")
+
+        data=current_app.unregisteredusers.get(id)
+
+        if not data:
+            return response(500,"something went wrong.Have you registered?",[])
+
+        uid = self.category.addDoc(data) 
+        current_app.unregisteredusers.pop(id)
+        return response(200,"Successfully resgistered",{"uniqueid":str(uid)},access_token=create_access_token(data["email"]))
+
     def post(self):
         data=reg_parser.parse_args()
-        
+        if not testEmailRe.match(data["email"]):
+            return response(200,"Invalid email",[])
+        if len(data["pswd"]) <6:
+            return response(200,"Password lenght must be greater than six",[])    
         for category in [Admin(),User()]: #Admin && User name should be unique
             if category.getBy(email=data["email"]): #check if email already exist
                 return response(200,"email taken",[])
@@ -41,10 +62,26 @@ class AdminRegistration(Resource):
                 return response(200,"usernname taken",[])    
 
         data["pswd"]=sha256.hash(data["pswd"]) #replace the old pswd arg with new hash passowrd
-        uid = self.category.addDoc(data) #finally add registration data to database
+    
+        generatedid=hex(randint(10**9,10**10))
+        current_app.unregisteredusers[generatedid]=data
 
-        return response(200,"Successfully resgistered",{"uniqueid":str(uid)},access_token=create_access_token(data["email"]))
+        msg = Message("Welcome to HackAlgo",
+                  sender=config.MAIL_USERNAME,
+                  recipients=[data["email"]]
+                  )
 
+        userMsg="""
+                <b>Thank for Registering With Us </b><br>
+                <p>Registration Code {} </p> 
+                """.format(generatedid)
+
+        msg.html = userMsg
+
+        current_app.mail.send(msg)
+
+        return response(200,"check you email",[])
+        
 class UserRegistration(AdminRegistration):
     category=User()
 

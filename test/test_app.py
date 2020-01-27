@@ -69,15 +69,20 @@ class AppTests(unittest.TestCase):
             username=username,
             pswd=password
         )) 
-        self.assertTrue('blank' in resp.data.decode())
+        
 
         resp=app_client.post(url, data=dict(
             username=username,
             pswd=password,
             email=email
         ))
+        self.assertTrue('email' in resp.data.decode())
 
-        resp=json.loads(resp.data.decode())
+        if "registration" in url:
+            keyreg=list(contestplatform.unregisteredusers.keys())[0]
+            resp=app_client.get(url+"?id="+keyreg)
+            resp=json.loads(resp.data.decode())
+
 
         self.assertTrue(len(resp["access_token"])>0)
         self.assertTrue(len(resp["data"]["uniqueid"])>0)
@@ -115,11 +120,11 @@ class AppTests(unittest.TestCase):
 
 
     def test_2_user_reg(self):
-        self.reg_test("/user/registration/","abraham","akerele","abraham@yahoo.com")
+        self.reg_test("/user/registration/","abraham","akerele","abrahamakerele38@gmail.com")
         self.login_test("/user/login/","abraham","akerele")
 
     def test_3_admin_reg(self):
-        self.reg_test("/admin/registration/","marlians","aburunakamaki","nairamarley@yahoo.com")
+        self.reg_test("/admin/registration/","marlians","aburunakamaki","abrahamadeniyi38@gmail.com")
         self.login_test("/admin/login/","marlians","aburunakamaki")
 
     def test_4_contest_create(self):
@@ -165,7 +170,7 @@ class AppTests(unittest.TestCase):
         a1 = "[3, 5, 8, 10, 12],[7, 6, 11, 14, 2],[11, 5, 9, 10, 9]"
         s1 = "3 4 6 3\n2 4 6 2"
         as1= "[5, 8, 12, 5]"
-        c2 = b"3\r\n1\r\n2\r\n3\r\n4\r\n5\r\n6,2\r\n7\r\n8\r\n9\r\n10,1\r\n9\r\n10'"
+        c2 = b"3\n1\n2\n3\n4\n5\n6,2\n7\n8\n9\n10,1\n9\n10"
         a2= b"3\n7\n11,\n15\n19,\n19"
         s2 = b"2\n3\n4\n2\n1"
         as2 = b"7\n3"
@@ -215,7 +220,7 @@ class AppTests(unittest.TestCase):
         a1 = "[3, 5, 8, 10, 12],[7, 6, 11, 14, 2],[11, 5, 9, 10, 9]"
         s1 = "3 4 6 3\n2 4 6 2"
         as1= "[5, 8, 12, 5]"
-        c2 = b"3\r\n1\r\n2\r\n3\r\n4\r\n5\r\n6,2\r\n7\r\n8\r\n9\r\n10,1\r\n9\r\n10'"
+        c2 = b"3\n1\n2\n3\n4\n5\n6,2\n7\n8\n9\n10,1\n9\n10"
         a2= b"3\n7\n11,\n15\n19,\n19"
         s2 = b"2\n3\n4\n2\n1"
         as2 = b"7\n3"
@@ -313,6 +318,11 @@ class AppTests(unittest.TestCase):
         data=json.loads(resp.data.decode())
         self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
 
+        #testing for memory
+        resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.testMemory())
+        data=json.loads(resp.data.decode())
+        self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
+
     def test_7_user_functions(self):
         self.assertTrue(len(self.contest_type)>0)
         self.assertTrue(len(self.contest_id)>0)
@@ -372,12 +382,12 @@ class AppTests(unittest.TestCase):
         data=json.loads(resp.data.decode()) 
         self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
         
-        #testing golang
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.golangData())
-        data=json.loads(resp.data.decode())
+        data=json.loads(resp.data.decode())  
         if not data["data"][0]["result"][0]["passed"]:
             print(data["data"][0]["result"][0]["errput"])
         self.assertTrue(data["data"][0]["result"][0]["passed"])
+
 
         #rtesting c
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.cData())
@@ -404,7 +414,6 @@ class AppTests(unittest.TestCase):
         self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
         if config.CELERY_TEST:
             #see if it is updated
-            print("did i even run")
             with open("/home/celerytestfile.in") as f:
                 self.assertTrue(f.read()=="a")
             # try:

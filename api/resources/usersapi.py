@@ -64,6 +64,15 @@ class UserProfile(Resource):
         user_data = self.category.getBy( params=exclude, _id=uid) 
         if user_data:
             return response(200, "Success", user_data)
+        return response(200, "uniqueid doesn't exist",[])
+        
+    def put(self):
+        data = getprofile_parser.parse_args() 
+        uid = ObjectId(data['uniqueid'])
+        exclude = {'_id':0, 'pswd':0, 'lastModified':0}
+        user_data = self.category.getBy( params=exclude, _id=uid) 
+        if user_data:
+            return response(200, "Success", user_data)
         return response(200, "uniqueid doesn't exist",[])       
 
 class SubmissionInfo(Resource):
