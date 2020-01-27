@@ -17,6 +17,7 @@ from api.access.contest import (InitializeContest, UpdateContest,
                                 ApproveContest, AddNewAuthor, RemoveAuthor,
                                 GetContest, GetContestById)
 from api.access.user import UserRegisterForContest, UserEnterContest, UserContestHistory, UserSubmissionHistory, RunContestCode, ContestRunCodeStatus
+from api.resources.internship import AddInternship,GetInternships,ViewInternship
 from flask_socketio import SocketIO
 from flask_mail import Mail
 
@@ -87,6 +88,10 @@ api.add_resource(RunContestCode, '/contest/run/code/')
 api.add_resource(ContestRunCodeStatus, '/contest/run/code/status/')
 api.add_resource(UserContestHistory, '/my/contest/history/')
 api.add_resource(UserSubmissionHistory, '/my/submission/history/')
+
+api.add_resource(AddInternship, '/add/internship/')
+api.add_resource(GetInternships, '/get/internship/')
+api.add_resource(ViewInternship, '/view/internship/')
 
 if __name__ == "__main__":
     contestplatform.socketio.run(contestplatform,host="0.0.0.0", debug=True, port="9000")

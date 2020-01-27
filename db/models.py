@@ -41,11 +41,10 @@ class ContestProblem(Contest):
         Contest.__init__(self, ctype)   
         self.collection = self.collection[contestid]      
 
+class Internships(base):
+    def __init__(self):
+        super().__init__(self)
+        self.collection = client["internships"] 
+
 if __name__ == "__main__":
-    pass
-    #from bson.objectid import ObjectId
-    #a=Admin.getBy(_id= ObjectId("5dd4309c7ea41f4d84bcbf3d"))
-    #print(a)
-    #a=Admin.addDoc({"bro":"code"})
-    #b=User.addDoc({"bro":"code"})
-    #c=Problem.addDoc({"bro":"code"})
+    pass 

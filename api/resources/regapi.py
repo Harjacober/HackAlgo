@@ -66,21 +66,21 @@ class AdminRegistration(Resource):
         generatedid=hex(randint(10**9,10**10))
         current_app.unregisteredusers[generatedid]=data
 
-        msg = Message("Welcome to HackAlgo",
+        msg = Message("Welcome to CodeGees",
                   sender=config.MAIL_USERNAME,
                   recipients=[data["email"]]
                   )
 
         userMsg="""
                 <b>Thank for Registering With Us </b><br>
-                <p>Registration Code {} </p> 
+                <p>Complete your Registration using the Code {} </p> 
                 """.format(generatedid)
 
         msg.html = userMsg
 
         current_app.mail.send(msg)
 
-        return response(200,"check you email",[])
+        return response(200,"Success!!! Check you email",[])
         
 class UserRegistration(AdminRegistration):
     category=User()
