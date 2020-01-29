@@ -4,6 +4,8 @@ from db.models import Admin, Problem, Contest
 from flask_restful import Resource,reqparse
 from flask_jwt_extended import jwt_required
 from bson.objectid import ObjectId
+from flask_cors import  cross_origin
+
 
 get_all_added_prob_parser = reqparse.RequestParser()
 get_all_added_prob_parser.add_argument('uniqueid', help="Admin unique Id", required=True)
@@ -27,6 +29,7 @@ class AdminProfile(UserProfile):
 
 class GetAllAddedProblems(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         data = get_all_added_prob_parser.parse_args()  
         uid = ObjectId(data['uniqueid'])  
@@ -41,12 +44,14 @@ class GetAllAddedProblems(Resource):
         return response(200, "Success", problemList)    
 
         
-    @jwt_required    
+    @jwt_required
+    @cross_origin(supports_credentials=True) 
     def post(self):
         return response(300, "Use a POST Request", "")     
 
 class GetAllInvolvedContest(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         data = get_all_involved_contest_parser.parse_args()  
         uid = ObjectId(data['uniqueid'])  
@@ -61,6 +66,7 @@ class GetAllInvolvedContest(Resource):
         return response(200, "Success", problemList)    
 
         
-    @jwt_required    
+    @jwt_required
+    @cross_origin(supports_credentials=True)  
     def post(self):
         return response(300, "Use a POST Request", "")    

@@ -14,5 +14,5 @@ MAIL_SERVER="smtp.gmail.com"
 MAIL_PORT=587
 MAIL_USE_TLS=True
 MAIL_USERNAME="hackalgodevs@gmail.com"
-MAIL_PASSWORD= "H@ck@lg0911"
+MAIL_PASSWORD= "H@ck@lg09111"
 

@@ -15,6 +15,8 @@ from flask import current_app
 from random import randint
 import config
 from flask_mail import Message
+from flask_cors import  cross_origin
+
 
 
 resString=r"""(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"""
@@ -37,6 +39,7 @@ def response(code,msg,data,access_token=""):
 
 class AdminRegistration(Resource):
     category=Admin()
+    @cross_origin(supports_credentials=True)
     def get(self):
         id=request.args.get("id")
 
@@ -48,7 +51,7 @@ class AdminRegistration(Resource):
         uid = self.category.addDoc(data) 
         current_app.unregisteredusers.pop(id)
         return response(200,"Successfully resgistered",{"uniqueid":str(uid)},access_token=create_access_token(data["email"]))
-
+    @cross_origin(supports_credentials=True)
     def post(self):
         data=reg_parser.parse_args()
         if not testEmailRe.match(data["email"]):
@@ -64,6 +67,7 @@ class AdminRegistration(Resource):
         data["pswd"]=sha256.hash(data["pswd"]) #replace the old pswd arg with new hash passowrd
     
         generatedid=hex(randint(10**9,10**10))
+        
         current_app.unregisteredusers[generatedid]=data
 
         msg = Message("Welcome to CodeGees",
@@ -78,18 +82,19 @@ class AdminRegistration(Resource):
 
         msg.html = userMsg
 
-        current_app.mail.send(msg)
+        #current_app.mail.send(msg)
 
-        return response(200,"Success!!! Check you email",[])
+        return response(200,"Success!!! Check you email",[generatedid])
         
 class UserRegistration(AdminRegistration):
     category=User()
 
 class AdminLogin(Resource):
     category=Admin()
+    @cross_origin(supports_credentials=True)
     def get(self) -> dict:
         return response(300,"Method not allowed",[])
-
+    @cross_origin(supports_credentials=True)
     def post(self) -> dict:
         data=login_parser.parse_args()
 

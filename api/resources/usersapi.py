@@ -8,6 +8,8 @@ from flask_jwt_extended import (
     )
 from bson.objectid import ObjectId
 from db.models import User,Submission
+from flask_cors import  cross_origin
+
 
 
 profile_parser = reqparse.RequestParser() 
@@ -34,9 +36,12 @@ def response(code,msg,data,access_token=""):
 
 class UserUpdateProfile(Resource):
     category = User()
+    @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return response(300, "Method not allowed", [])  
-
+    @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         data = profile_parser.parse_args() 
         #update the profile(document) with unqiueid provided 
@@ -48,6 +53,8 @@ class UserUpdateProfile(Resource):
  
 class UserProfile(Resource):
     category = User()
+    @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         data = getprofile_parser.parse_args() 
         uid = ObjectId(data['uniqueid'])
@@ -56,7 +63,8 @@ class UserProfile(Resource):
         if user_data:
             return response(200, "Success", user_data)
         return response(200, "uniqueid doesn't exist",[])    
-
+    @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         data = getprofile_parser.parse_args() 
         uid = ObjectId(data['uniqueid'])
@@ -65,7 +73,8 @@ class UserProfile(Resource):
         if user_data:
             return response(200, "Success", user_data)
         return response(200, "uniqueid doesn't exist",[])
-        
+    @jwt_required
+    @cross_origin(supports_credentials=True)
     def put(self):
         data = getprofile_parser.parse_args() 
         uid = ObjectId(data['uniqueid'])
@@ -78,10 +87,12 @@ class UserProfile(Resource):
 class SubmissionInfo(Resource):
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return response(300, "Method not allowed", [])
 
-    @jwt_required    
+    @jwt_required
+    @cross_origin(supports_credentials=True) 
     def post(self):
         data = getsubmission_parser.parse_args()
         userid = data['userid']
@@ -95,10 +106,12 @@ class SubmissionInfo(Resource):
 class SubmissionList(Resource):
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self, problemid): 
         return response(300, "Method not allowed", [])
         
-    @jwt_required    
+    @jwt_required 
+    @cross_origin(supports_credentials=True)  
     def post(self, problemid):
         data = getsubmission_parser.parse_args()
         userid = data['userid'] 

@@ -9,6 +9,8 @@ from flask_jwt_extended import (
 from db.models import Admin,Internships
 from flask import request 
 from bson.objectid import ObjectId
+from flask_cors import  cross_origin
+
 
 add_internship_parser = reqparse.RequestParser()
 add_internship_parser.add_argument("admin",help="Admin username",required=True)
@@ -32,10 +34,12 @@ def response(code,msg,data,access_token=""):
 
 class AddInternship(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return response(300, "Not Allowed", [])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         data = add_internship_parser.parse_args()
 
@@ -49,10 +53,12 @@ class AddInternship(Resource):
 
 class GetInternships(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         return response(300,"use a get request",[])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self): 
 
         include={"_id":1,"title":1,"companyname":1,"location":1,"hiring":1}
@@ -64,6 +70,7 @@ class GetInternships(Resource):
 
 class ViewInternship(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         data = get_internship_parser.parse_args()
 
@@ -76,6 +83,7 @@ class ViewInternship(Resource):
         return response(200, "Success", data)
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         return response(300,"use a GET request",[])
         

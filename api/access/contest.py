@@ -121,6 +121,7 @@ class InitializeContest(Resource):
     which can be updated later by the authors of the coontest.
     """
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return response(300, "Use a POST request", [])
 
@@ -153,10 +154,12 @@ class InitializeContest(Resource):
 
 class UpdateContest(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self, ctype):
         return response(300, "Use a POST request", [])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self, ctype):
         input_data = update_contest_parser.parse_args()
 
@@ -186,10 +189,12 @@ class UpdateContest(Resource):
 
 class AddProblemForContest(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self, ctype):
         return response(300, "Use a POST request", [])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self, ctype):    
         input_data = add_prob_parser.parse_args()
 
@@ -227,10 +232,12 @@ class AddProblemForContest(Resource):
 
 class UpdateProblemForContest(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self, ctype):
         return response(300, "Use a POST request", [])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self, ctype):    
         input_data = add_prob_parser.parse_args()
 
@@ -273,10 +280,12 @@ class UpdateProblemForContest(Resource):
 
 class ApproveContest(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self, ctype):
         return response(300, "Use a POST request", [])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self, ctype):
         # Only the contest creator can approve    
         input_data = approval_parser.parse_args()
@@ -310,9 +319,11 @@ class ApproveContest(Resource):
 
 class ForceStartOrEndContest(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return response(300, "Use a POST Request", [])
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self, ctype, contestid, start): 
         if bool(start):
             params = {'status': 1}
@@ -331,10 +342,12 @@ class ForceStartOrEndContest(Resource):
 
 class AddNewAuthor(Resource): 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self, ctype):
         return response(300, "Use a POST request", [])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self, ctype):
         input_data = manage_author_parser.parse_args()
 
@@ -363,10 +376,12 @@ class AddNewAuthor(Resource):
 
 class RemoveAuthor(Resource):   
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self, ctype):
         return response(300, "Use a POST request", [])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self, ctype):
         input_data = manage_author_parser.parse_args()
         
@@ -394,6 +409,7 @@ class RemoveAuthor(Resource):
 
 class GetContestById(Resource):   
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self, ctype, contestid):  
         exclude = {'_id':0, 'lastModified':0}
         data = Contest(ctype).getBy(params=exclude, _id=ObjectId(contestid))
@@ -423,6 +439,7 @@ class GetContestById(Resource):
 
 class GetContest(Resource):   
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self, ctype, status):
         status_code = {'started':1, 'inreview':0, 'completed':-1, 'active':00}
         if ctype == "all":
@@ -436,5 +453,6 @@ class GetContest(Resource):
         
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self, ctype, status):  
         return response(300, "Not allowed, Use a GET Request", [])   

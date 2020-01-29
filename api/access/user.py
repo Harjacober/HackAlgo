@@ -6,6 +6,7 @@ from datetime import datetime
 from bson.objectid import ObjectId
 from coderunner.problem import ProblemInstance
 from werkzeug.datastructures import FileStorage
+from flask_cors import  cross_origin
 
 from coderunner.taskqueue import queue 
 from coderunner.task import Task
@@ -62,10 +63,12 @@ class UserEnterContest(Resource):
     It also updates this actual contest document to reflect this participant
     """
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self,id):
         return response("300","Use a Post Request",[])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         req_data=enter_contest_parser.parse_args()
         req_data["timeentered"]=str(datetime.now())
@@ -117,10 +120,12 @@ class UserEnterContest(Resource):
 
 class UserContestHistory(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return response(300,"Use a Post Request",[])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         req_data=user_contest_history_parser.parse_args()
         exclude = {'_id':0, 'lastModified':0}
@@ -141,10 +146,12 @@ class UserContestHistory(Resource):
 
 class UserSubmissionHistory(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self,id):
         return response("300","Use a Post Request",[])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         req_data=user_submission_history_parser.parse_args()
         exclude = {'_id':0, 'lastModified':0}
@@ -182,10 +189,12 @@ class RunContestCode(Resource):
     Handles adding of the partial submission info to the database.
     """
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return  {"code":300,"msg":"Use A Post Request","data":[]}
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         input_data = run_code_parser.parse_args()
 
@@ -221,6 +230,7 @@ class RunContestCode(Resource):
 
 class ContestRunCodeStatus(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         input_data = run_code_status_parser.parse_args()
 
@@ -243,6 +253,7 @@ class ContestRunCodeStatus(Resource):
         return {"code":"200","msg":"Task state is {} ".format(task.status()),"data":[task.toJson()]}
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return  {"code":"300","msg":"Use A Post Request","data":[]}
 
@@ -252,10 +263,12 @@ class UserRegisterForContest(Resource):
     When user choose to register for a contest, it doesn't guarantee they will paritcipate in the contest.
     """
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self,id):
         return response("300","Use a Post Request",[])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         req_data=register_for_contest_parser.parse_args() 
 

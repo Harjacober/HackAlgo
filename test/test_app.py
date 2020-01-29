@@ -87,9 +87,12 @@ class AppTests(unittest.TestCase):
             email=email
         ))
         self.assertTrue('email' in resp.data.decode())
-
+        d=json.loads(resp.data.decode())
         if "registration" in url:
-            keyreg=list(contestplatform.unregisteredusers.keys())[0]
+            try:
+                keyreg=list(contestplatform.unregisteredusers.keys())[0]
+            except Exception:
+                keyreg=d["data"[0]]
             resp=app_client.get(url+"?id="+keyreg)
             resp=json.loads(resp.data.decode())
 

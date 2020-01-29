@@ -4,6 +4,7 @@ from bson.objectid import ObjectId
 from flask import jsonify
 from werkzeug.datastructures import FileStorage
 from db.models import Problem, Admin
+from flask_cors import  cross_origin
 
 add_prob_parser = reqparse.RequestParser()
 
@@ -45,6 +46,7 @@ class ProblemDetails(Resource):
     Returns full description of a problem excluding answercases and sampleanswercase
     """
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         input_data=req_show_problem_details.parse_args()
 
@@ -57,6 +59,7 @@ class ProblemDetails(Resource):
         return response(200, "Success", pb)  
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self): 
         return response(300, "Method not Allowed", [])  
 
@@ -65,6 +68,7 @@ class ProblemSet(Resource):
     Returns all problem that match specific search parameters
     """
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self, category):
         input_data = req_show_problem.parse_args()
 
@@ -80,7 +84,8 @@ class ProblemSet(Resource):
         data = list(data)
         return response(200, "Success", data)
 
-    @jwt_required    
+    @jwt_required
+    @cross_origin(supports_credentials=True)  
     def post(self, category):
         input_data = req_show_problem.parse_args()
 
@@ -101,6 +106,7 @@ class ProblemSearch(Resource):
     Returns all problem that match specific search parameters
     """
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         input_data = req_show_problem.parse_args()
 
@@ -112,7 +118,8 @@ class ProblemSearch(Resource):
         data = list(data)
         return response(200, "Success", data)
 
-    @jwt_required    
+    @jwt_required 
+    @cross_origin(supports_credentials=True)  
     def post(self):
         input_data = req_show_problem.parse_args()
 
@@ -126,10 +133,12 @@ class ProblemSearch(Resource):
  
 class ProblemAdd(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return response(300, "Use A POST Request", [])  
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         input_data = add_prob_parser.parse_args()
         difficulty = {"800-1100":"easy", "1200-1500":"medium", "1600-2000":"hard", "2100-2500":"advanced"} #TODO make this global
@@ -174,10 +183,12 @@ class ProblemAdd(Resource):
 
 class ProblemUpdate(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return response(300, "Use A POST Request", [])  
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         input_data = add_prob_parser.parse_args()
         difficulty = {"800-1100":"easy", "1200-1500":"medium", "1600-2000":"hard", "2100-2500":"advanced"} #TODO make this global
@@ -223,21 +234,25 @@ class ProblemUpdate(Resource):
 
 class GetAllProblemTags(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self): 
 
         data = Problem().getBy(_id="tags").get("problemtags")
         return response(200, "Success", data)
         
-    @jwt_required    
+    @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self, problemid):
         return response(300, "Method not allowed", [])
 
 class SubmitProblem(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return response(300, "Use A POST Request", [])  
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         input_data = submit_prob_parser.parse_args()
 

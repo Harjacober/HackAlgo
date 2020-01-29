@@ -1,4 +1,5 @@
 from flask_restful import Resource,reqparse
+from flask_cors import  cross_origin
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -37,6 +38,7 @@ class RunCode(Resource):
     Handles adding of the partial submission info to the database.
     """
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         input_data = run_code_parser.parse_args()
 
@@ -57,12 +59,14 @@ class RunCode(Resource):
         return {"code":"200","msg":"Task started ","data":[task.toJson()]}
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return  {"code":"301","msg":"Use A Post Request","data":[]}
 
 
 class RunCodeStatus(Resource):
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
         input_data = run_code_status_parser.parse_args()
 
@@ -83,6 +87,7 @@ class RunCodeStatus(Resource):
         return {"code":"200","msg":"Task state is {} ".format(task.status()),"data":[task.toJson()]}
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def get(self):
         return  {"code":"300","msg":"Use A Post Request","data":[]}
 
