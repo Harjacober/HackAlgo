@@ -7,3 +7,5 @@ Celery
 redis
 flask-socketio
 Flask-Mail
+flask-cors
+eventlet

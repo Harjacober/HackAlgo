@@ -7,5 +7,5 @@ touch /var/log/celery/log.log
 #                                        --logfile=/var/log/celery/log.log --loglevel=DEBUG --verbose
 
 celery -A api.access.contest worker -l info --loglevel=DEBUG &
-python test/test_app.py
-#python app.py 
+#python test/test_app.py
+python app.py 

@@ -20,6 +20,7 @@ from api.access.user import UserRegisterForContest, UserEnterContest, UserContes
 from api.resources.internship import AddInternship,GetInternships,ViewInternship
 from flask_socketio import SocketIO
 from flask_mail import Mail
+from flask_cors import CORS
 
 
 from celery import Celery
@@ -39,6 +40,8 @@ contestplatform.mail=mail
 
 contestplatform.socketio = SocketIO(contestplatform)
 contestplatform.unregisteredusers={}
+
+CORS(contestplatform,support_credentials=True)
 
 @contestplatform.route("/")
 def index():

@@ -12,7 +12,7 @@ from werkzeug.datastructures import FileStorage
 from datetime import datetime
 from api.access.utils import Rating
 from flask import current_app
-
+from flask_cors import  cross_origin
 from celery import Celery
 import config
 
@@ -125,6 +125,7 @@ class InitializeContest(Resource):
         return response(300, "Use a POST request", [])
 
     @jwt_required
+    @cross_origin(supports_credentials=True)
     def post(self):
 
         input_data = init_contest_parser.parse_args()   
