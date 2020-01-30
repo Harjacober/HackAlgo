@@ -455,4 +455,4 @@ class GetContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self, ctype, status):  
-        rreturn response(300, "Use a GET Request", [])  
+        return response(300, "Use a GET Request", [])  

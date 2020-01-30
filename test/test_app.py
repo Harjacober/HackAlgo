@@ -92,7 +92,7 @@ class AppTests(unittest.TestCase):
             try:
                 keyreg=list(contestplatform.unregisteredusers.keys())[0]
             except Exception:
-                keyreg=d["data"[0]]
+                keyreg=d["data"][0]
             resp=app_client.get(url+"?id="+keyreg)
             resp=json.loads(resp.data.decode())
 
@@ -411,7 +411,7 @@ class AppTests(unittest.TestCase):
 
         resp=app_client.post("/my/contest/history/",data=data,headers=header)
 
-        self.assertTrue("User Contests" in resp.data.decode())
+        self.assertTrue("Success" in resp.data.decode())
         self.assertTrue(len(json.loads(resp.data.decode())["data"])>0)
 
 

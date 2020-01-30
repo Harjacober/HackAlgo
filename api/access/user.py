@@ -225,7 +225,7 @@ class RunContestCode(Resource):
         task=Task(lang,codecontent,userid,ProblemInstance(problem),task_id,stype,codefile,contestid,ctype)
         queue.add(task_id,task) 
 
-        return response(200,"msg":"Task started",[task.toJson()]) 
+        return response(200,"Task started",[task.toJson()]) 
 
 
 class ContestRunCodeStatus(Resource):
