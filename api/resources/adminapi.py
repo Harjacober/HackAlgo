@@ -47,7 +47,7 @@ class GetAllAddedProblems(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True) 
     def post(self):
-        return response(300, "Use a POST Request", "")     
+        return response(300, "Use a GET Request", "")     
 
 class GetAllInvolvedContest(Resource):
     @jwt_required
@@ -69,4 +69,4 @@ class GetAllInvolvedContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)  
     def post(self):
-        return response(300, "Use a POST Request", "")    
+        return response(300, "Use a GET Request", "")    

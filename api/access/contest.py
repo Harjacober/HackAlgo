@@ -123,7 +123,7 @@ class InitializeContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        return response(300, "Use a POST request", [])
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -156,7 +156,7 @@ class UpdateContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self, ctype):
-        return response(300, "Use a POST request", [])
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -191,7 +191,7 @@ class AddProblemForContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self, ctype):
-        return response(300, "Use a POST request", [])
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -234,7 +234,7 @@ class UpdateProblemForContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self, ctype):
-        return response(300, "Use a POST request", [])
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -282,7 +282,7 @@ class ApproveContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self, ctype):
-        return response(300, "Use a POST request", [])
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -294,7 +294,7 @@ class ApproveContest(Resource):
         contestid = input_data['contestid']
         data = Contest(ctype).getBy(_id=ObjectId(contestid))
         if creator != data.get('creator'):
-            return response(404, "Not authorized", [])
+            return response(400, "Not authorized", [])
         # confirm that start date is not less than 12hrs in the future before approval 
         mintime = 12
         starttime = data.get('starttime')
@@ -330,13 +330,13 @@ class ForceStartOrEndContest(Resource):
             if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
                 return response(200, "Contest forcefully started", [])
 
-            return response(200, "Unable to start contest", [])    
+            return response(400, "Unable to start contest", [])    
         else:
             params = {'status': -1}
             if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
                 return response(200, "Contest forcefully ended", [])
 
-            return response(200, "Unable to end contest", [])   
+            return response(400, "Unable to end contest", [])   
 
 
 
@@ -344,7 +344,7 @@ class AddNewAuthor(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self, ctype):
-        return response(300, "Use a POST request", [])
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -357,7 +357,7 @@ class AddNewAuthor(Resource):
 
         data = Contest(ctype).getBy(_id=ObjectId(contestid))
         if creator != data.get('creator'):
-            return response(404, "Not authorized", [])
+            return response(400, "Not authorized", [])
 
         admin = Admin().getBy(username=author_username)
         if not admin:
@@ -378,7 +378,7 @@ class RemoveAuthor(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self, ctype):
-        return response(300, "Use a POST request", [])
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -391,7 +391,7 @@ class RemoveAuthor(Resource):
         
         data = Contest(ctype).getBy(_id=ObjectId(contestid))
         if creator != data.get('creator'):
-            return response(404, "Not authorized", [])
+            return response(400, "Not authorized", [])
 
         admin = Admin().getBy(username=author_username)
         if not admin:
@@ -455,4 +455,4 @@ class GetContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self, ctype, status):  
-        return response(300, "Not allowed, Use a GET Request", [])   
+        rreturn response(300, "Use a GET Request", [])  

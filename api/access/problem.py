@@ -61,7 +61,7 @@ class ProblemDetails(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self): 
-        return response(300, "Method not Allowed", [])  
+        return response(300, "Use a GET Request", [])
 
 class ProblemSet(Resource):
     """
@@ -135,7 +135,7 @@ class ProblemAdd(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        return response(300, "Use A POST Request", [])  
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -185,7 +185,7 @@ class ProblemUpdate(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        return response(300, "Use A POST Request", [])  
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -243,7 +243,7 @@ class GetAllProblemTags(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self, problemid):
-        return response(300, "Method not allowed", [])
+        return response(300, "Use a POST Request", [])
 
 class SubmitProblem(Resource):
     @jwt_required
