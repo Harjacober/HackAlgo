@@ -36,7 +36,7 @@ class AddInternship(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        return response(300, "Not Allowed", [])
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -44,7 +44,7 @@ class AddInternship(Resource):
         data = add_internship_parser.parse_args()
 
         if not Admin().getBy(username=data["username"]):
-            return response(200,"Username for admin not found",[])
+            return response(400,"Username for admin not found",[])
         
         uid=Internships().addDoc(data)
         data["_id"]=str(uid) 
@@ -55,7 +55,7 @@ class GetInternships(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self):
-        return response(300,"use a get request",[])
+        return response(300, "Use a GET Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -85,5 +85,5 @@ class ViewInternship(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self):
-        return response(300,"use a GET request",[])
+        return response(300, "Use a GET Request", [])
         

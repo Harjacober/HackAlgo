@@ -30,6 +30,8 @@ run_code_status_parser.add_argument('prblmid', help = 'This field cannot be blan
 run_code_status_parser.add_argument('userid', help = 'This field cannot be blank', required = True)
 
 
+def response(code,msg,data):
+    return {"code":code,"msg":msg,"data":data}
 
 
 class RunCode(Resource): 
@@ -45,7 +47,7 @@ class RunCode(Resource):
         problem_id=input_data["prblmid"] #get id
         problem = Problem().getBy(_id= ObjectId(problem_id))#fetch the actual problem from database with the problemId 
         if not problem:
-            return {"code":"404","msg":"Invalid Problem Id","data":[]}
+            return response(400, "Invalid Problem Id", []) 
  
         task_id=queue.generateID()
         codecontent = input_data.get('codecontent')
@@ -56,12 +58,12 @@ class RunCode(Resource):
         task=Task(lang,codecontent,userid,ProblemInstance(problem),task_id,stype,codefile)
         queue.add(task_id,task) 
 
-        return {"code":"200","msg":"Task started ","data":[task.toJson()]}
+        return response(200, "Task started", [task.toJson()]) 
 
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        return  {"code":"301","msg":"Use A Post Request","data":[]}
+        return response(300,"Use a POST REQUEST",[])
 
 
 class RunCodeStatus(Resource):
@@ -73,7 +75,7 @@ class RunCodeStatus(Resource):
         problem_id=input_data["prblmid"]
         problem= Problem().getBy(_id= ObjectId(problem_id))
         if not problem:
-            return {"code":"404","msg":"Invalid Problem Id","data":[]}
+            return response(400, "Invalid Problem Id", []) 
 
         user_id=input_data["userid"]
         task_id=input_data["taskid"]
@@ -82,13 +84,13 @@ class RunCodeStatus(Resource):
         task=queue.getById(task_id)
  
         if task is None:
-            return {"code":"404","msg":"Task not found","data":[]}
+            return response(400, "Task not found", [])  
 
-        return {"code":"200","msg":"Task state is {} ".format(task.status()),"data":[task.toJson()]}
+        return response(200, "Task state is {} ".format(task.status()), [task.toJson()]) 
 
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        return  {"code":"300","msg":"Use A Post Request","data":[]}
+        rreturn response(300,"Use a POST REQUEST",[])
 
 

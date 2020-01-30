@@ -46,10 +46,11 @@ class AdminRegistration(Resource):
         data=current_app.unregisteredusers.get(id)
 
         if not data:
-            return response(500,"something went wrong.Have you registered?",[])
+            return response(400,"something went wrong.Have you registered?",[])
 
         uid = self.category.addDoc(data) 
         current_app.unregisteredusers.pop(id)
+
         return response(200,"Successfully resgistered",{"uniqueid":str(uid)},access_token=create_access_token(data["email"]))
     @cross_origin(supports_credentials=True)
     def post(self):
@@ -57,12 +58,14 @@ class AdminRegistration(Resource):
         if not testEmailRe.match(data["email"]):
             return response(200,"Invalid email",[])
         if len(data["pswd"]) <6:
-            return response(200,"Password lenght must be greater than six",[])    
+            return response(400,"Password lenght must be greater than six",[])   
+
         for category in [Admin(),User()]: #Admin && User name should be unique
             if category.getBy(email=data["email"]): #check if email already exist
-                return response(200,"email taken",[])
+                return response(400,"email taken",[])
+
             if category.getBy(username=data["username"]): #check if username already exist
-                return response(200,"usernname taken",[])    
+                return response(400,"usernname taken",[])    
 
         data["pswd"]=sha256.hash(data["pswd"]) #replace the old pswd arg with new hash passowrd
     
@@ -92,10 +95,11 @@ class UserRegistration(AdminRegistration):
 class AdminLogin(Resource):
     category=Admin()
     @cross_origin(supports_credentials=True)
-    def get(self) -> dict:
-        return response(300,"Method not allowed",[])
+    def get(self):
+        return response(300,"Use a POST REQUEST",[])
+
     @cross_origin(supports_credentials=True)
-    def post(self) -> dict:
+    def post(self):
         data=login_parser.parse_args()
 
         user_data=self.category.getBy(username=data["username"]) #fetch user data from the database with username
@@ -106,7 +110,7 @@ class AdminLogin(Resource):
         if user_data and sha256.verify(data["pswd"],user_data["pswd"]):
             return response(200,"login successfuly",{"uniqueid":str(user_data.get('_id'))},access_token=create_access_token(data["username"]+user_data["pswd"]))
 
-        return response(200,"check the username and password",[])
+        return response(400,"check the username and password",[])
 
 class UserLogin(AdminLogin):
    category=User()   

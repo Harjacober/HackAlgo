@@ -65,7 +65,7 @@ class UserEnterContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self,id):
-        return response("300","Use a Post Request",[])
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -122,7 +122,7 @@ class UserContestHistory(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        return response(300,"Use a Post Request",[])
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -138,7 +138,7 @@ class UserContestHistory(Resource):
         exclude = {'_id':0, 'lastModified':0}
         return response(
             200,
-            "User Contests",
+            "Success",
             list(UserRegisteredContest
             (req_data["userid"]).getAll(params=exclude))
         )
@@ -148,7 +148,7 @@ class UserSubmissionHistory(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self,id):
-        return response("300","Use a Post Request",[])
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -163,7 +163,7 @@ class UserSubmissionHistory(Resource):
             if not ContestProblem(req_data["contesttype"],req_data["contestid"]).getBy(
                 _id=ObjectId(req_data["prblmid"])
             ):
-                return response(400,"Contest not found a",{})
+                return response(400,"Contest not found",[])
 
             submissions= list(Submission(req_data["userid"]).\
                                 getAll(params=exclude,contestid=req_data["contestid"]))
@@ -180,7 +180,7 @@ class UserSubmissionHistory(Resource):
             return response(200,"Submisions ",submissions)
 
 
-        return response(400,"request arameters not valid",{})
+        return response(400,"request parameters not valid",{})
 
      
 class RunContestCode(Resource):
@@ -191,7 +191,7 @@ class RunContestCode(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        return  {"code":300,"msg":"Use A Post Request","data":[]}
+        return response(300, "Use a POST Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
@@ -213,7 +213,7 @@ class RunContestCode(Resource):
 
         problem = ContestProblem(ctype, contestid).getBy(_id=ObjectId(problem_id))# fetch the actual problem from database with the problemId 
         if not problem:
-            return {"code":400,"msg":"Invalid Problem Id","data":[]}
+            return response(400, "Invalid Problem Id", []) 
  
         task_id=queue.generateID()
         codecontent = input_data.get('codecontent')
@@ -225,7 +225,7 @@ class RunContestCode(Resource):
         task=Task(lang,codecontent,userid,ProblemInstance(problem),task_id,stype,codefile,contestid,ctype)
         queue.add(task_id,task) 
 
-        return {"code":"200","msg":"Task started ","data":[task.toJson()]}
+        return response(200,"msg":"Task started",[task.toJson()]) 
 
 
 class ContestRunCodeStatus(Resource):
@@ -239,7 +239,7 @@ class ContestRunCodeStatus(Resource):
         ctype = input_data['contesttype'] 
         problem = ContestProblem(ctype, contestid).getBy(_id=ObjectId(problem_id))
         if not problem:
-            return {"code":404,"msg":"Invalid Problem Id","data":[]}
+             return response(400, "Invalid Problem Id", []) 
 
         user_id=input_data["userid"]
         task_id=input_data["taskid"]
@@ -248,14 +248,14 @@ class ContestRunCodeStatus(Resource):
         task=queue.getById(task_id)
  
         if task is None:
-            return {"code":"404","msg":"Task not found","data":[]}
+             return response(400, "Task not found", [])  
 
-        return {"code":"200","msg":"Task state is {} ".format(task.status()),"data":[task.toJson()]}
+        return response(200,"Task state is {} ".format(task.status()),[task.toJson()]) 
 
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        return  {"code":"300","msg":"Use A Post Request","data":[]}
+        return response(300, "Use A POST Request", [])  
 
 
 class UserRegisterForContest(Resource):
@@ -265,7 +265,7 @@ class UserRegisterForContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self,id):
-        return response("300","Use a Post Request",[])
+        return response(300, "Use A POST Request", [])  
 
     @jwt_required
     @cross_origin(supports_credentials=True)

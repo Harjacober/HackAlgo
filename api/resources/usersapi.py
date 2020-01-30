@@ -39,7 +39,7 @@ class UserUpdateProfile(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        return response(300, "Method not allowed", [])  
+        return response(300, "Use a POST Request", [])  
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self):
@@ -49,7 +49,7 @@ class UserUpdateProfile(Resource):
         if self.category.update(params=data, _id=uid):
             return response(200, "update successful",[],access_token=create_access_token(data['uniqueid']))
 
-        return response(200, "uniqueid does not exist",[])      
+        return response(400, "uniqueid does not exist",[])      
  
 class UserProfile(Resource):
     category = User()
@@ -62,7 +62,7 @@ class UserProfile(Resource):
         user_data = self.category.getBy( params=exclude, _id=uid) 
         if user_data:
             return response(200, "Success", user_data)
-        return response(200, "uniqueid doesn't exist",[])    
+        return response(400, "uniqueid doesn't exist",[])    
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self):
@@ -72,7 +72,7 @@ class UserProfile(Resource):
         user_data = self.category.getBy( params=exclude, _id=uid) 
         if user_data:
             return response(200, "Success", user_data)
-        return response(200, "uniqueid doesn't exist",[])
+        return response(400, "uniqueid doesn't exist",[])
     @jwt_required
     @cross_origin(supports_credentials=True)
     def put(self):
@@ -82,14 +82,14 @@ class UserProfile(Resource):
         user_data = self.category.getBy( params=exclude, _id=uid) 
         if user_data:
             return response(200, "Success", user_data)
-        return response(200, "uniqueid doesn't exist",[])       
+        return response(400, "uniqueid doesn't exist",[])       
 
 class SubmissionInfo(Resource):
 
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        return response(300, "Method not allowed", [])
+        return response(300, "Use a POST Request", [])  
 
     @jwt_required
     @cross_origin(supports_credentials=True) 
@@ -101,14 +101,14 @@ class SubmissionInfo(Resource):
         user_submission = Submission(userid).getBy(params=exclude, _id=ObjectId(subm_id))
         if user_submission:
             return response(200, "Success", user_submission)
-        return response(200, "Submission doesn't exist", [])    
+        return response(400, "Submission doesn't exist", [])    
 
 class SubmissionList(Resource):
 
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self, problemid): 
-        return response(300, "Method not allowed", [])
+        return response(300, "Use a POST Request", [])  
         
     @jwt_required 
     @cross_origin(supports_credentials=True)  
@@ -122,6 +122,6 @@ class SubmissionList(Resource):
             submissions = Submission(userid).getAll(params=exclude, prblmid=problemid)
         if submissions:    
             return response(200, "Success", list(submissions))   
-        return response(200, "No matching Submission found", [])
+        return response(400, "No matching Submission found", [])
 
         
