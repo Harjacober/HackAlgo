@@ -91,6 +91,6 @@ class RunCodeStatus(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        rreturn response(300,"Use a POST REQUEST",[])
+        return response(300,"Use a POST REQUEST",[])
 
 
