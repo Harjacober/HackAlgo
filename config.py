@@ -1,9 +1,11 @@
 import datetime
 from platform import system
+import os
+
 
 JWT_ACCESS_TOKEN_EXPIRES = datetime.timedelta(days=20)
 JWT_SECRET_KEY = "Q24JKjhdbjsJNBKsukdsnkjdsJWjsdnkjdsbdkjn"  #if you have a cat/dog allow it to type this. more random
-TESTING = False  # During development use this
+TESTING = os.environ.get("TESTING","1")=="1"  # During development use this
 CELERY_TEST = False
 REDIS_HOST="redis" if system()=='Linux' else 'localhost'
 CELERY_BROKER_URL= 'redis://{}:6379/0'.format(REDIS_HOST)
@@ -14,5 +16,5 @@ MAIL_SERVER="smtp.gmail.com"
 MAIL_PORT=587
 MAIL_USE_TLS=True
 MAIL_USERNAME="hackalgodevs@gmail.com"
-MAIL_PASSWORD= "H@ck@lg09111"
+MAIL_PASSWORD= "C0deGees$911"
 

@@ -22,7 +22,8 @@ profile_parser.add_argument('summary', help = 'Brief description about yourself'
 profile_parser.add_argument('profilephoto', help='Link to profile pictture on storage', required=False, store_missing=False)
 
 getprofile_parser = reqparse.RequestParser()
-getprofile_parser.add_argument('uniqueid', help="This field cannot be blank", required=True)
+getprofile_parser.add_argument('uniqueid', help="Accepts username or user unique id", required=False)
+getprofile_parser.add_argument('username', help="Accepts username or user unique id", required=False)
 
 getsubmission_parser = reqparse.RequestParser()
 getsubmission_parser.add_argument('userid', required=True)
@@ -56,23 +57,28 @@ class UserProfile(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        data = getprofile_parser.parse_args() 
+        data = getprofile_parser.parse_args()
+        if not data:
+            return response(400,"No values passed",[])
+
+        userName=data.get("username")
+        if userName:
+            exclude = {'_id':0, 'pswd':0, 'lastModified':0}
+            user_data = self.category.getBy( params=exclude, username=userName) 
+            if user_data:
+                return response(200, "Success", user_data)
+
         uid = ObjectId(data['uniqueid'])
         exclude = {'_id':0, 'pswd':0, 'lastModified':0}
         user_data = self.category.getBy( params=exclude, _id=uid) 
         if user_data:
             return response(200, "Success", user_data)
+
         return response(400, "uniqueid doesn't exist",[])    
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self):
-        data = getprofile_parser.parse_args() 
-        uid = ObjectId(data['uniqueid'])
-        exclude = {'_id':0, 'pswd':0, 'lastModified':0}
-        user_data = self.category.getBy( params=exclude, _id=uid) 
-        if user_data:
-            return response(200, "Success", user_data)
-        return response(400, "uniqueid doesn't exist",[])
+        return response(300, "Use a GET Request",[])
     @jwt_required
     @cross_origin(supports_credentials=True)
     def put(self):

@@ -37,6 +37,7 @@ reg_parser.add_argument('pswd', help = 'This field cannot be blank', required = 
 def response(code,msg,data,access_token=""):
     return {"code":code,"msg":msg,"data":data,"access_token":access_token}
 
+
 class AdminRegistration(Resource):
     category=Admin()
     @cross_origin(supports_credentials=True)
@@ -47,11 +48,19 @@ class AdminRegistration(Resource):
 
         if not data:
             return response(400,"something went wrong.Have you registered?",[])
+        
+        for category in [Admin(),User()]: #Admin && User name should be unique
+            if category.getBy(email=data["email"]): #check if email already exist
+                return response(400,"email taken",[])
+
+            if category.getBy(username=data["username"]): #check if username already exist
+                return response(400,"usernname taken",[])
 
         uid = self.category.addDoc(data) 
         current_app.unregisteredusers.pop(id)
-
-        return response(200,"Successfully resgistered",{"uniqueid":str(uid)},access_token=create_access_token(data["email"]))
+        data.pop("pswd");data["uid"]=str(data["_id"]);data.pop("_id")
+        return response(200,"Successfully resgistered",{"uniqueid":str(uid)},access_token=create_access_token(data))
+        
     @cross_origin(supports_credentials=True)
     def post(self):
         data=reg_parser.parse_args()
@@ -66,6 +75,7 @@ class AdminRegistration(Resource):
 
             if category.getBy(username=data["username"]): #check if username already exist
                 return response(400,"usernname taken",[])    
+        
 
         data["pswd"]=sha256.hash(data["pswd"]) #replace the old pswd arg with new hash passowrd
     
@@ -79,7 +89,7 @@ class AdminRegistration(Resource):
                   )
 
         userMsg="""
-                <b>Thank for Registering With Us </b><br>
+                <b>Thanks for Registering With Us </b><br>
                 <p>Complete your Registration using the Code {} </p> 
                 """.format(generatedid)
 
@@ -103,12 +113,15 @@ class AdminLogin(Resource):
         data=login_parser.parse_args()
 
         user_data=self.category.getBy(username=data["username"]) #fetch user data from the database with username
+        
         if user_data and sha256.verify(data["pswd"],user_data["pswd"]): #if user exist and password match
-            return response(200,"login successfuly",{"uniqueid":str(user_data.get('_id'))},access_token=create_access_token(data["username"]+user_data["pswd"]))
+            user_data.pop("pswd");user_data["uid"]=str(user_data["_id"]);user_data.pop("_id")
+            return response(200,"login successfuly",{"uniqueid":user_data["uid"]},access_token=create_access_token(user_data))
 
         user_data=self.category.getBy(email=data["username"])  #fetch user data from the database with email
         if user_data and sha256.verify(data["pswd"],user_data["pswd"]):
-            return response(200,"login successfuly",{"uniqueid":str(user_data.get('_id'))},access_token=create_access_token(data["username"]+user_data["pswd"]))
+            user_data.pop("pswd");user_data["uid"]=str(user_data["_id"]);user_data.pop("_id")
+            return response(200,"login successfuly",{"uniqueid":user_data["uid"]},access_token=create_access_token(user_data))
 
         return response(400,"check the username and password",[])
 
