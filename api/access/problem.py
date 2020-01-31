@@ -32,9 +32,7 @@ req_show_problem_details=reqparse.RequestParser()
 req_show_problem_details.add_argument('prblmid', help = 'This field cannot be blank', required = True) 
 
 req_show_problem = reqparse.RequestParser()
-req_show_problem.add_argument('category', required=False)
-req_show_problem.add_argument('author', required=False)
-req_show_problem.add_argument('name', required=False)
+req_show_problem.add_argument('tags', required=False) 
 req_show_problem.add_argument('start', type=int, required=False)
 req_show_problem.add_argument('size', type=int, required=False)
 
@@ -72,13 +70,12 @@ class ProblemSet(Resource):
     def get(self, category):
         input_data = req_show_problem.parse_args()
 
-        exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
-         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0, 'lastModified':0}
+        include = {'_id':0,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1}
 
         if category == "all":
-            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'], status=1)
+            data = Problem().getAll(params=include,start=input_data.get('start'),size=input_data.get('size'), status=1)
         else:
-            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'], 
+            data = Problem().getAll(params=include,start=input_data.get('start'),size=input_data.get('size'), 
             category=category, status=1)
             
         data = list(data)
@@ -86,20 +83,8 @@ class ProblemSet(Resource):
 
     @jwt_required
     @cross_origin(supports_credentials=True)  
-    def post(self, category):
-        input_data = req_show_problem.parse_args()
-
-        exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
-         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0, 'lastModified':0} 
-
-        if category == "all":
-            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'],status=1)
-        else:
-            data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'], 
-            category=category, status=1)
-            
-        data = list(data)
-        return response(200, "Success", data)
+    def post(self, category): 
+        return response(300, "Use a GET Request", data)
 
 class ProblemSearch(Resource):
     """
@@ -110,26 +95,22 @@ class ProblemSearch(Resource):
     def get(self):
         input_data = req_show_problem.parse_args()
 
-        exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
-         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0, 'lastModified':0}
+        include = {'_id':0,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1}
 
-        data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'],
-        category=input_data['category'], author=input_data['author'], name=input_data['name'], status=1)
+        tags = input_data.get('tags')
+        if tags is None:
+            query = dict()
+        else:
+            value = {'$all': tags.split(",")}
+            query = dict(tags=value,status=1)
+        data = Problem().getAll(params=include,start=input_data.get('start'),size=input_data.get('size'),**query)
         data = list(data)
         return response(200, "Success", data)
 
     @jwt_required 
     @cross_origin(supports_credentials=True)  
-    def post(self):
-        input_data = req_show_problem.parse_args()
-
-        exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0, 'samplecases':0,
-         'sizeofsamplecases':0, 'sampleanswercases':0, 'problemstatement':0, 'lastModified':0} 
-
-        data = Problem().getAll(params=exclude,start=input_data['start'],size=input_data['size'],
-        category=input_data['category'], author=input_data['author'], name=input_data['name'], status=1) 
-        data = list(data) 
-        return response(200, "Success", data)
+    def post(self): 
+        return response(300, "Use a GET Request", [])
  
 class ProblemAdd(Resource):
     @jwt_required
