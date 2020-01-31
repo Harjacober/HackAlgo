@@ -237,9 +237,13 @@ class GetAllProblemTags(Resource):
     @cross_origin(supports_credentials=True)
     def get(self): 
 
-        data = Problem().getBy(_id="tags").get("problemtags")
-        return response(200, "Success", data)
+        data = Problem().getBy(_id="tags")
+        if data:
+            tags = data.get("problemtags")
+            return response(200, "Success", tags)
         
+        default_tags = ['dfs','bfs','sorting','hashmap','constructive algorithm', 'greedy', 'recursion', 'graph']
+        return response(200, "Default tags", default_tags)
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self, problemid):
