@@ -445,11 +445,14 @@ class GetContest(Resource):
         if ctype == "all":
             #TODO(jacob) handle this
             pass
-        exclude = {'_id':0, 'lastModified':0}
-        data = Contest(ctype).getAll(params=exclude, status=status_code[status])
+        exclude = {'lastModified':0}
+        data = list(Contest(ctype).getAll(params=exclude, status=status_code[status]))
+        for each in data:
+            each["_id"] = str(each.get("_id"))
+
         if data:
-            return response(200, "Success", list(data))
-        return response(400, "Check the contestid", [])  
+            return response(200, "Success", data)
+        return response(400, "No contest available yet", [])  
         
 
     @jwt_required
