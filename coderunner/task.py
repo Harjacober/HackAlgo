@@ -243,6 +243,8 @@ class Task:
                                 "output":output,
                                 "errput":errput
                                 }             
+                if not self.answercase[cc] and ans.returncode==0: #note @AB i just added this line after calling u
+                    self.verdict = "Failed"
 
         self.state=self.PossibelTasksState[2]
         #create a submission in the database    
