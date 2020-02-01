@@ -39,6 +39,20 @@ def scoreBoard(participants):
     return ans
 
 @celery.task
+def startContest(contestid, ctype, duration): 
+    # This function is going to be run in another process celery's
+    # so dont worry much about this imports performances
+    from db.models import Contest 
+    from bson.objectid import ObjectId 
+
+    # update the status field to indicate that the contest has started
+    params = {'status': 1}
+    Contest(ctype).update(params=params, _id=ObjectId(contestid))   
+    # schedule task to end the contest within the given duration
+    duration = duration/1000 # celery takes time in seconds not milliseconds
+    updateRank.apply_async(countdown=duration,args=[contestid, ctype])
+
+@celery.task
 def updateRank(contestid, ctype):
     if config.CELERY_TEST:
         #JUST write to a file and see if it is updated
@@ -300,19 +314,18 @@ class ApproveContest(Resource):
         starttime = data.get('starttime')
         duration = data.get('duration')
         currentime = datetime.now().timestamp()
-        sixhrs = mintime*60*60*1000.0
-        task_start_time = starttime + duration/1000 # start the task when the contest is over 
+        sixhrs = mintime*60*60*1000.0 
+
         if starttime < currentime + sixhrs:
             return response(400, "start time must be at least {}hrs in the future".format(mintime), [])
 
-        task_start_time=10*60
-        if config.CELERY_TEST:
-            #to test the rank function we set this to 1
-            task_start_time=2*60
+        start_contest_time = (starttime - currentime) * 1000 # celeery takes time in seconds not milliseconds  
+
         params = {'status': 2}
         if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
-            # schedule task here
-            updateRank.apply_async(countdown=task_start_time,args=[contestid, ctype])
+            # schedule task to start contest here
+            startContest.apply_async(countdown=start_contest_time, args=[contestid, ctype, duration])
+            
             return response(200, "Success", [])  
 
         return response(400, "check the contestid",[])    
@@ -320,23 +333,27 @@ class ApproveContest(Resource):
 class ForceStartOrEndContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
-    def get(self):
+    def get(self, ctype, contestid, action):
         return response(300, "Use a POST Request", [])
     @jwt_required
     @cross_origin(supports_credentials=True)
-    def post(self, ctype, contestid, start): 
-        if bool(start):
+    def post(self, ctype, contestid, action): 
+        if action == "start":
             params = {'status': 1}
             if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
                 return response(200, "Contest forcefully started", [])
 
             return response(400, "Unable to start contest", [])    
-        else:
+        elif action == "end" :
             params = {'status': -1}
             if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
+                # compute the participants rank when contest is forcefully ended
+                updateRank.apply_async(countdown=1, args=[contestid, ctype])
                 return response(200, "Contest forcefully ended", [])
 
-            return response(400, "Unable to end contest", [])   
+            return response(400, "Unable to end contest", [])  
+        else:
+             return response(400, "Invalid action", [])  
 
 
 

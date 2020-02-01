@@ -84,7 +84,7 @@ api.add_resource(UpdateProblemForContest,
 api.add_resource(ApproveContest, '/contest/<string:ctype>/approve/')
 api.add_resource(GetContestById, '/contest/<string:ctype>/<string:contestid>/')
 api.add_resource(GetContest, '/contest/many/<string:ctype>/<string:status>/')
-api.add_resource(ForceStartOrEndContest, '/contest/<string:ctype>/<string:contestid>/<string:start>/')
+api.add_resource(ForceStartOrEndContest, '/contest/force/<string:ctype>/<string:contestid>/<string:action>/')
 
 api.add_resource(UserEnterContest, '/enter/contest/')
 api.add_resource(UserRegisterForContest, '/register/contest/')
