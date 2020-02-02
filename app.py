@@ -11,7 +11,7 @@ from api.resources.regapi import AdminRegistration, UserRegistration, AdminLogin
 from api.resources.usersapi import UserProfile, UserUpdateProfile, SubmissionInfo, SubmissionList
 from api.resources.adminapi import AdminProfile, AdminUpdateProfile,GetAllAddedProblems, GetAllInvolvedContest
 from api.resources.coding import RunCode, RunCodeStatus
-from api.access.problem import ProblemAdd, ProblemDetails, ProblemSet, ProblemSearch, ProblemUpdate, SubmitProblem, GetAllProblemTags
+from api.access.problem import ProblemAdd, ProblemDetails, ProblemSet, ProblemSearch, ProblemUpdate, SubmitProblem, GetAllProblemTags, DeleteProblem
 from api.access.contest import (InitializeContest, UpdateContest,
                                 AddProblemForContest, UpdateProblemForContest,
                                 ApproveContest, AddNewAuthor, RemoveAuthor,
@@ -73,6 +73,7 @@ api.add_resource(ProblemDetails, '/get/problem/')
 api.add_resource(GetAllProblemTags, '/get/problemtags/')
 api.add_resource(ProblemSearch, '/get/problemset/')
 api.add_resource(ProblemSet, '/get/problemset/<string:category>/')
+api.add_resource(DeleteProblem, '/delete/problem/')
 
 api.add_resource(InitializeContest, '/contest/initialize/')
 api.add_resource(UpdateContest, '/contest/<string:ctype>/update/')

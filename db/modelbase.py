@@ -32,3 +32,9 @@ class base:
             update,
             upsert=upsert
         ).modified_count > 0     
+
+    def deleteOne(self, **kwargs):
+        return self.collection.delete_one(kwargs)
+
+    def deleteAll(self, **kwargs):
+        return self.collection.delete_many(kwargs)
