@@ -12,12 +12,12 @@ class base:
     def __init__(self,id):
         self.id=id
          
-    def getAll(self, params=None,start=1, size=1000, **kwargs):
+    def getAll(self, params=None,start=0, size=1000, **kwargs):
         """
         :param start: where query should begin
         :param size: size of data needed
         """
-        return self.collection.find(kwargs, params).skip(start-1).limit(size)
+        return self.collection.find(kwargs, params).skip(start).limit(size)
  
     def update(self, params,**kwargs):
         return self.collection.update_one(

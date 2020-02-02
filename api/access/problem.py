@@ -9,19 +9,19 @@ from flask_cors import  cross_origin
 add_prob_parser = reqparse.RequestParser()
 
 add_prob_parser.add_argument('author', help = 'username of the admin adding the problem', required=True)
-add_prob_parser.add_argument('name', help = 'This field cannot be blank') 
-add_prob_parser.add_argument('testcases', type=FileStorage, location = 'files')
-add_prob_parser.add_argument('sizeoftestcases', type=int, help = 'This field cannot be blank')
-add_prob_parser.add_argument('answercases', type=FileStorage, location = 'files')
-add_prob_parser.add_argument('samplecases', type=FileStorage, location = 'files')
-add_prob_parser.add_argument('sizeofsamplecases', type=int, help = 'This field cannot be blank')
-add_prob_parser.add_argument('sampleanswercases', type=FileStorage, location = 'files')
-add_prob_parser.add_argument('problemstatement', help = 'This field cannot be blank')
-add_prob_parser.add_argument('category', help = 'This field cannot be blank')
-add_prob_parser.add_argument('timelimit', type=float, help = 'Time in seconds')
-add_prob_parser.add_argument('memorylimit', type=float, help = 'Memory limit in Megabytes') 
-add_prob_parser.add_argument('score', type=float, help = 'score denotes the difficulty of the problem') 
-add_prob_parser.add_argument('tags', help = 'Enter tags separated by comma') #TODO complete implementation
+add_prob_parser.add_argument('name', store_missing=False) 
+add_prob_parser.add_argument('testcases', type=FileStorage, location='files', store_missing=False)
+add_prob_parser.add_argument('sizeoftestcases', type=int)
+add_prob_parser.add_argument('answercases', type=FileStorage, location = 'files', store_missing=False)
+add_prob_parser.add_argument('samplecases', type=FileStorage, location = 'files', store_missing=False)
+add_prob_parser.add_argument('sizeofsamplecases', type=int, store_missing=False)
+add_prob_parser.add_argument('sampleanswercases', type=FileStorage, location = 'files', store_missing=False)
+add_prob_parser.add_argument('problemstatement', store_missing=False)
+add_prob_parser.add_argument('category', store_missing=False)
+add_prob_parser.add_argument('timelimit', type=float, help = 'Time in seconds', store_missing=False)
+add_prob_parser.add_argument('memorylimit', type=float, help = 'Memory limit in Megabytes', store_missing=False) 
+add_prob_parser.add_argument('score', type=float, help = 'score denotes the difficulty of the problem', store_missing=False) 
+add_prob_parser.add_argument('tags', help = 'Enter tags separated by comma', store_missing=False)   
 add_prob_parser.add_argument('prblmid', help = 'for updating problem', store_missing=False) 
 
 submit_prob_parser = reqparse.RequestParser()
@@ -33,8 +33,8 @@ req_show_problem_details.add_argument('prblmid', help = 'This field cannot be bl
 
 req_show_problem = reqparse.RequestParser()
 req_show_problem.add_argument('tags', required=False) 
-req_show_problem.add_argument('start', type=int, required=False)
-req_show_problem.add_argument('size', type=int, required=False)
+req_show_problem.add_argument('page', type=int, required=True, help="This field cannot be blank")
+req_show_problem.add_argument('limit', type=int, required=True, help="This field cannot be blank")
 
 def response(code,msg,data):
     return {"code":code,"msg":msg,"data":data}
@@ -72,10 +72,12 @@ class ProblemSet(Resource):
 
         include = {'_id':0,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1}
 
+        page = input_data.get('page')
+        limit = input_data.get('limit')
         if category == "all":
-            data = Problem().getAll(params=include,start=input_data.get('start'),size=input_data.get('size'), status=1)
+            data = Problem().getAll(params=include,start=(page-1)*limit,size=limit, status=1)
         else:
-            data = Problem().getAll(params=include,start=input_data.get('start'),size=input_data.get('size'), 
+            data = Problem().getAll(params=include,start=(page-1)*limit,size=limit, 
             category=category, status=1)
             
         data = list(data)
@@ -98,14 +100,16 @@ class ProblemSearch(Resource):
         include = {'_id':0,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1}
 
         tags = input_data.get('tags')
+        page = input_data.get('page')
+        limit = input_data.get('limit')
         if tags is None:
             query = dict()
         else:
             value = {'$all': tags.split(",")}
             query = dict(tags=value,status=1)
-        data = Problem().getAll(params=include,start=input_data.get('start'),size=input_data.get('size'),**query)
-        data = list(data)
-        return response(200, "Success", data)
+        data = Problem().getAll(params=include,start=(page-1)*limit,size=limit,**query) 
+
+        return response(200, "Success", list(data))
 
     @jwt_required 
     @cross_origin(supports_credentials=True)  
@@ -129,18 +133,24 @@ class ProblemAdd(Resource):
             return response(400, "author is not an admin, check the username", [])
         # Reads the cases from the uploaded files and decode the byte into a unicode string,
         # before saving it into the database
-        testcases = input_data['testcases'].read().decode("utf-8")  
-        answercases = input_data['answercases'].read().decode("utf-8")  
-        samplecases = input_data['samplecases'].read().decode("utf-8")  
-        sampleanswercases = input_data['sampleanswercases'].read().decode("utf-8")  
+        if input_data.get('testcases') is not None: 
+            testcases = input_data['testcases'].read().decode("utf-8")  
+            input_data['testcases'] = testcases 
+        if input_data.get('answercases') is not None: 
+            answercases = input_data['answercases'].read().decode("utf-8")  
+            input_data['answercases'] = answercases 
+        if input_data.get('samplecases') is not None: 
+            samplecases = input_data['samplecases'].read().decode("utf-8")  
+            input_data['samplecases'] = samplecases 
+        if input_data.get('sampleanswercases') is not None: 
+            sampleanswercases = input_data['sampleanswercases'].read().decode("utf-8")  
+            input_data['sampleanswercases'] = sampleanswercases 
 
-        input_data['testcases'] = testcases 
-        input_data['answercases'] = answercases 
-        input_data['samplecases'] = samplecases 
-        input_data['sampleanswercases'] = sampleanswercases 
-        tags = input_data.get('tags').split(',') # create an array of tags 
-        input_data['tags'] = tags
-        input_data['status'] = 0
+        tags = input_data.get('tags')# create an array of tags 
+        if tags is not None:
+            tags = tags.split(',') 
+            input_data['tags'] = tags
+            input_data['status'] = 0
         # process difficulty
         score = input_data.get('score')
         for key in difficulty:
@@ -211,7 +221,7 @@ class ProblemUpdate(Resource):
             Problem().flexibleUpdate(update, upsert=True, _id="tags")
             return response(200, "update successful",[])
 
-        return response(400, "Problem not updated", [])              
+        return response(400, "Problem not updated, check the problemid", [])              
 
 class GetAllProblemTags(Resource):
     @jwt_required
