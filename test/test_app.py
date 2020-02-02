@@ -213,7 +213,7 @@ class AppTests(unittest.TestCase):
             contestid = contest_id,
             timelimit=1,
             memorylimit=250,
-            prblmscore=900
+            prblmscore=900 
         )
         resp=app_client.post("/contest/{}/problem/add/".format(contest_type), data=data,headers=header,content_type='multipart/form-data')
  
@@ -380,7 +380,7 @@ class AppTests(unittest.TestCase):
 
         # Contest must have started before users can enter
         # force start contest
-        resp=app_client.post("/contest/{}/{}/True/".format(self.contest_type, self.contest_id),headers=header) 
+        resp=app_client.post("/contest/force/{}/{}/start/".format(self.contest_type, self.contest_id),headers=header) 
         self.assertTrue("Contest forcefully started" in resp.data.decode())  
 
         #/enter/contest/
@@ -446,6 +446,7 @@ class AppTests(unittest.TestCase):
         data=json.loads(resp.data.decode()) 
         self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
         
+        #testing go
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.golangData())
         data=json.loads(resp.data.decode())  
         if not data["data"][0]["result"][0]["passed"]:
