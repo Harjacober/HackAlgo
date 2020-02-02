@@ -116,6 +116,7 @@ class Task:
             self.answercase=self.problem.getAnswerForSampleCases().split(",")
             self.result=[None]*int(self.problem.getSizeOfSampleCases()) 
 
+        self.cases=[i.strip() for i in self.cases]
         self.answercase=[i.strip() for i in self.answercase]
 
         self.timelimit=problem.getTimeLimit()
