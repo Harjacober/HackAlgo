@@ -113,12 +113,15 @@ class AdminLogin(Resource):
         data=login_parser.parse_args()
 
         user_data=self.category.getBy(username=data["username"]) #fetch user data from the database with username
+        
         if user_data and sha256.verify(data["pswd"],user_data["pswd"]): #if user exist and password match
-            return response(200,"login successfuly",{"uniqueid":str(user_data.get('_id'))},access_token=create_access_token(data["username"]+user_data["pswd"]))
+            user_data.pop("pswd");user_data["uid"]=str(user_data["_id"]);user_data.pop("_id")
+            return response(200,"login successfuly",{"uniqueid":user_data["uid"]},access_token=create_access_token(user_data))
 
         user_data=self.category.getBy(email=data["username"])  #fetch user data from the database with email
         if user_data and sha256.verify(data["pswd"],user_data["pswd"]):
-            return response(200,"login successfuly",{"uniqueid":str(user_data.get('_id'))},access_token=create_access_token(data["username"]+user_data["pswd"]))
+            user_data.pop("pswd");user_data["uid"]=str(user_data["_id"]);user_data.pop("_id")
+            return response(200,"login successfuly",{"uniqueid":user_data["uid"]},access_token=create_access_token(user_data))
 
         return response(400,"check the username and password",[])
 
