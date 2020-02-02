@@ -74,7 +74,7 @@ class ProblemSet(Resource):
     def get(self, category):
         input_data = req_show_problem.parse_args()
 
-        include = {'_id':0,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1}
+        include = {'_id':0,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1, 'difficulty':1}
 
         page = input_data.get('page')
         limit = input_data.get('limit')
@@ -101,7 +101,7 @@ class ProblemSearch(Resource):
     def get(self):
         input_data = req_show_problem.parse_args()
 
-        include = {'_id':0,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1}
+        include = {'_id':0,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1, 'difficulty':1}
 
         tags = input_data.get('tags')
         page = input_data.get('page')
