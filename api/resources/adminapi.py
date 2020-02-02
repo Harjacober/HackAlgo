@@ -33,7 +33,13 @@ class GetAllAddedProblems(Resource):
     def get(self):
         data = get_all_added_prob_parser.parse_args()  
         uid = ObjectId(data['uniqueid'])  
-        allProblemsId = Admin().getBy(_id=uid).get('problems')
+        admin = Admin().getBy(_id=uid)
+        if not admin:
+            return response(400, "User with the unique id specified does not exist", [])
+
+        allProblemsId = admin.get('problems')   
+        if allProblemsId is None:
+            return response(400, "Admin has not added any problem yet", [])
         # query all problem information using the IDs before sending to the frontend
         exclude = {'_id':0, 'testcases':0, 'sizeoftestcases':0, 'answercases':0,'timelimit':0, 'samplecases':0,
          'sizeofsamplecases':0, 'sampleanswercases':0, 'memorylimit':0, 'problemstatement':0, 'lastModified':0}

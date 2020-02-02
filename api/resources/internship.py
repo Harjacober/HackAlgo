@@ -27,6 +27,10 @@ add_internship_parser.add_argument('closingtime', help='', required=True)
 get_internship_parser = reqparse.RequestParser()
 get_internship_parser.add_argument("uniqueid",help="Internsip ID",required=True) 
 
+get_internships_parser = reqparse.RequestParser()
+get_internships_parser.add_argument("page", type=int, required=True, help="This field cannot be blank") 
+get_internships_parser.add_argument("limit", type=int, required=True, help="This field cannot be blank") 
+
 
 
 def response(code,msg,data,access_token=""):
@@ -60,9 +64,11 @@ class GetInternships(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self): 
-
+        input_data = get_internships_parser.parse_args()
+        page = input_data.get('page')
+        limit = input_data.get('limit')
         include={"_id":1,"title":1,"companyname":1,"location":1,"hiring":1}
-        data = list(Internships().getAll(params=include))
+        data = list(Internships().getAll(params=include, start=(page-1)*limit, size=limit))
         for each in data:
             each["_id"] = str(each.get("_id"))
 

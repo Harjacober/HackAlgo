@@ -101,19 +101,20 @@ update_contest_parser.add_argument('contestid', help="contest id assigned upon c
 
 add_prob_parser = reqparse.RequestParser()
 add_prob_parser.add_argument('authorusername', help = 'This field cannot be blank.', required = True)
-add_prob_parser.add_argument('name', help = 'This field cannot be blank', required = True) 
-add_prob_parser.add_argument('testcases', type=FileStorage, location = 'files')
-add_prob_parser.add_argument('sizeoftestcases', type=int, help = 'This field cannot be blank', required = True)
-add_prob_parser.add_argument('answercases', type=FileStorage, location = 'files')
-add_prob_parser.add_argument('samplecases', type=FileStorage, location = 'files')
-add_prob_parser.add_argument('sizeofsamplecases', type=int, help = 'This field cannot be blank', required = True)
-add_prob_parser.add_argument('sampleanswercases', type=FileStorage, location = 'files')
-add_prob_parser.add_argument('problemstatement', help = 'This field cannot be blank', required = True) 
-add_prob_parser.add_argument('contestid', help = 'This field cannot be blank', required = True)
-add_prob_parser.add_argument('timelimit', type=float, help = 'Time in seconds', required = True)
-add_prob_parser.add_argument('memorylimit', type=float, help = 'Memory limit in Megabytes', required = True)
+add_prob_parser.add_argument('name', help = 'This field cannot be blank', store_missing=False) 
+add_prob_parser.add_argument('testcases', type=FileStorage, location = 'files', store_missing=False)
+add_prob_parser.add_argument('sizeoftestcases', type=int, help = 'This field cannot be blank', store_missing=False)
+add_prob_parser.add_argument('answercases', type=FileStorage, location = 'files', store_missing=False)
+add_prob_parser.add_argument('samplecases', type=FileStorage, location = 'files', store_missing=False)
+add_prob_parser.add_argument('sizeofsamplecases', type=int, store_missing=False)
+add_prob_parser.add_argument('sampleanswercases', type=FileStorage, location = 'files', store_missing=False)
+add_prob_parser.add_argument('problemstatement', store_missing=False) 
+add_prob_parser.add_argument('contestid', store_missing=False)
+add_prob_parser.add_argument('timelimit', type=float, store_missing=False)
+add_prob_parser.add_argument('memorylimit', type=float, store_missing=False)
+add_prob_parser.add_argument('tags', help = 'Enter tags separated by comma', store_missing=False)   
 add_prob_parser.add_argument('prblmid', help = 'Time in seconds', required = False, store_missing=False)
-add_prob_parser.add_argument('prblmscore', type=int, help = 'Time in seconds', required = True)
+add_prob_parser.add_argument('prblmscore', type=int, store_missing=False)
 
 approval_parser = reqparse.RequestParser()
 approval_parser.add_argument("creator", help="username of the admin that initialized the contest", required=True)
@@ -123,6 +124,10 @@ manage_author_parser = reqparse.RequestParser()
 manage_author_parser.add_argument("creator", required=True) 
 manage_author_parser.add_argument("contestid", required=True) 
 manage_author_parser.add_argument("authorusername", required=True)
+
+get_contests_parser = reqparse.RequestParser()
+get_contests_parser.add_argument('page', type=int, help="Page number", required=True)
+get_contests_parser.add_argument('limit', type=int, help="size of data", required=True)
 
 
 
@@ -226,17 +231,24 @@ class AddProblemForContest(Resource):
             return response(400, "Unauthorized author", [])
         # Reads the cases from the uploaded files and decode the byte into a unicode string,
         # before saving it into the database
-        testcases = input_data.get('testcases').read().decode("utf-8")  
-        answercases = input_data.get('answercases').read().decode("utf-8")  
-        samplecases = input_data.get('samplecases').read().decode("utf-8")  
-        sampleanswercases = input_data.get('sampleanswercases').read().decode("utf-8")  
+        if input_data.get('testcases') is not None: 
+            testcases = input_data['testcases'].read().decode("utf-8")  
+            input_data['testcases'] = testcases 
+        if input_data.get('answercases') is not None: 
+            answercases = input_data['answercases'].read().decode("utf-8")  
+            input_data['answercases'] = answercases 
+        if input_data.get('samplecases') is not None: 
+            samplecases = input_data['samplecases'].read().decode("utf-8")  
+            input_data['samplecases'] = samplecases 
+        if input_data.get('sampleanswercases') is not None: 
+            sampleanswercases = input_data['sampleanswercases'].read().decode("utf-8")  
+            input_data['sampleanswercases'] = sampleanswercases 
 
-        input_data['testcases'] = testcases 
-        input_data['answercases'] = answercases 
-        input_data['samplecases'] = samplecases 
-        input_data['sampleanswercases'] = sampleanswercases 
-
-        input_data=dict(input_data)   
+        tags = input_data.get('tags')# create an array of tags 
+        if tags is not None:
+            tags = tags.split(',') 
+            input_data['tags'] = tags
+            input_data['status'] = 0 
         # remove args that are not needed
         input_data.pop('prblmid', None) 
 
@@ -271,17 +283,23 @@ class UpdateProblemForContest(Resource):
             return response(400, "Unauthorized author", [])
         # Reads the cases from the uploaded files and decode the byte into a unicode string,
         # before saving it into the database
-        testcases = input_data.get('testcases').read().decode("utf-8")  
-        answercases = input_data.get('answercases').read().decode("utf-8")  
-        samplecases = input_data.get('samplecases').read().decode("utf-8")  
-        sampleanswercases = input_data.get('sampleanswercases').read().decode("utf-8")  
+        if input_data.get('testcases') is not None: 
+            testcases = input_data['testcases'].read().decode("utf-8")  
+            input_data['testcases'] = testcases 
+        if input_data.get('answercases') is not None: 
+            answercases = input_data['answercases'].read().decode("utf-8")  
+            input_data['answercases'] = answercases 
+        if input_data.get('samplecases') is not None: 
+            samplecases = input_data['samplecases'].read().decode("utf-8")  
+            input_data['samplecases'] = samplecases 
+        if input_data.get('sampleanswercases') is not None: 
+            sampleanswercases = input_data['sampleanswercases'].read().decode("utf-8")  
+            input_data['sampleanswercases'] = sampleanswercases 
 
-        input_data['testcases'] = testcases 
-        input_data['answercases'] = answercases 
-        input_data['samplecases'] = samplecases 
-        input_data['sampleanswercases'] = sampleanswercases 
-
-        input_data=dict(input_data) 
+        tags = []
+        if input_data.get('tags') is not None: 
+            tags = input_data.get('tags').split(',') # create an array of tags 1
+            input_data['tags'] = tags  
         contestid = input_data.get('contestid')
         prblmid = input_data.get('prblmid')
         # remove args that are not needed
@@ -459,11 +477,14 @@ class GetContest(Resource):
     @cross_origin(supports_credentials=True)
     def get(self, ctype, status):
         status_code = {'started':1, 'inreview':0, 'completed':-1, 'active':00}
+        data = get_contests_parser.parse_args()
+        page = data.get('page')
+        limit = data.get('limit')
         if ctype == "all":
             #TODO(jacob) handle this
             pass
         exclude = {'lastModified':0}
-        data = list(Contest(ctype).getAll(params=exclude, status=status_code[status]))
+        data = list(Contest(ctype).getAll(params=exclude, start=(page-1)*limit, size=limit, status=status_code[status]))
         for each in data:
             each["_id"] = str(each.get("_id"))
 
