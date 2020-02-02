@@ -325,6 +325,8 @@ class ApproveContest(Resource):
         creator = input_data['creator'] 
         contestid = input_data['contestid']
         data = Contest(ctype).getBy(_id=ObjectId(contestid))
+        if data is None:
+            return response(400, "Check the contest id", [])
         if creator != data.get('creator'):
             return response(400, "Not authorized", [])
         # confirm that start date is not less than 12hrs in the future before approval 
@@ -476,7 +478,7 @@ class GetContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self, ctype, status):
-        status_code = {'started':1, 'inreview':0, 'completed':-1, 'active':00}
+        status_code = {'started':1, 'inreview':0, 'completed':-1, 'active':2}
         data = get_contests_parser.parse_args()
         page = data.get('page')
         limit = data.get('limit')
