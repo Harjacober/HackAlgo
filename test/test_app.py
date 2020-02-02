@@ -308,7 +308,8 @@ class AppTests(unittest.TestCase):
         #testing python
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.pythonData())
         data=json.loads(resp.data.decode())
-        self.assertTrue(data["data"][0]["result"][0]["passed"])
+        for i in range(3):
+            self.assertTrue(data["data"][0]["result"][i]["passed"])
 
         #testingtimeout py code
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.pythonData(testtimeout=True))
@@ -321,14 +322,16 @@ class AppTests(unittest.TestCase):
        
         if not data["data"][0]["result"][0]["passed"]:
             print(data["data"][0]["result"][0]["errput"]) 
-        self.assertTrue(data["data"][0]["result"][0]["passed"])
+        for i in range(3):
+            self.assertTrue(data["data"][0]["result"][i]["passed"])
 
         #rtesting c
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.cData())
         data=json.loads(resp.data.decode())
         if not data["data"][0]["result"][0]["passed"]:
             print(data["data"][0]["result"][0]["errput"])
-        self.assertTrue(data["data"][0]["result"][0]["passed"])
+        for i in range(3):
+            self.assertTrue(data["data"][0]["result"][i]["passed"])
 
          #rtesting timeout c
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.cData(testtimeout=True))
@@ -340,7 +343,8 @@ class AppTests(unittest.TestCase):
         data=json.loads(resp.data.decode())
         if not data["data"][0]["result"][0]["passed"]:
             print(data["data"][0]["result"][0]["errput"])
-        self.assertTrue(data["data"][0]["result"][0]["passed"])
+        for i in range(3):
+            self.assertTrue(data["data"][0]["result"][i]["passed"])
 
         #testing java timeout
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.javaData(testtimeout=True))
@@ -439,7 +443,8 @@ class AppTests(unittest.TestCase):
         #testing python
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.pythonData())
         data=json.loads(resp.data.decode())
-        self.assertTrue(data["data"][0]["result"][0]["passed"])
+        for i in range(3):
+            self.assertTrue(data["data"][0]["result"][i]["passed"])
 
         #testingtimeout py code
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.pythonData(testtimeout=True))
@@ -451,14 +456,16 @@ class AppTests(unittest.TestCase):
         data=json.loads(resp.data.decode())  
         if not data["data"][0]["result"][0]["passed"]:
             print(data["data"][0]["result"][0]["errput"]) 
-        self.assertTrue(data["data"][0]["result"][0]["passed"])
+        for i in range(3):
+            self.assertTrue(data["data"][0]["result"][i]["passed"])
 
         #rtesting c
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.cData())
         data=json.loads(resp.data.decode()) 
         if not data["data"][0]["result"][0]["passed"]:
             print(data["data"][0]["result"][0]["errput"])
-        self.assertTrue(data["data"][0]["result"][0]["passed"])
+        for i in range(3):
+            self.assertTrue(data["data"][0]["result"][i]["passed"])
 
          #rtesting timeout c
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.cData(testtimeout=True))
@@ -470,7 +477,8 @@ class AppTests(unittest.TestCase):
         data=json.loads(resp.data.decode())
         if not data["data"][0]["result"][0]["passed"]:
             print(data["data"][0]["result"][0]["errput"])
-        self.assertTrue(data["data"][0]["result"][0]["passed"])
+        for i in range(3):
+            self.assertTrue(data["data"][0]["result"][i]["passed"])
 
         #testing java timeout
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.javaData(testtimeout=True))
