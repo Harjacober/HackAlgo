@@ -36,6 +36,10 @@ req_show_problem.add_argument('tags', required=False)
 req_show_problem.add_argument('page', type=int, required=True, help="This field cannot be blank")
 req_show_problem.add_argument('limit', type=int, required=True, help="This field cannot be blank")
 
+delete_problem_parser = reqparse.RequestParser()
+delete_problem_parser.add_argument('author', help = 'username of the admin adding the problem', required=True)
+delete_problem_parser.add_argument('prblmid', help = 'cannot be empty', required=True)
+
 def response(code,msg,data):
     return {"code":code,"msg":msg,"data":data}
 
@@ -70,17 +74,19 @@ class ProblemSet(Resource):
     def get(self, category):
         input_data = req_show_problem.parse_args()
 
-        include = {'_id':0,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1}
+        include = {'_id':1,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1, 'difficulty':1}
 
         page = input_data.get('page')
         limit = input_data.get('limit')
         if category == "all":
-            data = Problem().getAll(params=include,start=(page-1)*limit,size=limit, status=1)
+            data = list(Problem().getAll(params=include,start=(page-1)*limit,size=limit, status=1))
         else:
-            data = Problem().getAll(params=include,start=(page-1)*limit,size=limit, 
-            category=category, status=1)
+            data = list(Problem().getAll(params=include,start=(page-1)*limit,size=limit, 
+            category=category, status=1))
             
-        data = list(data)
+        for each in data:
+            each["_id"] = str(each.get("_id"))
+
         return response(200, "Success", data)
 
     @jwt_required
@@ -97,7 +103,7 @@ class ProblemSearch(Resource):
     def get(self):
         input_data = req_show_problem.parse_args()
 
-        include = {'_id':0,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1}
+        include = {'_id':1,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1, 'difficulty':1}
 
         tags = input_data.get('tags')
         page = input_data.get('page')
@@ -107,7 +113,9 @@ class ProblemSearch(Resource):
         else:
             value = {'$all': tags.split(",")}
             query = dict(tags=value,status=1)
-        data = Problem().getAll(params=include,start=(page-1)*limit,size=limit,**query) 
+        data = list(Problem().getAll(params=include,start=(page-1)*limit,size=limit,**query))
+        for each in data:
+            each["_id"] = str(each.get("_id"))
 
         return response(200, "Success", list(data))
 
@@ -263,3 +271,25 @@ class SubmitProblem(Resource):
             return response(200, "Problem submitted", [])     
 
         return response(400, "Problem not submitted", [])     
+
+class DeleteProblem(Resource):
+    @jwt_required
+    def delete(self):
+        data = delete_problem_parser.parse_args()
+        prblmid = data.get("prblmid")
+        author = data.get('author')
+        try:
+            ObjectId(prblmid)
+        except :
+            return response(400, "Invalid ID", [])
+
+        pb = Problem().getBy(_id=ObjectId(prblmid))
+        if not pb:
+            return response(400, "Problem not found", [])
+        if author != pb.get('author'): 
+            return response(400, "not the author of the problem", [])  
+
+        if Problem().deleteOne(_id=ObjectId(prblmid)):
+            return response(200, "Problem deleted Successfully", [])
+        
+        return response(400, "Unable to delete problem, problem with that id might not exist", [])
