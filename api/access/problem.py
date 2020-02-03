@@ -74,17 +74,19 @@ class ProblemSet(Resource):
     def get(self, category):
         input_data = req_show_problem.parse_args()
 
-        include = {'_id':0,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1, 'difficulty':1}
+        include = {'_id':1,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1, 'difficulty':1}
 
         page = input_data.get('page')
         limit = input_data.get('limit')
         if category == "all":
-            data = Problem().getAll(params=include,start=(page-1)*limit,size=limit, status=1)
+            data = list(Problem().getAll(params=include,start=(page-1)*limit,size=limit, status=1))
         else:
-            data = Problem().getAll(params=include,start=(page-1)*limit,size=limit, 
-            category=category, status=1)
+            data = list(Problem().getAll(params=include,start=(page-1)*limit,size=limit, 
+            category=category, status=1))
             
-        data = list(data)
+        for each in data:
+            each["_id"] = str(each.get("_id"))
+
         return response(200, "Success", data)
 
     @jwt_required
@@ -101,7 +103,7 @@ class ProblemSearch(Resource):
     def get(self):
         input_data = req_show_problem.parse_args()
 
-        include = {'_id':0,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1, 'difficulty':1}
+        include = {'_id':1,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1, 'difficulty':1}
 
         tags = input_data.get('tags')
         page = input_data.get('page')
@@ -111,7 +113,9 @@ class ProblemSearch(Resource):
         else:
             value = {'$all': tags.split(",")}
             query = dict(tags=value,status=1)
-        data = Problem().getAll(params=include,start=(page-1)*limit,size=limit,**query) 
+        data = list(Problem().getAll(params=include,start=(page-1)*limit,size=limit,**query))
+        for each in data:
+            each["_id"] = str(each.get("_id"))
 
         return response(200, "Success", list(data))
 
