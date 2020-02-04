@@ -15,6 +15,9 @@ from flask import current_app
 from flask_cors import  cross_origin
 from celery import Celery
 import config
+import time
+
+current_time_mills = lambda: float(round(time.time() * 1000))
 
 # Initialize Celery
 #include should contain app.py module path.
@@ -128,6 +131,7 @@ manage_author_parser.add_argument("authorusername", required=True)
 get_contests_parser = reqparse.RequestParser()
 get_contests_parser.add_argument('page', type=int, help="Page number", required=True)
 get_contests_parser.add_argument('limit', type=int, help="size of data", required=True)
+get_contests_parser.add_argument('filter')
 
 
 
@@ -332,14 +336,13 @@ class ApproveContest(Resource):
         # confirm that start date is not less than 12hrs in the future before approval 
         mintime = 12
         starttime = data.get('starttime')
-        duration = data.get('duration')
-        currentime = datetime.now().timestamp()
+        duration = data.get('duration') 
         sixhrs = mintime*60*60*1000.0 
 
-        if starttime < currentime + sixhrs:
+        if starttime < current_time_mills() + sixhrs:
             return response(400, "start time must be at least {}hrs in the future".format(mintime), [])
 
-        start_contest_time = (starttime - currentime) * 1000 # celeery takes time in seconds not milliseconds  
+        start_contest_time = (starttime - current_time_mills()) * 1000 # celeery takes time in seconds not milliseconds  
 
         params = {'status': 2}
         if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
@@ -482,20 +485,54 @@ class GetContest(Resource):
         data = get_contests_parser.parse_args()
         page = data.get('page')
         limit = data.get('limit')
+        filters = data.get("filter")
+        currentUser = get_jwt_identity() #fromk jwt
+        if not currentUser:
+            return response(400, "Invalid token", [])
+        userid = currentUser.get("uid")
         if ctype == "all":
             #TODO(jacob) handle this
             pass
-        exclude = {'lastModified':0}
-        data = list(Contest(ctype).getAll(params=exclude, start=(page-1)*limit, size=limit, status=status_code[status]))
-        for each in data:
-            each["_id"] = str(each.get("_id"))
+        query = dict(status=status_code[status])
+        if filters is None: # return all data
+            exclude = {'lastModified':0}
+            data = list(Contest(ctype).getAll(params=exclude, start=(page-1)*limit, size=limit, **query))
+            for each in data:
+                each["_id"] = str(each.get("_id"))
+                if userid in each.get("registeredUsers"):
+                    each["registered"] = True
+                else:
+                    each["registered"] = False
 
-        if data:
-            return response(200, "Success", data)
-        return response(400, "No contest available yet", [])  
+            if data:
+                return response(200, "Success", data)
+            return response(400, "No contest available yet", [])  
+        else:
+            if filters=="registered": # return only all contests user has registered for
+                exclude = {'lastModified':0}
+                query["registeredUsers"] = {"$elemMatch": {"$eq":userid}} 
+                data = list(Contest(ctype).getAll(params=exclude, start=(page-1)*limit, size=limit, **query))
+                for each in data:
+                    each["_id"] = str(each.get("_id"))
+                if data:
+                    return response(200, "Success", data)
+                return response(400, "No contest available yet", []) 
+            elif filters=="unregistered": # return only all contests user has not registered for
+                exclude = {'lastModified':0}
+                query["registeredUsers"] = {"$not": {"$elemMatch": {"$eq": userid}}} 
+                data = list(Contest(ctype).getAll(params=exclude, start=(page-1)*limit, size=limit, **query))
+                for each in data:
+                    each["_id"] = str(each.get("_id"))
+                if data:
+                    return response(200, "Success", data)
+                return response(400, "No contest available yet", []) 
+            else:
+                return response(400, "Invalid filter parameter", [])
         
 
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self, ctype, status):  
         return response(300, "Use a GET Request", [])  
+
+

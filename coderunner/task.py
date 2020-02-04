@@ -259,6 +259,10 @@ class Task:
                 submission_data.pop('contestid', None)
                 submission_data.pop('ctype', None)
                 Submission(self.userid).addDoc(submission_data) 
+                if self.verdict == "Passed":
+                    # problem solved, update this particular problem document
+                    update = {"$addToSet": {"solvedby": self.userid}}
+                    Problem().flexibleUpdate(update, _id=ObjectId(self.problem.getprblmid()))
             else:
                 self.gradeSubmission(submission_data)    
        

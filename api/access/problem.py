@@ -1,5 +1,5 @@
 from flask_restful import Resource,reqparse
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity 
 from bson.objectid import ObjectId
 from flask import jsonify
 from werkzeug.datastructures import FileStorage
@@ -35,6 +35,7 @@ req_show_problem = reqparse.RequestParser()
 req_show_problem.add_argument('tags', required=False) 
 req_show_problem.add_argument('page', type=int, required=True, help="This field cannot be blank")
 req_show_problem.add_argument('limit', type=int, required=True, help="This field cannot be blank")
+req_show_problem.add_argument('filter')
 
 delete_problem_parser = reqparse.RequestParser()
 delete_problem_parser.add_argument('author', help = 'username of the admin adding the problem', required=True)
@@ -74,8 +75,12 @@ class ProblemSet(Resource):
     def get(self, category):
         input_data = req_show_problem.parse_args()
 
-        include = {'_id':1,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1, 'difficulty':1}
+        include = {'_id':1,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1, 'difficulty':1, 'solvedby':1}
 
+        currentUser = get_jwt_identity() # get id from token
+        if not currentUser:
+            return response(400, "Invalid token", [])
+        userid = currentUser.get("uid")
         page = input_data.get('page')
         limit = input_data.get('limit')
         if category == "all":
@@ -86,6 +91,10 @@ class ProblemSet(Resource):
             
         for each in data:
             each["_id"] = str(each.get("_id"))
+            if userid in each.get("solvedby"): # check if the user requesting has solved the problem before
+                each["solved"] = True
+            else:
+                each["solved"] = False
 
         return response(200, "Success", data)
 
@@ -103,21 +112,50 @@ class ProblemSearch(Resource):
     def get(self):
         input_data = req_show_problem.parse_args()
 
-        include = {'_id':1,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1, 'difficulty':1}
+        include = {'_id':1,'prblmid':1, 'author':1, 'name':1, 'category':1, 'score':1, 'tags':1, 'difficulty':1, 'solvedby':1}
 
+        currentUser = get_jwt_identity() # get id from token
+        if not currentUser:
+            return response(400, "Invalid token", [])
+        userid = currentUser.get("uid")
         tags = input_data.get('tags')
         page = input_data.get('page')
         limit = input_data.get('limit')
+        filters = input_data.get('filter')
         if tags is None:
-            query = dict()
+            query = dict(status=1)
         else:
             value = {'$all': tags.split(",")}
             query = dict(tags=value,status=1)
-        data = list(Problem().getAll(params=include,start=(page-1)*limit,size=limit,**query))
-        for each in data:
-            each["_id"] = str(each.get("_id"))
+        if filters is None:
+            data = list(Problem().getAll(params=include,start=(page-1)*limit,size=limit,**query))
+            for each in data:
+                each["_id"] = str(each.get("_id"))
+                if userid in each.get("solvedby"): # check if the user requesting has solved the problem before
+                    each["solved"] = True
+                else:
+                    each["solved"] = False
 
-        return response(200, "Success", list(data))
+            return response(200, "Success", list(data))
+        else:
+            if filters=="solved": # return only all contests user has registered for 
+                query["solvedby"] = {"$elemMatch": {"$eq": userid}}
+                data = list(Problem().getAll(params=include,start=(page-1)*limit,size=limit,**query))
+                for each in data:
+                    each["_id"] = str(each.get("_id"))
+                if data:
+                    return response(200, "Success", data)
+                return response(400, "No contest available yet", []) 
+            elif filters=="unsolved": # return only all contests user has not registered for 
+                query["solvedby"] = {"$not": {"$elemMatch": {"$eq": userid}}}
+                data = list(Problem().getAll(params=include,start=(page-1)*limit,size=limit,**query))
+                for each in data:
+                    each["_id"] = str(each.get("_id"))
+                if data:
+                    return response(200, "Success", data)
+                return response(400, "No contest available yet", []) 
+            else:
+                return response(400, "Invalid filter parameter", [])
 
     @jwt_required 
     @cross_origin(supports_credentials=True)  
@@ -158,7 +196,7 @@ class ProblemAdd(Resource):
         if tags is not None:
             tags = tags.split(',') 
             input_data['tags'] = tags
-            input_data['status'] = 0
+        input_data['status'] = 0
         # process difficulty
         score = input_data.get('score')
         for key in difficulty:
@@ -266,7 +304,7 @@ class SubmitProblem(Resource):
         if author != pb.get('author'): 
             return response(400, "not the author of the problem", [])  
          
-        params = {"status": 1}
+        params = {"status": 1, 'solvedby':[]} # add a new field `solvedby` to indicate all users that have solved a problem
         if Problem().update(params=params, _id=ObjectId(input_data['prblmid'])):
             return response(200, "Problem submitted", [])     
 
