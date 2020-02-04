@@ -140,7 +140,8 @@ class UserContestHistory(Resource):
             200,
             "Success",
             list(UserRegisteredContest
-            (req_data["userid"]).getAll(params=exclude))
+            (req_data.get("userid").getAll(params=exclude))
+        )
         )
 
 
