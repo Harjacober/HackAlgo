@@ -121,12 +121,12 @@ class UserEnterContest(Resource):
 class UserContestHistory(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
-    def get(self):
-        return response(300, "Use a POST Request", [])
+    def post(self):
+        return response(300, "Use a GET Request", [])
 
     @jwt_required
     @cross_origin(supports_credentials=True)
-    def post(self):
+    def get(self):
         req_data=user_contest_history_parser.parse_args()
         exclude = {'_id':0, 'lastModified':0}
         #TODO(ab|jacob) move all this to a caching db. REDIS?
