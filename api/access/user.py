@@ -128,21 +128,21 @@ class UserContestHistory(Resource):
     @cross_origin(supports_credentials=True)
     def get(self):
         req_data=user_contest_history_parser.parse_args()
+
+        userid = req_data.get("userid")
         exclude = {'_id':0, 'lastModified':0}
         #TODO(ab|jacob) move all this to a caching db. REDIS?
         if not User().getBy(
-                _id=ObjectId(req_data["userid"])
+                _id=ObjectId(userid)
             ):
             return response(400,"User Id not found",{})
 
         exclude = {'_id':0, 'lastModified':0}
-        return response(
-            200,
-            "Success",
-            list(UserRegisteredContest
-            (req_data.get("userid").getAll(params=exclude))
-        )
-        )
+        data = list(UserRegisteredContest(userid).getAll(params=exclude))
+        if data:
+            return response(200,"Success",data)
+        
+        return response(400,"No contest data available",[])
 
 
 class UserSubmissionHistory(Resource):

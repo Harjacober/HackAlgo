@@ -69,16 +69,14 @@ class UserProfile(Resource):
                 return response(200, "Success", user_data)
 
         uid = ObjectId(data['uniqueid'])
-        exclude = {'_id':0, 'pswd':0, 'lastModified':0}
+        exclude = {'pswd':0, 'lastModified':0}
         user_data = self.category.getBy( params=exclude, _id=uid) 
+        user_data['_id'] = str(user_data.get('_id'))
         if user_data:
             return response(200, "Success", user_data)
 
         return response(400, "uniqueid doesn't exist",[])    
-    @jwt_required
-    @cross_origin(supports_credentials=True)
-    def post(self):
-        return response(300, "Use a GET Request",[])
+    
     @jwt_required
     @cross_origin(supports_credentials=True)
     def put(self):
@@ -88,7 +86,12 @@ class UserProfile(Resource):
         user_data = self.category.getBy( params=exclude, _id=uid) 
         if user_data:
             return response(200, "Success", user_data)
-        return response(400, "uniqueid doesn't exist",[])       
+        return response(400, "uniqueid doesn't exist",[])  
+
+    @jwt_required
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        return response(300, "Use a GET Request",[])     
 
 class SubmissionInfo(Resource):
 

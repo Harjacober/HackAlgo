@@ -66,6 +66,8 @@ class AdminRegistration(Resource):
         data=reg_parser.parse_args()
         if not testEmailRe.match(data["email"]):
             return response(200,"Invalid email",[])
+        if len(data["username"]) <2:
+            return response(400,"Username is too short",[]) 
         if len(data["pswd"]) <6:
             return response(400,"Password lenght must be greater than six",[])   
 
