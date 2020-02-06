@@ -48,7 +48,13 @@ class UserUpdateProfile(Resource):
         #update the profile(document) with unqiueid provided 
         uid = ObjectId(data['uniqueid']) #convert str id to a bson object
         if self.category.update(params=data, _id=uid):
-            return response(200, "update successful",[],access_token=create_access_token(data))
+            uid = ObjectId(data['uniqueid'])
+            exclude = {'pswd':0, 'lastModified':0}
+            user_data = self.category.getBy( params=exclude, _id=uid) 
+            user_data['_id'] = str(user_data.get('_id'))
+            if user_data:
+                return response(200, "update successful",[],access_token=create_access_token(user_data))
+            return response(400, "something went wrong",[],access_token="")
 
         return response(400, "uniqueid does not exist",[])      
  
