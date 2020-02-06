@@ -499,8 +499,11 @@ class GetContest(Resource):
             data = list(Contest(ctype).getAll(params=exclude, start=(page-1)*limit, size=limit, **query))
             for each in data:
                 each["_id"] = str(each.get("_id"))
-                if userid in each.get("registeredUsers"):
-                    each["registered"] = True
+                if each.get("registeredUsers") is not None:
+                    if userid in each.get("registeredUsers"):
+                        each["registered"] = True
+                    else:
+                        each["registered"] = False
                 else:
                     each["registered"] = False
 
