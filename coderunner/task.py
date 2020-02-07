@@ -125,6 +125,10 @@ class Task:
 
     def toJson(self):
         return {"state":self.state,"lang":self.lang,"userid":self.userid,"_id":self.id,"result":self.result}
+    
+    def free(self):
+        del self.verdict,self.contestid,self.ctype,self.problem,self.stype
+        del self.cases,self.answercase,self.timelimit,self.memlimit
 
     def __del___(self):
         #cleaning up
@@ -265,6 +269,7 @@ class Task:
         os.remove(self.filepath)
         if self.lang.lower()=="java":
             rmtree(self.folder,ignore_errors=True)
+        self.free()
 
     def gradeSubmission(self, data):
         """

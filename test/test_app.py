@@ -493,7 +493,28 @@ class AppTests(unittest.TestCase):
             # except Exception:
             #     pass
         else:
-            print("I didn't run because CELERY_TEST was set to False in config.py")   
+            print("I didn't run because CELERY_TEST was set to False in config.py") 
+    
+    def test_9_password_reset(self):
+        data={"email":"abrahamadeniyi38@gmail.com"}
+        resp=app_client.get("/forgot/password/",data=data) 
+        self.assertTrue("Success" in resp.data.decode())
+
+        key,url=list(contestplatform.pendindmacs.values())[0]
+
+        resp=app_client.get(url,data=data)
+        print(resp.data.decode())
+
+        data={"email":"abrahamadeniyi38@gmail.com","pswd":"mambamentality"}
+        resp=app_client.post("/change/password/",data=data)  
+        self.assertTrue("Success" in resp.data.decode())
+
+        header={"Authorization":"Bearer "+self.api_token_user}
+
+        data={"email":"abrahamadeniyi38@gmail.com","pswd":"mambamentality"}
+        resp=app_client.post("/change/password/authuser",data=data,headers=header)  
+        self.assertTrue("Success" in resp.data.decode())
+
  
 if __name__ == "__main__":
     unittest.main()
