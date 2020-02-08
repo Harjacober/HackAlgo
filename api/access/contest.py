@@ -10,7 +10,7 @@ from bson.objectid import ObjectId
 from db.models import Contest, ContestProblem, Admin, User
 from werkzeug.datastructures import FileStorage
 from datetime import datetime
-from api.access.utils import Rating
+from utils import Rating
 from flask import current_app
 from flask_cors import  cross_origin
 from celery import Celery
@@ -66,7 +66,7 @@ def updateRank(contestid, ctype):
     # so dont worry much about this imports performances
     from db.models import Contest, ContestProblem, Admin
     from bson.objectid import ObjectId
-    from api.access.utils import Rating
+    from utils import Rating
 
     # update the status field to indicate that the contest is over
     params = {'status': -1}
@@ -342,7 +342,7 @@ class ApproveContest(Resource):
         if starttime < current_time_mills() + sixhrs:
             return response(400, "start time must be at least {}hrs in the future".format(mintime), [])
 
-        start_contest_time = (starttime - current_time_mills()) * 1000 # celeery takes time in seconds not milliseconds  
+        start_contest_time = (starttime - current_time_mills()) / 1000 # celeery takes time in seconds not milliseconds  
 
         params = {'status': 2}
         if Contest(ctype).update(params=params, _id=ObjectId(contestid)):

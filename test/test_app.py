@@ -72,7 +72,7 @@ class AppTests(unittest.TestCase):
             os.stat(directory)
 
     def getValidTime(self):
-        return datetime.now().timestamp() + 13*60*60*1000.0        
+        return datetime.now().timestamp()*1000 + 13*60*60*1000.0        
 
     def reg_test(self,url,username,password,email,first=True):
         resp=app_client.post(url, data=dict(
@@ -413,7 +413,7 @@ class AppTests(unittest.TestCase):
             userid=self.user_id,
         )
 
-        resp=app_client.post("/my/contest/history/",data=data,headers=header)
+        resp=app_client.get("/my/contest/history/",data=data,headers=header)
 
         self.assertTrue("Success" in resp.data.decode())
         self.assertTrue(len(json.loads(resp.data.decode())["data"])>0)
@@ -493,7 +493,28 @@ class AppTests(unittest.TestCase):
             # except Exception:
             #     pass
         else:
-            print("I didn't run because CELERY_TEST was set to False in config.py")   
+            pass
+    
+    def test_9_password_reset(self):
+        data={"email":"abrahamadeniyi38@gmail.com"}
+        resp=app_client.get("/forgot/password/",data=data) 
+        self.assertTrue("Success" in resp.data.decode())
+
+        key,url=list(contestplatform.pendindmacs.values())[0]
+
+        resp=app_client.get(url,data=data)
+        print(resp.data.decode())
+
+        data={"email":"abrahamadeniyi38@gmail.com","pswd":"mambamentality","changepswdid":key}
+        resp=app_client.post("/change/password/",data=data)  
+        self.assertTrue("Success" in resp.data.decode())
+
+        header={"Authorization":"Bearer "+self.api_token_user}
+
+        data={"email":"abrahamadeniyi38@gmail.com","pswd":"mambamentality"}
+        resp=app_client.post("/change/password/authuser/",data=data,headers=header)  
+        self.assertTrue("Success" in resp.data.decode())
+
  
 if __name__ == "__main__":
     unittest.main()

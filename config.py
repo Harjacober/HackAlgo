@@ -12,9 +12,13 @@ CELERY_BROKER_URL= 'redis://{}:6379/0'.format(REDIS_HOST)
 CELERY_RESULT_BACKEND='redis://{}:6379/0'.format(REDIS_HOST)
 CELERY_TRACK_STARTED=True
 CELERY_IMPORTS = ("app","api.access.contest")
-MAIL_SERVER="smtp.gmail.com"
+MAIL_SERVER="smtp.live.com"
 MAIL_PORT=587
 MAIL_USE_TLS=True
-MAIL_USERNAME="hackalgodevs@gmail.com"
+MAIL_USE_SSL=False
+MAIL_USERNAME="codegees@outlook.com"
 MAIL_PASSWORD= "C0deGees$911"
+SECRET_KEY = b'7c56f3a987c603a9816b44c96e221ff86f7b7a6196062a804843fad8e204240620c40f7e2ca0c240e22d19728dee84fc7c06'
+HOST = "http://localhost:9000" if TESTING else "http://api.codegees.com/"
+FRONT_END_HOST = "http://localhost:8080" #definately need to change
 

@@ -1,4 +1,5 @@
-
+import config,secrets,hmac,re
+from threading import Timer
 from passlib.hash import pbkdf2_sha256 as sha256
 from flask_restful import Resource,reqparse,request
 from flask_jwt_extended import (
@@ -10,12 +11,10 @@ from flask_jwt_extended import (
     )
 from bson.objectid import ObjectId
 from db.models import Admin,User,Submission
-import re
-from flask import current_app
-from random import randint
-import config
+from flask import current_app,redirect,render_template
 from flask_mail import Message
 from flask_cors import  cross_origin
+from utils import retry
 
 
 
@@ -32,7 +31,21 @@ reg_parser.add_argument('email', help = 'This field cannot be blank.', required 
 reg_parser.add_argument('username', help = 'This field cannot be blank.', required = True)
 reg_parser.add_argument('pswd', help = 'This field cannot be blank', required = True)
 
+pswd_parser = reqparse.RequestParser()
+pswd_parser.add_argument('email', help = 'User regtistered mail',required=True)
 
+valid_pswd_parser = reqparse.RequestParser()
+valid_pswd_parser.add_argument('id', help = 'User regtistered mail',required=True)
+
+change_pswd_parser = reqparse.RequestParser()
+change_pswd_parser.add_argument('email', help = 'User regtistered mail',required=True)
+change_pswd_parser.add_argument("pswd",help="user new password",required=True)
+change_pswd_parser.add_argument("changepswdid",help="id sent to email",required=True)
+
+change_authuser_pswd_parser = reqparse.RequestParser()
+change_authuser_pswd_parser.add_argument("pswd",help="enter user new password",required=True)
+
+BITS=200
 
 def response(code,msg,data,access_token=""):
     return {"code":code,"msg":msg,"data":data,"access_token":access_token}
@@ -81,7 +94,7 @@ class AdminRegistration(Resource):
 
         data["pswd"]=sha256.hash(data["pswd"]) #replace the old pswd arg with new hash passowrd
     
-        generatedid=hex(randint(10**9,10**10))
+        generatedid=hex(secrets.SystemRandom().getrandbits(BITS))
         
         current_app.unregisteredusers[generatedid]=data
 
@@ -96,9 +109,9 @@ class AdminRegistration(Resource):
                 """.format(generatedid)
 
         msg.html = userMsg
-
-        #current_app.mail.send(msg)
-
+        #start mail send in next .5 sec
+        kw={"app-context": current_app._get_current_object()}
+        Timer(0.1,retry,(5,current_app.mail.send,msg),kw).start()
         return response(200,"Success!!! Check you email",[generatedid])
         
 class UserRegistration(AdminRegistration):
@@ -128,7 +141,116 @@ class AdminLogin(Resource):
         return response(400,"check the username and password",[])
 
 class UserLogin(AdminLogin):
-   category=User()   
+   category=User()  
+
+class ForgetPassword(Resource):
+    @cross_origin(supports_credentials=True)
+    def  get(self):
+        data=pswd_parser.parse_args()
+        
+        #checking if user is present
+        for category in [Admin(),User()]:
+            if category.getBy(email=data["email"]):break
+        else:
+            return response(404,"User Not Found",[])    
+        
+        msg = Message("Password change request",
+                  sender=config.MAIL_USERNAME,
+                  recipients=[data["email"]]
+                )
+
+        mac=hmac.new(config.SECRET_KEY)
+        generatedid=hex(secrets.SystemRandom().getrandbits(BITS)).encode("utf-8")
+        mac.update(generatedid)
+        generatedid=mac.hexdigest()
+        
+        url="{}/check/password?id={}&email={}".format(config.HOST,generatedid,data["email"])
+        current_app.pendindmacs[data["email"]]=(generatedid,url)
+
+        userMsg="""
+                <b><a href="{}">Click here to change password<a/></b><br>
+                
+                """.format(url)
+
+        msg.html = userMsg
+        kw={"app-context": current_app._get_current_object()}
+        Timer(0.1,retry,(5,current_app.mail.send,msg),kw).start()
+
+        return response(200,"Success!!! Check you email",[url])
+
+class ChangePassword(Resource):
+    @cross_origin(supports_credentials=True)
+    def  post(self):
+        data=change_pswd_parser.parse_args()
+
+        for cat in [Admin(),User()]:
+            user = cat.getBy(email=data["email"])
+            if user:
+                category=cat
+                break
+        else:
+            return response(404,"User not found",[])
+        
+        if len(data["pswd"]) <6:
+            return response(400,"Password lenght must be greater than six",[])  
+        pending=current_app.pendindmacs.get(data["email"])
+        if not pending or len(pending)<2:
+            return response(400,"Invalid ID",[])  
+
+        if not hmac.compare_digest(pending[0],data["changepswdid"]):
+            return response(400,"Invalid ID",[])  
+        
+        user["pswd"] =  sha256.hash(data["pswd"])
+        uid = ObjectId(user['_id'])
+        category.update(params=data, _id=uid)
+        current_app.pendindmacs.pop(data["email"])
+        return response(200,"Success!!! Password changed",[])
+
+
+@cross_origin(supports_credentials=True)
+def ValidatePassword():
+    id=request.args.get("id")
+    email=request.args.get("email")
+    ok= True if id else False
+    pending=current_app.pendindmacs.get(email)
+    ok = pending and len(pending)>1
+    ok = ok and hmac.compare_digest(pending[0],id)
+    if not ok:
+        return render_template("html/404.html")
+    return redirect("{}/reset-password/{}/{}/".format(config.FRONT_END_HOST,email,id), code=302)
+
+class ChangeAuthUserPassword(Resource):
+    @cross_origin(supports_credentials=True)
+    @jwt_required
+    def post(self):
+        data=change_authuser_pswd_parser.parse_args()
+        if len(data["pswd"]) <6:
+            return response(400,"Password lenght must be greater than five",[])
+        
+        identity=get_jwt_identity()
+        for cat in [Admin(),User()]:
+            user=cat.getBy(username=identity.get("username")) 
+            user = user or cat.getBy(email=identity.get("email")) 
+            if user:
+                category=cat;break
+        else:
+            return response(404,"User not found",[])
+
+        data["pswd"]=sha256.hash(data["pswd"])
+
+        uid = ObjectId(user['_id'])
+        category.update(params=data, _id=uid)
+        return response(200,"Success!!! Password changed",[])
+
+
+
+
+        
+        
+
+
+        
+
 
 
 

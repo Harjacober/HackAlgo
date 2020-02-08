@@ -7,7 +7,7 @@ from flask import Flask, request
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
 
-from api.resources.regapi import AdminRegistration, UserRegistration, AdminLogin, UserLogin
+from api.resources.regapi import AdminRegistration, UserRegistration, AdminLogin, UserLogin, ForgetPassword, ValidatePassword,ChangePassword,ChangeAuthUserPassword
 from api.resources.usersapi import UserProfile, UserUpdateProfile, SubmissionInfo, SubmissionList
 from api.resources.adminapi import AdminProfile, AdminUpdateProfile,GetAllAddedProblems, GetAllInvolvedContest
 from api.resources.coding import RunCode, RunCodeStatus
@@ -40,18 +40,24 @@ contestplatform.mail=mail
 
 contestplatform.socketio = SocketIO(contestplatform)
 contestplatform.unregisteredusers={}
+contestplatform.pendindmacs={}
 
 CORS(contestplatform,support_credentials=True)
 
 @contestplatform.route("/")
 def index():
-    #server some home page here
+    #serve some home page here
     return "Welcome to HackAlgo!!"
+
+contestplatform.add_url_rule("/check/password/","checkPassword",ValidatePassword)
 
 api.add_resource(AdminRegistration, '/admin/registration/')
 api.add_resource(UserRegistration, '/user/registration/')
 api.add_resource(AdminLogin, '/admin/login/')
 api.add_resource(UserLogin, '/user/login/')
+api.add_resource(ForgetPassword,"/forgot/password/")
+api.add_resource(ChangePassword,"/change/password/")
+api.add_resource(ChangeAuthUserPassword,"/change/password/authuser/")
 
 api.add_resource(GetAllAddedProblems, '/admin/get/addedproblems/all/')
 api.add_resource(GetAllInvolvedContest, '/admin/get/involvedcontests/all/')
@@ -99,4 +105,5 @@ api.add_resource(GetInternships, '/get/internship/')
 api.add_resource(ViewInternship, '/view/internship/')
 
 if __name__ == "__main__":
-    contestplatform.socketio.run(contestplatform,host="0.0.0.0", debug=True, port="9000")
+    print(config.TESTING)
+    contestplatform.run(host="0.0.0.0", debug=True, port="9000")
