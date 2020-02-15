@@ -514,6 +514,8 @@ class AppTests(unittest.TestCase):
         data={"email":"abrahamadeniyi38@gmail.com","pswd":"mambamentality"}
         resp=app_client.post("/change/password/authuser/",data=data,headers=header)  
         self.assertTrue("Success" in resp.data.decode())
+        self.login_test("/admin/login/","marlians","mambamentality")
+        
 
  
 if __name__ == "__main__":

@@ -16,9 +16,9 @@ MAIL_SERVER="smtp.live.com"
 MAIL_PORT=587
 MAIL_USE_TLS=True
 MAIL_USE_SSL=False
-MAIL_USERNAME="codegees@outlook.com"
-MAIL_PASSWORD= "C0deGees$911"
+MAIL_USERNAME="codegee@outlook.com"
+MAIL_PASSWORD= "CodeAndGee"
 SECRET_KEY = b'7c56f3a987c603a9816b44c96e221ff86f7b7a6196062a804843fad8e204240620c40f7e2ca0c240e22d19728dee84fc7c06'
-HOST = "http://localhost:9000" if TESTING else "http://api.codegees.com/"
+HOST = "http://localhost:9000" if TESTING else "http://api.codegees.com"
 FRONT_END_HOST = "http://localhost:8080" #definately need to change
 

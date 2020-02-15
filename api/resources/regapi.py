@@ -202,7 +202,7 @@ class ChangePassword(Resource):
         
         user["pswd"] =  sha256.hash(data["pswd"])
         uid = ObjectId(user['_id'])
-        category.update(params=data, _id=uid)
+        category.update({"pswd":user["pswd"]}, _id=uid)
         current_app.pendindmacs.pop(data["email"])
         return response(200,"Success!!! Password changed",[])
 
@@ -217,7 +217,7 @@ def ValidatePassword():
     ok = ok and hmac.compare_digest(pending[0],id)
     if not ok:
         return render_template("html/404.html")
-    return redirect("{}/reset-password/{}/{}/".format(config.FRONT_END_HOST,email,id), code=302)
+    return redirect("{}/reset-password/{}/{}".format(config.FRONT_END_HOST,email,id), code=302)
 
 class ChangeAuthUserPassword(Resource):
     @cross_origin(supports_credentials=True)
