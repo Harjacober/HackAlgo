@@ -29,3 +29,5 @@ services:
       - mongodb
       - redis
     restart: on-failure
+    environment:
+     - BUILD

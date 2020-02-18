@@ -24,6 +24,6 @@ RUN pip install -r requirement.txt
 ENV PYTHONPATH "${PYTHONPATH}:/home"
 ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
 ENV PATH="$JAVA_HOME/bin:${PATH}"
-RUN chmod +x build
-CMD ["sh", "build"]
+RUN chmod +x scripts/*
+CMD sh "scripts/build"
 

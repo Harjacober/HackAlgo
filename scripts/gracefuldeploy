@@ -1,0 +1,3 @@
+#!/bin/sh
+# run this file in host container redeploy app gracefully
+sudo docker exec platform sh -c ./scripts/redeploy

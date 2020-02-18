@@ -103,7 +103,3 @@ api.add_resource(UserSubmissionHistory, '/my/submission/history/')
 api.add_resource(AddInternship, '/add/internship/')
 api.add_resource(GetInternships, '/get/internship/')
 api.add_resource(ViewInternship, '/view/internship/')
-
-if __name__ == "__main__":
-    print(config.TESTING)
-    contestplatform.run(host="0.0.0.0", debug=True, port="9000")
