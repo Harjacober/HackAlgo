@@ -14,8 +14,12 @@
   ```docker-compose up```  
   
   ```docker-compose up -d (This restart the container in the backgroud)```  
+
+ if you want to deploy the app in a production environment run this  ```export BUILD=prod``` on the shell 
+
+  To redploy the app in a production env run this ```./scripts/gracefuldeploy ```  
+
 - it is expected that the current directory where the project is , is mounted on the container so changes are in sync from your ide  
-- This an only developement setup 
 #  code formatting  
 install yapf with ```pip install yapf``` then run ```yapf -i -r *.py```
 #  Software Requirement  
@@ -23,7 +27,5 @@ Redis
 Mongo  
 celery  
 #  running celery  
-use ```celery multi start w1 -A coderunner.celerytasks -l info --pidfile=/var/run/celery/%n.pid \
-                                        --logfile=/var/log/celery/%n%I.log```  
-or whatever works for you  
-check test 9 for sample usage
+check scripts/build  
+
