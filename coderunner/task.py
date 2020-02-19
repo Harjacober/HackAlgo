@@ -127,7 +127,7 @@ class Task:
         return {"state":self.state,"lang":self.lang,"userid":self.userid,"_id":self.id,"result":self.result}
     
     def free(self):
-        del self.verdict,self.contestid,self.ctype,self.problem,self.stype
+        del self.contestid,self.ctype,self.problem,self.stype
         del self.cases,self.answercase,self.timelimit,self.memlimit
 
     def __del___(self):
@@ -242,15 +242,13 @@ class Task:
 
                 output=ans.stdout.strip()
                 errput=ans.stderr.strip()
-                if self.lang.lower()=="go":
-                    pass
-                    #print(self.answercase[cc].strip(),output+"theoutput")
+
                 self.result[cc] = {
                                 "passed":output==self.answercase[cc] and ans.returncode==0,
                                 "output":output,
                                 "errput":errput
                                 }             
-                if not self.answercase[cc] and ans.returncode==0: #note @AB i just added this line after calling u
+                if not self.answercase[cc] or ans.returncode>0 or output!=self.answercase[cc]: 
                     self.verdict = "Failed"
 
         self.state=self.PossibelTasksState[2]

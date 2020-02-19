@@ -6,7 +6,12 @@ python db/create.py
 touch /var/log/celery/log.log
 celery -A api.access.contest worker -l info --loglevel=DEBUG &
 export TESTING=1
-#python test/test_app.py
+python test/test_app.py
+failtest=$?
+if [[ $failtest != 0 ]]; then
+    echo "Test failed!"
+    exit $failtest
+fi
 export TESTING=0
 if [[ "$BUILD" = "prod" ]]; then
     gunicorn --worker-class eventlet -p app.pid -w 3 app:contestplatform -b :9000

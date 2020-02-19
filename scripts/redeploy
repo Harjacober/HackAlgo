@@ -1,3 +1,9 @@
+#!/bin/sh
+failtest=$?
+if [[ $failtest != 0 ]]; then
+    echo "Test failed!"
+    exit $failtest
+fi
 #redeploy the app without downtime
 # checks if pid file exist since app is being started with pid file
 if [[ -f app.pid ]];then
