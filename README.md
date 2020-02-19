@@ -20,6 +20,8 @@
   To redploy the app in a production env run this ```./scripts/gracefuldeploy ```  
 
 - it is expected that the current directory where the project is , is mounted on the container so changes are in sync from your ide  
+- if you are using sudo always pass -E params to preserve env variables  
+
 #  code formatting  
 install yapf with ```pip install yapf``` then run ```yapf -i -r *.py```
 #  Software Requirement  

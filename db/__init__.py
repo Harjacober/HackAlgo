@@ -15,5 +15,4 @@ if TESTING:
     client=client["contestplatformtesting"]
 else:
     client = MongoClient(host, 27017)
-    client.drop_database("contestplatform")  #remove after remove  developemnt
     client = client["contestplatform"] 

@@ -60,8 +60,11 @@ class RunCode(Resource):
         codefile = input_data.get('codefile') 
         task=Task(lang,codecontent,userid,ProblemInstance(problem),task_id,stype,codefile)
         queue.add(task_id,task) 
-
-        return response(200, "Task started", [task.toJson()]) 
+        
+        code=200
+        if task.verdict!="Passed":
+            code=400
+        return response(code, "Task started", [task.toJson()]) 
 
     @jwt_required
     @cross_origin(supports_credentials=True)
