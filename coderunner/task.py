@@ -253,7 +253,7 @@ class Task:
 
         self.state=self.PossibelTasksState[2]
         #create a submission in the database    
-        submission_data = {'prblmid':self.problem.getprblmid(),'userid':self.userid,'contestid':self.contestid,'ctype':self.ctype,'codecontent':self.content,
+        submission_data = {'prblmid':self.problem.getprblmid(),'name':self.problem.getName(),'userid':self.userid,'contestid':self.contestid,'ctype':self.ctype,'codecontent':self.content,
         'lang':self.lang,'stype':self.stype,'result': self.result,'verdict': self.verdict,'timesubmitted':self.timeofsubmission}
         if self.stype == "test":   
             if not bool(self.contestid):

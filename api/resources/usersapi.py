@@ -69,16 +69,28 @@ class UserProfile(Resource):
 
         userName=data.get("username")
         if userName:
-            exclude = {'_id':0, 'pswd':0, 'lastModified':0}
+            exclude = {'pswd':0, 'lastModified':0}
             user_data = self.category.getBy( params=exclude, username=userName) 
+            user_data['_id'] = str(user_data.get('_id'))
             if user_data:
+                userid = user_data.get('_id')
+                solvedProblems = dict()
+                submissions = Submission(userid).getAll(params={'_id':0}, verdict='Passed')
+                for submission in submissions:
+                    solvedProblems[submission.get('prblmid')] = submission.get('name')
+                user_data['solvedProblems'] = solvedProblems
                 return response(200, "Success", user_data)
-
-        uid = ObjectId(data['uniqueid'])
+        userid =  data.get('uniqueid')
+        uid = ObjectId(userid)
         exclude = {'pswd':0, 'lastModified':0}
         user_data = self.category.getBy( params=exclude, _id=uid) 
         user_data['_id'] = str(user_data.get('_id'))
         if user_data:
+            solvedProblems = dict()
+            submissions = Submission(userid).getAll(params={'_id':0}, verdict='Passed')
+            for submission in submissions:
+                solvedProblems[submission.get('prblmid')] = submission.get('name')
+            user_data['solvedProblems'] = solvedProblems
             return response(200, "Success", user_data)
 
         return response(400, "uniqueid doesn't exist",[])    

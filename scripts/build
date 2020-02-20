@@ -1,4 +1,4 @@
-#!/bin/sh
+ #!/bin/sh
 cd /home
 mkdir -p /var/run/celery
 mkdir -p /var/log/celery
@@ -18,4 +18,3 @@ if [[ "$BUILD" = "prod" ]]; then
 else 
    python appdev.py 
 fi
-
