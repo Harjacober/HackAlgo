@@ -311,6 +311,27 @@ class AppTests(unittest.TestCase):
         for i in range(3):
             self.assertTrue(data["data"][0]["result"][i]["passed"])
 
+        #tetsing php 
+        resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.phpData())
+        data=json.loads(resp.data.decode())
+        for i in range(3):
+            self.assertTrue(data["data"][0]["result"][i]["passed"])
+        
+        #testing js
+        resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.jsData())
+        data=json.loads(resp.data.decode())
+        print(data)
+        for i in range(3):
+            self.assertTrue(data["data"][0]["result"][i]["passed"])
+        
+        #testing c++
+        resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.cplusplusData())
+        data=json.loads(resp.data.decode())
+        for i in range(3):
+            self.assertTrue(data["data"][0]["result"][i]["passed"])
+
+
+
         #testingtimeout py code
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.pythonData(testtimeout=True))
         data=json.loads(resp.data.decode())
@@ -488,12 +509,6 @@ class AppTests(unittest.TestCase):
             #see if it is updated
             with open("/home/celerytestfile.in") as f:
                 self.assertTrue(f.read()=="a")
-            # try:
-            #     os.remove("/home/celerytestfile.in")
-            # except Exception:
-            #     pass
-        else:
-            pass
     
     def test_9_password_reset(self):
         data={"email":"abrahamadeniyi38@gmail.com"}

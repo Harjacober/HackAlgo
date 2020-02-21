@@ -25,5 +25,6 @@ ENV PYTHONPATH "${PYTHONPATH}:/home"
 ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
 ENV PATH="$JAVA_HOME/bin:${PATH}"
 RUN chmod +x scripts/*
+RUN apk add --no-cache g++
 CMD sh "scripts/build"
 

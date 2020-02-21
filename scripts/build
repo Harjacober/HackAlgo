@@ -14,7 +14,7 @@ if [[ $failtest != 0 ]]; then
 fi
 export TESTING=0
 if [[ "$BUILD" = "prod" ]]; then
-    gunicorn --worker-class eventlet -p app.pid -w 3 app:contestplatform -b :9000
+    gunicorn --worker-class eventlet -p app.pid -w 1 app:contestplatform -b :9000
 else 
    python appdev.py 
 fi

@@ -3,16 +3,21 @@ This class holds runnng tasks and can provide the status of each
 """
 from os import getcwd
 from bson.objectid import ObjectId
+import sched,time
+import threading
 
-class Queue:
+
+class Queue(threading.Thread):
     tasks={}
     idsAvailable=[]
+    s = sched.scheduler(time.time, time.sleep)
 
     def add(self,id,task):
         if id in Queue.tasks:
             print("WARN: id in task")
         Queue.tasks[id]=task
         Queue.tasks[id].run()
+        self.s.enter(10*60, 1, self.done,argument=(id,))
 
 
     def getById(self,id):
@@ -31,7 +36,7 @@ class Queue:
         print(" Removed ID {}".format(id))
 
     def checkForID(self,id):
-        return id in Queue.tasks
+        return id in Queue.tasks        
 
     @classmethod
     def generateID(self):

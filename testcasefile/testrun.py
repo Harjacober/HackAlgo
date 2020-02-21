@@ -20,6 +20,7 @@ def runCommand(*popenargs,input=None, capture_output=False, timeout=None, check=
     with subprocess.Popen(*popenargs, **kwargs) as process:
         if system()=='Linux':
             memorylimithard=memorylimit*1024**2+10024
+            print(process.pid)
             resource.prlimit(process.pid,resource.RLIMIT_STACK,(memorylimit*1024**2,memorylimithard))
             resource.prlimit(process.pid,resource.RLIMIT_DATA,(memorylimit*1024**2,memorylimithard))
         try:
@@ -50,4 +51,9 @@ def runCommand(*popenargs,input=None, capture_output=False, timeout=None, check=
     return subprocess.CompletedProcess(process.args, retcode, stdout, stderr)
 
 
-print(runCommand(["go","run","test.go"] ,capture_output=True,timeout= 1,input='2\n7\n8\n9\n10',encoding="utf-8"))
+print(runCommand(["node","testcasefile/test.js"] ,capture_output=True,timeout= 1,input='2\n7\n8\n9\n10',encoding="utf-8"))
+print(runCommand(["node","testcasefile/test.js"] ,capture_output=True,timeout= 1,input='2\n7\n8\n9\n10',encoding="utf-8"))
+print(runCommand(["node","testcasefile/test.js"] ,capture_output=True,timeout= 1,input='2\n7\n8\n9\n10',encoding="utf-8"))
+print(runCommand(["node","testcasefile/test.js"] ,capture_output=True,timeout= 1,input='2\n7\n8\n9\n10',encoding="utf-8"))
+
+print(resource.getrusage(resource.RUSAGE_CHILDREN))
