@@ -35,6 +35,8 @@ compilers={
 def runCommand(*popenargs,input=None, capture_output=False, timeout=None, check=False,memorylimit=300,**kwargs):
     #mocking the standard implementation of subprocess.run
     #so we can set memory limit
+    lang=kwargs.get("lang")
+    if lang:kwargs.pop("lang")
     if input is not None:
         if kwargs.get('stdin') is not None:
             raise ValueError('stdin and input arguments may not both be used.')
@@ -49,9 +51,16 @@ def runCommand(*popenargs,input=None, capture_output=False, timeout=None, check=
 
     with subprocess.Popen(*popenargs, **kwargs) as process:
         if system()=='Linux':
+            memorylimit=memorylimit+128 #extra 128 mb for startup
             memorylimithard=memorylimit*1024**2+10024
+            
+            if lang!="js":
+                #js is single threaded that means we would be setting stack limit
+                #for the entire js interpreter since js relies on callback functions
+                #for it operations which essentially uses stack
+                resource.prlimit(process.pid,resource.RLIMIT_DATA,(memorylimit*1024**2,memorylimithard))
             resource.prlimit(process.pid,resource.RLIMIT_STACK,(memorylimit*1024**2,memorylimithard))
-            resource.prlimit(process.pid,resource.RLIMIT_DATA,(memorylimit*1024**2,memorylimithard))
+            
         try:
             stdout, stderr = process.communicate(input, timeout=timeout)
         except subprocess.TimeoutExpired as exc:
@@ -175,7 +184,7 @@ class Task:
     def runCompile(self,compiler_name,compile_options,run_options,n_cases,binary):
 
         compileans=runCommand([compiler_name]+compile_options+[self.filepath],
-                                            capture_output=True,encoding="utf-8")
+                                            capture_output=True,encoding="utf-8",memorylimit=self.memlimit)
 
         #if while trying to compile and there was an error 
         if compileans.returncode >0 :
@@ -187,7 +196,7 @@ class Task:
         for cc in range(n_cases):
             try:
                 ans=runCommand([binary]+run_options, capture_output=True,timeout= self.timelimit,\
-                                input=self.cases[cc],encoding="utf-8")
+                                input=self.cases[cc],encoding="utf-8",memorylimit=self.memlimit)
             except subprocess.TimeoutExpired:
                 self.result[cc] ={"passed":False,"output":"Timeout","errput":"Timeout"}
                 self.verdict = "Failed" 
@@ -224,13 +233,14 @@ class Task:
             self.runCompile("g++",options_compile,options_run,l,self.filepath+".out")
         else:
             # languages like python, js, php should be fine.
+            self.memlimit= self.memlimit+100 # extra 100mb for interpreted languanges
             for cc in range(l):
                 args=[]
                 args.extend(self.resolveFolder(self.lang))
                 args.append(self.filepath) 
                 try:
                     ans=runCommand(args,capture_output=True,timeout= self.timelimit,
-                            input=self.cases[cc],encoding="utf-8")
+                            input=self.cases[cc],encoding="utf-8",memorylimit=self.memlimit,lang=self.lang)
                 except subprocess.TimeoutExpired:
                     self.result[cc] ={"passed":False,"output":"Timeout","errput":"Timeout"}
                     self.verdict = "Failed"
@@ -322,4 +332,4 @@ class Task:
         'participants.{}.timepenalty'.format(userid): timepenalty}}
         Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)) 
         data['score'] = totalscore
-        current_app.socketio.emit('newscore', {'data':totalscore})
+        current_app.socketio.emit('newscore', {'data':totalscore},namespace='/scoreboard/')

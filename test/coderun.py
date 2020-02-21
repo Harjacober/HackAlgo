@@ -94,17 +94,56 @@ class CodeRunTests:
         )
         return data
 
-    def cplusplusData(self):
-        return {}
+    def cplusplusData(self,testtimeout=False):
+        path = "testcasefile/test.cpp"
+        with open(path) as f:
+            code=f.read()
+        
+        data=dict(
+            prblmid=self.problem_id,
+            userid=self.user_id,
+            codecontent=code,
+            lang="c++",
+            stype = "test",
+            contestid = self.contestid,
+            ctype = self.ctype
+        )
 
-    def jsData(self):
-        return {
+        return data
 
-        }
-    def phpData(self):
-        return {
+    def jsData(self,testtimeout=False):
+        path = "testcasefile/test.js"
+        with open(path) as f:
+            code=f.read()
 
-        }
+        data=dict(
+            prblmid=self.problem_id,
+            userid=self.user_id,
+            codecontent=code,
+            lang="js",
+            stype = "test",
+            contestid = self.contestid,
+            ctype = self.ctype
+        )
+
+        return data
+
+    def phpData(self,testtimeout=False):
+        path = "testcasefile/test.php"
+        with open(path) as f:
+            code=f.read()
+
+        data=dict(
+            prblmid=self.problem_id,
+            userid=self.user_id,
+            codecontent=code,
+            lang="php",
+            stype = "test",
+            contestid = self.contestid,
+            ctype = self.ctype
+        )
+
+        return data
 
     def run(self,url,url_status,apiKey,appClient,requestData):
 

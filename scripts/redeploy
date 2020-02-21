@@ -1,4 +1,5 @@
 #!/bin/sh
+python test/test_app.py
 failtest=$?
 if [[ $failtest != 0 ]]; then
     echo "Test failed!"
