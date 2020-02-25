@@ -39,8 +39,6 @@ mail.init_app(contestplatform)
 contestplatform.mail=mail
 
 contestplatform.socketio = SocketIO(contestplatform)
-contestplatform.unregisteredusers={}
-contestplatform.pendindmacs={}
 
 CORS(contestplatform,support_credentials=True)
 

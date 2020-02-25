@@ -92,6 +92,16 @@ class Task:
     """
     Handles running of submitted code and updates the submission details in the database
     """
+
+    @classmethod
+    def taskObj(cls,d):
+        if isinstance(d,dict):
+            obj=object()
+            for classvar in d:
+                setattr(obj,classvar,d[classvar])
+            setattr(obj,"run",)
+            return obj
+            
     PossibelTasksState=["initialize","running","finished"]
     def __init__(self,lang,content,userid,problem,id,stype,codefile,contestid="",ctype=""):
         """
@@ -134,6 +144,12 @@ class Task:
 
     def toJson(self):
         return {"state":self.state,"lang":self.lang,"userid":self.userid,"_id":self.id,"result":self.result}
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def __repr__(self):
+        return str(self.__dict__)
     
     def free(self):
         del self.contestid,self.ctype,self.problem,self.stype
@@ -161,9 +177,8 @@ class Task:
         else:
             self.folder="/tmp/{}/".format(self.lang)
         self.filepath=self.folder+self.filename
-        self.file = open(self.filepath,"w+")
-        self.file.write(self.content) 
-        self.file.close()
+        with open(self.filepath,"w+") as f:
+            f.write(self.content) 
         self.timeofsubmission=str(datetime.now())
     
     def resolveFolder(self,lang):
@@ -215,7 +230,7 @@ class Task:
                             "errput":errput
                             }
 
-    def run(self):
+    def run(self,ClientConnection):
         l=len(self.result)
         self.state=self.PossibelTasksState[1]
         #some languagues have to compile then run 
@@ -282,6 +297,7 @@ class Task:
         if self.lang.lower()=="java":
             rmtree(self.folder,ignore_errors=True)
         self.free()
+        ClientConnection.send(["DONE",self.id])
 
     def gradeSubmission(self, data):
         """

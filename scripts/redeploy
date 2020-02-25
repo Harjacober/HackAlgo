@@ -1,4 +1,5 @@
 #!/bin/sh
+pip install -r requirement.txt
 python test/test_app.py
 failtest=$?
 if [[ $failtest != 0 ]]; then

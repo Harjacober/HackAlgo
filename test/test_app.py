@@ -9,6 +9,7 @@ from db.models import *
 from test.coderun import CodeRunTests
 from datetime import datetime
 import config
+from db import redisClient
 
 app_client=contestplatform.test_client()
 
@@ -89,11 +90,8 @@ class AppTests(unittest.TestCase):
         self.assertTrue('email' in resp.data.decode())
         d=json.loads(resp.data.decode())
         if "registration" in url:
-            try:
-                keyreg=list(contestplatform.unregisteredusers.keys())[0]
-            except Exception:
-                keyreg=d["data"][0]
-            resp=app_client.get(url+"?id="+keyreg)
+            keyreg=list(redisClient.hgetall("unregisteredusers").keys())[0]
+            resp=app_client.get(url+"?id="+keyreg.decode())
             resp=json.loads(resp.data.decode())
 
 
@@ -308,6 +306,7 @@ class AppTests(unittest.TestCase):
         #testing python
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.pythonData())
         data=json.loads(resp.data.decode())
+        print(data)
         for i in range(3):
             self.assertTrue(data["data"][0]["result"][i]["passed"])
 
@@ -320,7 +319,6 @@ class AppTests(unittest.TestCase):
         #testing js
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.jsData())
         data=json.loads(resp.data.decode())
-        print(data)
         for i in range(3):
             self.assertTrue(data["data"][0]["result"][i]["passed"])
         
@@ -515,11 +513,10 @@ class AppTests(unittest.TestCase):
         resp=app_client.get("/forgot/password/",data=data) 
         self.assertTrue("Success" in resp.data.decode())
 
-        key,url=list(contestplatform.pendindmacs.values())[0]
+        key,url=json.loads(list(redisClient.hgetall("pendindmacs").values())[0])
 
         resp=app_client.get(url,data=data)
-        print(resp.data.decode())
-
+    
         data={"email":"abrahamadeniyi38@gmail.com","pswd":"mambamentality","changepswdid":key}
         resp=app_client.post("/change/password/",data=data)  
         self.assertTrue("Success" in resp.data.decode())
@@ -532,6 +529,7 @@ class AppTests(unittest.TestCase):
         self.login_test("/admin/login/","marlians","mambamentality")
         
 
- 
+from test.test_task_queue import *
+
 if __name__ == "__main__":
     unittest.main()
