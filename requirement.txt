@@ -10,3 +10,4 @@ Flask-Mail
 flask-cors
 eventlet
 gunicorn
+redis-collections

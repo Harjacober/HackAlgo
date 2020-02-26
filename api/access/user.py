@@ -247,7 +247,6 @@ class ContestRunCodeStatus(Resource):
         language=input_data["lang"]
 
         task=queue.getById(task_id)
- 
         if task is None:
              return response(400, "Task not found", [])  
 

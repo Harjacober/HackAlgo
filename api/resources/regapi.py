@@ -1,4 +1,4 @@
-import config,secrets,hmac,re
+import config,secrets,hmac,re,json
 from threading import Timer
 from passlib.hash import pbkdf2_sha256 as sha256
 from flask_restful import Resource,reqparse,request
@@ -11,6 +11,7 @@ from flask_jwt_extended import (
     )
 from bson.objectid import ObjectId
 from db.models import Admin,User,Submission
+from db import redisClient
 from flask import current_app,redirect,render_template
 from flask_mail import Message
 from flask_cors import  cross_origin
@@ -57,8 +58,8 @@ class AdminRegistration(Resource):
     def get(self):
         id=request.args.get("id")
 
-        data=current_app.unregisteredusers.get(id)
-
+        data=json.loads(redisClient.hget("unregisteredusers",id).decode())
+        
         if not data:
             return response(400,"something went wrong.Have you registered?",[])
         
@@ -70,7 +71,7 @@ class AdminRegistration(Resource):
                 return response(400,"usernname taken",[])
 
         uid = self.category.addDoc(data) 
-        current_app.unregisteredusers.pop(id)
+        redisClient.hdel("unregisteredusers",id)
         data.pop("pswd");data["uid"]=str(data["_id"]);data.pop("_id")
         return response(200,"Successfully resgistered",{"uniqueid":str(uid)},access_token=create_access_token(data))
         
@@ -95,8 +96,7 @@ class AdminRegistration(Resource):
         data["pswd"]=sha256.hash(data["pswd"]) #replace the old pswd arg with new hash passowrd
     
         generatedid=hex(secrets.SystemRandom().getrandbits(BITS))
-        
-        current_app.unregisteredusers[generatedid]=data
+        redisClient.hset("unregisteredusers",generatedid,json.dumps(data))
 
         msg = Message("Welcome to CodeGees",
                   sender=config.MAIL_USERNAME,
@@ -111,7 +111,7 @@ class AdminRegistration(Resource):
         msg.html = userMsg
         #start mail send in next .5 sec
         kw={"app-context": current_app._get_current_object()}
-        Timer(0.1,retry,(5,current_app.mail.send,msg),kw).start()
+        Timer(0,retry,(5,current_app.mail.send,msg),kw).start()
         return response(200,"Success!!! Check you email",[generatedid])
         
 class UserRegistration(AdminRegistration):
@@ -165,7 +165,7 @@ class ForgetPassword(Resource):
         generatedid=mac.hexdigest()
         
         url="{}/check/password?id={}&email={}".format(config.HOST,generatedid,data["email"])
-        current_app.pendindmacs[data["email"]]=(generatedid,url)
+        redisClient.hset("pendindmacs",data["email"],json.dumps((generatedid,url)))
 
         userMsg="""
                 <b><a href="{}">Click here to change password<a/></b><br>
@@ -193,7 +193,8 @@ class ChangePassword(Resource):
         
         if len(data["pswd"]) <6:
             return response(400,"Password lenght must be greater than six",[])  
-        pending=current_app.pendindmacs.get(data["email"])
+
+        pending=json.loads(redisClient.hget("pendindmacs",data["email"]).decode())
         if not pending or len(pending)<2:
             return response(400,"Invalid ID",[])  
 
@@ -203,7 +204,7 @@ class ChangePassword(Resource):
         user["pswd"] =  sha256.hash(data["pswd"])
         uid = ObjectId(user['_id'])
         category.update({"pswd":user["pswd"]}, _id=uid)
-        current_app.pendindmacs.pop(data["email"])
+        redisClient.hdel("pendindmacs",data["email"])
         return response(200,"Success!!! Password changed",[])
 
 
@@ -212,8 +213,8 @@ def ValidatePassword():
     id=request.args.get("id")
     email=request.args.get("email")
     ok= True if id else False
-    pending=current_app.pendindmacs.get(email)
-    ok = pending and len(pending)>1
+    pending=json.loads(redisClient.hget("pendindmacs",email).decode())
+    ok = ok and pending and len(pending)>1 
     ok = ok and hmac.compare_digest(pending[0],id)
     if not ok:
         return render_template("html/404.html")
