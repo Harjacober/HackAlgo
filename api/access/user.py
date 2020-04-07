@@ -70,6 +70,8 @@ class UserEnterContest(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self):
+        #TODO check if user has already entered and take user to the contest area.
+        #Also update this method to return all info about the contest
         req_data=enter_contest_parser.parse_args()
         req_data["timeentered"]=str(datetime.now())
         req_data["totalscore"]=0
@@ -85,8 +87,7 @@ class UserEnterContest(Resource):
         contestid = req_data.get('contestid')
         ctype = req_data.get('contesttype')
         userid = req_data.get("userid")
-        contest = Contest(ctype).getBy(
-                _id=ObjectId(contestid))
+        contest = Contest(ctype).getBy(_id=ObjectId(contestid)) 
         if not contest:
             return response(400,"Contest not found",{})
         else:
@@ -96,10 +97,17 @@ class UserEnterContest(Resource):
                 return response(400,"Contest has ended",{})
             elif contest['status'] == 0:
                 return response(400,"Contest is not active yet",{})
-
+        
         user = User().getBy(_id=ObjectId(userid))
         if not user:
             return response(400,"User Id not found",{})
+
+        if contest.get("registeredUsers") is not None: # some people have registered for this particular contest
+            if userid not in contest.get("registeredUsers"): # user has not registered for this contest
+                return response(400, "User not registered for this contest",{})
+        else:
+            # obviously, can't be registered as no one registered
+            return response(400, "User not registered for this contest",{}) 
 
         UserRegisteredContest(userid).addDoc(req_data)
 
@@ -114,7 +122,14 @@ class UserEnterContest(Resource):
 
         update = {"$set": {'participants.{}'.format(userid): userdata}}
         if Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)):
-            return response(200,"Contest participation history updated",{})
+            # query all contest problems
+            exclude = {'lastModified':0}
+            problems = list(ContestProblem(ctype, contestid).getAll(params=exclude))  
+            for problem in problems:
+                problem['_id'] = str(problem['_id'])
+            contest['problems'] = problems 
+            contest['_id'] = str(contest.get('_id'))
+            return response(200,"Contest participation history updated",contest)
 
         return response(400,"Unable to enter contest",[])    
 

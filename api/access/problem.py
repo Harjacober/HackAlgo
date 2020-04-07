@@ -135,8 +135,11 @@ class ProblemSearch(Resource):
                     each["solved"] = True
                 else:
                     each["solved"] = False
-
-            return response(200, "Success", list(data))
+            
+            if data:
+                return response(200, "Success", list(data))
+            else:
+                return response(400, "No problem available yet", [])
         else:
             if filters=="solved": # return only all contests user has registered for 
                 query["solvedby"] = {"$elemMatch": {"$eq": userid}}
@@ -145,7 +148,7 @@ class ProblemSearch(Resource):
                     each["_id"] = str(each.get("_id"))
                 if data:
                     return response(200, "Success", data)
-                return response(400, "No contest available yet", []) 
+                return response(400, "No problem available yet", []) 
             elif filters=="unsolved": # return only all contests user has not registered for 
                 query["solvedby"] = {"$not": {"$elemMatch": {"$eq": userid}}}
                 data = list(Problem().getAll(params=include,start=(page-1)*limit,size=limit,**query))
@@ -153,7 +156,7 @@ class ProblemSearch(Resource):
                     each["_id"] = str(each.get("_id"))
                 if data:
                     return response(200, "Success", data)
-                return response(400, "No contest available yet", []) 
+                return response(400, "No problem available yet", []) 
             else:
                 return response(400, "Invalid filter parameter", [])
 
