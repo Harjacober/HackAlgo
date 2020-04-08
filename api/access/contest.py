@@ -451,14 +451,28 @@ class GetContestById(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self, ctype, contestid):  
+        currentUser = get_jwt_identity() #fromk jwt
+        if not currentUser:
+            return response(400, "Invalid token", [])
+        userid = currentUser.get("uid")
         exclude = {'_id':0, 'lastModified':0}
         data = Contest(ctype).getBy(params=exclude, _id=ObjectId(contestid))
         if data: 
-            exclude = {'lastModified':0}
-            problems = list(ContestProblem(ctype, contestid).getAll(params=exclude))  
-            for problem in problems:
-                problem['_id'] = str(problem['_id'])
-            data['problems'] = problems
+            if data.get("registeredUsers") is not None: # some people have registered for this particular contest
+                if userid in data.get("registeredUsers"): # user has registered for this contest
+                    data["registered"] = True
+                else:
+                    data["registered"] = False
+            else:
+                # obviously, can't be registered as no one registered
+                data["registered"] = False
+
+            #TODO problems should only be shown when user has entered the contest area
+            #exclude = {'lastModified':0}
+            #problems = list(ContestProblem(ctype, contestid).getAll(params=exclude))  
+            #for problem in problems:
+            #    problem['_id'] = str(problem['_id'])
+            #data['problems'] = problems 
             return response(200, "Success", data)
         return response(400, "Check the contestid", [])    
 
@@ -482,10 +496,10 @@ class GetContest(Resource):
     @cross_origin(supports_credentials=True)
     def get(self, ctype, status):
         status_code = {'started':1, 'inreview':0, 'completed':-1, 'active':2}
-        data = get_contests_parser.parse_args()
-        page = data.get('page')
-        limit = data.get('limit')
-        filters = data.get("filter")
+        args = get_contests_parser.parse_args()
+        page = args.get('page')
+        limit = args.get('limit')
+        filters = args.get("filter")
         currentUser = get_jwt_identity() #fromk jwt
         if not currentUser:
             return response(400, "Invalid token", [])
@@ -496,16 +510,17 @@ class GetContest(Resource):
         query = dict(status=status_code[status])
         if filters is None: # return all data
             exclude = {'lastModified':0}
-            data = list(Contest(ctype).getAll(params=exclude, start=(page-1)*limit, size=limit, **query))
+            data = list(Contest(ctype).getAll(params=exclude, start=(page-1)*limit, size=limit, **query)) # all contests based on the status specified
             for each in data:
                 each["_id"] = str(each.get("_id"))
-                if each.get("registeredUsers") is not None:
-                    if userid in each.get("registeredUsers"):
+                if each.get("registeredUsers") is not None: # some people have registered for this particular contest
+                    if userid in each.get("registeredUsers"): # user has registered for this contest
                         each["registered"] = True
                     else:
                         each["registered"] = False
                 else:
-                    each["registered"] = False
+                    # obviously this user can't be registered as nobody has registered yet.
+                    each["registered"] = False 
 
             if data:
                 return response(200, "Success", data)
@@ -517,6 +532,7 @@ class GetContest(Resource):
                 data = list(Contest(ctype).getAll(params=exclude, start=(page-1)*limit, size=limit, **query))
                 for each in data:
                     each["_id"] = str(each.get("_id"))
+                    each["registered"] = True
                 if data:
                     return response(200, "Success", data)
                 return response(400, "No contest available yet", []) 

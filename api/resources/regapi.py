@@ -83,7 +83,7 @@ class AdminRegistration(Resource):
         if len(data["username"]) <2:
             return response(400,"Username is too short",[]) 
         if len(data["pswd"]) <6:
-            return response(400,"Password lenght must be greater than six",[])   
+            return response(400,"Password length must be greater than six",[])   
 
         for category in [Admin(),User()]: #Admin && User name should be unique
             if category.getBy(email=data["email"]): #check if email already exist
