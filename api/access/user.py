@@ -122,7 +122,14 @@ class UserEnterContest(Resource):
 
         update = {"$set": {'participants.{}'.format(userid): userdata}}
         if Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)):
-            return response(200,"Contest participation history updated",{})
+            # query all contest problems
+            exclude = {'lastModified':0}
+            problems = list(ContestProblem(ctype, contestid).getAll(params=exclude))  
+            for problem in problems:
+                problem['_id'] = str(problem['_id'])
+            contest['problems'] = problems 
+            contest['_id'] = str(contest.get('_id'))
+            return response(200,"Contest participation history updated",contest)
 
         return response(400,"Unable to enter contest",[])    
 
