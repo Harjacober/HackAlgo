@@ -68,23 +68,16 @@ class UserEnterContest(Resource):
 
     @jwt_required
     @cross_origin(supports_credentials=True)
-    def post(self):
-        #TODO check if user has already entered and take user to the contest area.
-        #Also update this method to return all info about the contest
+    def post(self): 
         req_data=enter_contest_parser.parse_args()
+
+        contestid = req_data.get('contestid')
+        ctype = req_data.get('contesttype') 
         req_data["timeentered"]=str(datetime.now())
         req_data["totalscore"]=0
         req_data["penalty"]=0
         req_data["problemscore"]={}
-        req_data["rank"]=2 
- 
-        problems = list(ContestProblem(req_data['contesttype'], req_data['contestid']).getAll())  # get all problems
-        for each in problems:
-            req_data["problemscore"][str(each['_id'])] = 0
-
-        #TODO(ab|jacob) move all this to a caching db. REDIS?
-        contestid = req_data.get('contestid')
-        ctype = req_data.get('contesttype') 
+        req_data["rank"]=2  
 
         currentUser = get_jwt_identity() #fromk jwt
         userid = currentUser.get("uid") 
@@ -103,6 +96,19 @@ class UserEnterContest(Resource):
         user = User().getBy(_id=ObjectId(userid))
         if not user:
             return response(400,"User Id not found",{})
+
+        # query all contest problems
+        exclude = {'lastModified':0}
+        problems = list(ContestProblem(ctype, contestid).getAll(params=exclude))  
+        for problem in problems:
+            problem['_id'] = str(problem['_id'])
+            req_data["problemscore"][str(each['_id'])] = 0 
+        contest['problems'] = problems 
+        contest['_id'] = str(contest.get('_id'))
+        
+        if userid in contest.get("participants"): # user already entered before
+            return response(200,
+            "Contest participation history updated",contest) 
 
         if contest.get("registeredUsers") is not None: # some people have registered for this particular contest
             if userid not in contest.get("registeredUsers"): # user has not registered for this contest
@@ -123,15 +129,9 @@ class UserEnterContest(Resource):
         'timesplayed':timesplayed, 'currrank': 2, 'currscore': 0}
 
         update = {"$set": {'participants.{}'.format(userid): userdata}}
-        if Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)):
-            # query all contest problems
-            exclude = {'lastModified':0}
-            problems = list(ContestProblem(ctype, contestid).getAll(params=exclude))  
-            for problem in problems:
-                problem['_id'] = str(problem['_id'])
-            contest['problems'] = problems 
-            contest['_id'] = str(contest.get('_id'))
-            return response(200,"Contest participation history updated",contest)
+        if Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)): 
+            return response(200,
+            "Contest participation history updated",contest)
 
         return response(400,"Unable to enter contest",[])    
 
