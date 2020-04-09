@@ -407,8 +407,7 @@ class AppTests(unittest.TestCase):
         self.assertTrue("Contest forcefully started" in resp.data.decode())  
 
         #/enter/contest/
-        data=dict(
-            userid=self.user_id,
+        data=dict( 
             contesttype=self.contest_type,
             contestid=self.contest_id
         )
@@ -417,8 +416,7 @@ class AppTests(unittest.TestCase):
         self.assertTrue("Contest participation history updated" in resp.data.decode())
 
         #/enter/contest/
-        data=dict(
-            userid=self.user_id2,
+        data=dict(   
             contesttype=self.contest_type,
             contestid=self.contest_id
         )

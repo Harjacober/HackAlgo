@@ -102,7 +102,7 @@ class UserEnterContest(Resource):
         problems = list(ContestProblem(ctype, contestid).getAll(params=exclude))  
         for problem in problems:
             problem['_id'] = str(problem['_id'])
-            req_data["problemscore"][str(each['_id'])] = 0 
+            req_data["problemscore"][str(problem['_id'])] = 0 
         contest['problems'] = problems 
         contest['_id'] = str(contest.get('_id'))
         
