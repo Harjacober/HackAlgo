@@ -1,7 +1,7 @@
 
 from flask_restful import Resource,reqparse
 from db.models import User,UserRegisteredContest,User,Contest,ContestProblem,Problem,Submission
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required,get_jwt_identity
 from datetime import datetime
 from bson.objectid import ObjectId
 from coderunner.problem import ProblemInstance
@@ -12,8 +12,7 @@ from coderunner.taskqueue import queue
 from coderunner.task import Task
 
  
-enter_contest_parser = reqparse.RequestParser()
-enter_contest_parser.add_argument('userid', required=True)
+enter_contest_parser = reqparse.RequestParser() 
 enter_contest_parser.add_argument('contesttype', help="The type of the contest and contest id are required fields",required=True)
 enter_contest_parser.add_argument('contestid', help="the contestid", required=True)
 
@@ -85,8 +84,11 @@ class UserEnterContest(Resource):
 
         #TODO(ab|jacob) move all this to a caching db. REDIS?
         contestid = req_data.get('contestid')
-        ctype = req_data.get('contesttype')
-        userid = req_data.get("userid")
+        ctype = req_data.get('contesttype') 
+
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid") 
+
         contest = Contest(ctype).getBy(_id=ObjectId(contestid)) 
         if not contest:
             return response(400,"Contest not found",{})
