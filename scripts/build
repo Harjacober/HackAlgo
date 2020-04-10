@@ -10,7 +10,7 @@ python test/test_app.py
 failtest=$?
 if [[ $failtest != 0 ]]; then
     echo "Test failed!"
-    #exit $failtest
+    exit $failtest
 fi
 export TESTING=0
 if [[ "$BUILD" = "prod" ]]; then

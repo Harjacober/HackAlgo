@@ -21,9 +21,6 @@ register_for_contest_parser.add_argument('userid', required=True)
 register_for_contest_parser.add_argument('contesttype', help="The type of the contest and contest id are required fields",required=True)
 register_for_contest_parser.add_argument('contestid', help="the contestid", required=True)
 
-user_contest_history_parser = reqparse.RequestParser()
-user_contest_history_parser.add_argument('userid', required=True)
-
 user_submission_history_parser = reqparse.RequestParser()
 user_submission_history_parser.add_argument('userid', required=True)
 user_submission_history_parser.add_argument('contestid', help="if contestid is valid return all submission categorised by contest")
@@ -33,8 +30,7 @@ user_submission_history_parser.\
 
 
 run_code_parser = reqparse.RequestParser()
-run_code_parser.add_argument('prblmid', help = 'This field cannot be blank. It also accept email', required = True)
-run_code_parser.add_argument('userid', help = 'This field cannot be blank', required = True)
+run_code_parser.add_argument('prblmid', help = 'This field cannot be blank. It also accept email', required = True) 
 run_code_parser.add_argument('codecontent', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('codefile', type=FileStorage, location='files', required = False, store_missing=False)
 run_code_parser.add_argument('lang', help = 'This field cannot be blank', required = True)
@@ -81,6 +77,7 @@ class UserEnterContest(Resource):
 
         currentUser = get_jwt_identity() #fromk jwt
         userid = currentUser.get("uid") 
+        req_data["userid"]=userid
 
         contest = Contest(ctype).getBy(_id=ObjectId(contestid)) 
         if not contest:
@@ -143,10 +140,10 @@ class UserContestHistory(Resource):
 
     @jwt_required
     @cross_origin(supports_credentials=True)
-    def get(self):
-        req_data=user_contest_history_parser.parse_args()
+    def get(self): 
 
-        userid = req_data.get("userid")
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid") 
         exclude = {'_id':0, 'lastModified':0}
         #TODO(ab|jacob) move all this to a caching db. REDIS?
         if not User().getBy(
@@ -235,7 +232,8 @@ class RunContestCode(Resource):
  
         task_id=queue.generateID()
         codecontent = input_data.get('codecontent')
-        userid = input_data.get('userid')
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid")
         stype = input_data.get('stype')
         lang = input_data.get('lang')
         codefile = input_data.get('codefile')
