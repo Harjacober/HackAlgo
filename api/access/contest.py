@@ -52,7 +52,7 @@ def startContest(contestid, ctype, duration):
     params = {'status': 1}
     Contest(ctype).update(params=params, _id=ObjectId(contestid))   
     # schedule task to end the contest within the given duration
-    duration = duration/1000 # celery takes time in seconds not milliseconds
+    duration = (duration/1000) + 10800 # celery takes time in seconds not milliseconds
     updateRank.apply_async(countdown=duration,args=[contestid, ctype])
 
 @celery.task

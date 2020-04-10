@@ -5,7 +5,7 @@ Entry Point to the entire application. it is recommeded to keep this file as sim
 
 from flask import Flask, request
 from flask_restful import Api
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager,jwt_required
 
 from api.resources.regapi import AdminRegistration, UserRegistration, AdminLogin, UserLogin, ForgetPassword, ValidatePassword,ChangePassword,ChangeAuthUserPassword
 from api.resources.usersapi import UserProfile, UserUpdateProfile, SubmissionInfo, SubmissionList
@@ -20,7 +20,7 @@ from api.access.user import UserRegisterForContest, UserEnterContest, UserContes
 from api.resources.internship import AddInternship,GetInternships,ViewInternship
 from flask_socketio import SocketIO
 from flask_mail import Mail
-from flask_cors import CORS
+from flask_cors import CORS,cross_origin
 
 
 from celery import Celery
@@ -38,7 +38,9 @@ mail = Mail()
 mail.init_app(contestplatform)
 contestplatform.mail=mail
 
-contestplatform.socketio = SocketIO(contestplatform)
+ws=SocketIO(contestplatform,cors_allowed_origins="*")
+ws.init_app(contestplatform)
+contestplatform.socketio = ws
 
 CORS(contestplatform,support_credentials=True)
 
@@ -46,6 +48,13 @@ CORS(contestplatform,support_credentials=True)
 def index():
     #serve some home page here
     return "Welcome to HackAlgo!!"
+
+@jwt_required
+@cross_origin
+@contestplatform.socketio.on('connect')
+def on_connect():
+    contestplatform.socketio.send("Welcome to HackAlgo!!")
+
 
 contestplatform.add_url_rule("/check/password/","checkPassword",ValidatePassword)
 

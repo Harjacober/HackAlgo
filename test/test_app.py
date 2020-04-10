@@ -310,10 +310,10 @@ class AppTests(unittest.TestCase):
             self.assertTrue(data["data"][0]["result"][i]["passed"])
 
         #tetsing php 
-        #resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.phpData())
-        #data=json.loads(resp.data.decode()) 
-        #for i in range(3):
-            #self.assertTrue(data["data"][0]["result"][i]["passed"])
+        resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.phpData())
+        data=json.loads(resp.data.decode()) 
+        for i in range(3):
+            self.assertTrue(data["data"][0]["result"][i]["passed"])
         
         #testing js
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.jsData())
@@ -334,7 +334,6 @@ class AppTests(unittest.TestCase):
         data=json.loads(resp.data.decode())
         self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
         
-        """
         #testing golang
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.golangData())
         data=json.loads(resp.data.decode())
@@ -344,7 +343,6 @@ class AppTests(unittest.TestCase):
         print(data)
         for i in range(3):
             self.assertTrue(data["data"][0]["result"][i]["passed"])
-        """
 
         #rtesting c
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.cData())
@@ -469,7 +467,7 @@ class AppTests(unittest.TestCase):
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.pythonData(testtimeout=True))
         data=json.loads(resp.data.decode()) 
         self.assertTrue(data["data"][0]["result"][0]["passed"]==False)
-        """
+        
         #testing go
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.golangData())
         data=json.loads(resp.data.decode())  
@@ -478,7 +476,6 @@ class AppTests(unittest.TestCase):
             print(data["data"][0]["result"][0]["errput"]) 
         for i in range(3):
             self.assertTrue(data["data"][0]["result"][i]["passed"])
-        """
 
         #rtesting c
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.cData())
@@ -531,6 +528,12 @@ class AppTests(unittest.TestCase):
         resp=app_client.post("/change/password/authuser/",data=data,headers=header)  
         self.assertTrue("Success" in resp.data.decode())
         self.login_test("/admin/login/","marlians","mambamentality")
+
+    def test_10_websocket(self):
+        ws_client=contestplatform.socketio.test_client(contestplatform,namespace='/scoreboard/')
+        received = ws_client.get_received()
+        self.assertEqual(received[0]['args'],"Welcome to HackAlgo!!")
+
         
 
 from test.test_task_queue import *
