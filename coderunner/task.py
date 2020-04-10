@@ -330,22 +330,22 @@ class Task:
         # update the user score for that problem and time penalty, if the new score is greater than the prev one
         update = {'$set': {'problemscore.{}'.format(prblmid): score}, '$inc': {'timepenalty': submission_time}}  
         argDict={"contestid":contestid,prblmscorefield:{'$lte': score}}
-        UserRegisteredContest(userid).flexibleUpdate(update, **argDict) 
-        # calculate the total score
-        reg_contest = UserRegisteredContest(userid).getBy(contestid=contestid)
-        problemscore = reg_contest.get('problemscore')
-        totalscore = reg_contest.get('penalty')
-        timepenalty = reg_contest.get('timepenalty')
-        for each in problemscore: 
-            totalscore += problemscore[each]
-        # update the total score
-        update = {"$set": {'totalscore': totalscore}}
-        UserRegisteredContest(userid).flexibleUpdate(update, contestid=contestid)   
+        if UserRegisteredContest(userid).flexibleUpdate(update, **argDict): 
+            # calculate the total score
+            reg_contest = UserRegisteredContest(userid).getBy(contestid=contestid)
+            problemscore = reg_contest.get('problemscore')
+            totalscore = reg_contest.get('penalty')
+            timepenalty = reg_contest.get('timepenalty')
+            for each in problemscore: 
+                totalscore += problemscore[each]
+            # update the total score
+            update = {"$set": {'totalscore': totalscore}}
+            UserRegisteredContest(userid).flexibleUpdate(update, contestid=contestid)   
 
-        # update the contest document to reflect this participants current score. the rank will be updated on
-        # the scoreboard in the front end using dynamic tables.
-        update = {"$set": {'participants.{}.currscore'.format(userid): totalscore,
-        'participants.{}.timepenalty'.format(userid): timepenalty}}
-        Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)) 
-        data['score'] = totalscore
-        current_app.socketio.emit('newscore', {'data':totalscore},namespace='/scoreboard/')
+            # update the contest document to reflect this participants current score. the rank will be updated on
+            # the scoreboard in the front end using dynamic tables.
+            update = {"$set": {'participants.{}.currscore'.format(userid): totalscore,
+            'participants.{}.timepenalty'.format(userid): timepenalty}}
+            Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)) 
+            data['score'] = totalscore
+            current_app.socketio.emit('newscore', {'data':totalscore},namespace='/scoreboard/')
