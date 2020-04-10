@@ -504,10 +504,11 @@ class GetContest(Resource):
         if not currentUser:
             return response(400, "Invalid token", [])
         userid = currentUser.get("uid")
-        if ctype == "all":
-            #TODO(jacob) handle this
-            pass
-        query = dict(status=status_code[status])
+        if status == "all":
+            # exclude only inreview contest
+            query = dict(status={"$ne": status_code["inreview"]}) 
+        else:
+            query = dict(status=status_code[status])
         if filters is None: # return all data
             exclude = {'lastModified':0}
             data = list(Contest(ctype).getAll(params=exclude, start=(page-1)*limit, size=limit, **query)) # all contests based on the status specified
