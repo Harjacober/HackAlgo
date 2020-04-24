@@ -114,10 +114,10 @@ class Task:
         self.lang=lang
         self.stype = stype 
         self.codefile = codefile
-        if self.codefile is not None:
+        if self.codefile:
             self.content = self.codefile.read().decode("utf-8") 
         else:
-            self.content = content # get submitted code content   
+            self.content = content # get submitted code content    
         self.userid=userid  
         self.id=id 
         self.state=Task.PossibelTasksState[0]  
