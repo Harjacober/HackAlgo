@@ -445,9 +445,7 @@ class AppTests(unittest.TestCase):
 
         resp=app_client.post("/my/submission/history/",data=data,headers=header)
 
-        self.assertTrue("Submisions" in resp.data.decode())
-        self.assertTrue(len(json.loads(resp.data.decode())["data"])>0)
-
+        self.assertTrue("Submisions" in resp.data.decode())  
     
     def test_8_run_contest_code(self):
         self.assertTrue(len(self.contest_prblmid)>0)
