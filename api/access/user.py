@@ -220,6 +220,8 @@ class RunContestCode(Resource):
         # check if contest is still active. either check the contest status or 
         # compare the starttime and duration with the currenttime
         contest = Contest(ctype).getBy(_id=ObjectId(contestid))
+        if not contest:
+            return response(400, "Check the contest id", [])
         duration = contest.get('duration', 2*60*60*1000.0)
         starttime = contest.get('starttime', datetime.now().timestamp())
         currenttime = datetime.now().timestamp()
