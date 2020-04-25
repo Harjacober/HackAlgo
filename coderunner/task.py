@@ -291,6 +291,7 @@ class Task:
                     update = {"$addToSet": {"solvedby": self.userid}}
                     Problem().flexibleUpdate(update, _id=ObjectId(self.problem.getprblmid()))
             else:
+                Submission(self.userid).addDoc(submission_data) #add this submission to the submission document
                 self.gradeSubmission(submission_data)    
        
         os.remove(self.filepath)
@@ -342,8 +343,7 @@ class Task:
             update = {"$set": {'totalscore': totalscore}}
             UserRegisteredContest(userid).flexibleUpdate(update, contestid=contestid)   
 
-            # update the contest document to reflect this participants current score. the rank will be updated on
-            # the scoreboard in the front end using dynamic tables.
+            # update the contest document to reflect this participants current score. 
             update = {"$set": {'participants.{}.currscore'.format(userid): totalscore,
             'participants.{}.timepenalty'.format(userid): timepenalty}}
             Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)) 

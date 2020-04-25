@@ -16,7 +16,7 @@ from api.access.contest import (InitializeContest, UpdateContest,
                                 AddProblemForContest, UpdateProblemForContest,
                                 ApproveContest, AddNewAuthor, RemoveAuthor,
                                 GetContest, GetContestById, ForceStartOrEndContest)
-from api.access.user import UserRegisterForContest, UserEnterContest, UserContestHistory, UserSubmissionHistory, RunContestCode, ContestRunCodeStatus
+from api.access.user import UserRegisterForContest, UserEnterContest, UserContestHistory, UserContestSubmissionHistoryById, UserContestSubmissionHistory, RunContestCode, ContestRunCodeStatus
 from api.resources.internship import AddInternship,GetInternships,ViewInternship
 from flask_socketio import SocketIO
 from flask_mail import Mail
@@ -105,7 +105,8 @@ api.add_resource(UserRegisterForContest, '/register/contest/')
 api.add_resource(RunContestCode, '/contest/run/code/')
 api.add_resource(ContestRunCodeStatus, '/contest/run/code/status/')
 api.add_resource(UserContestHistory, '/my/contest/history/')
-api.add_resource(UserSubmissionHistory, '/my/submission/history/')
+api.add_resource(UserContestSubmissionHistory, '/my/submission/history/')
+api.add_resource(UserContestSubmissionHistoryById, '/my/submission/history/single/')
 
 api.add_resource(AddInternship, '/add/internship/')
 api.add_resource(GetInternships, '/get/internship/')
