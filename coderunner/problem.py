@@ -37,4 +37,8 @@ class ProblemInstance:
 
     def getProblemCategory(self):
         return self.problem["category"]
-    
+    def isValid(self):
+        return (self.getprblmid and self.getName() and self.getTimeLimit()
+         and self.getMemLimit() and self.getAuthor() and self.getTestCases() 
+         and self.getSizeOfTestCases() and self.getAnswerForTestCases() 
+         and self.getProblemStatement())

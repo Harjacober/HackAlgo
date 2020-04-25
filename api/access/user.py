@@ -21,12 +21,11 @@ register_for_contest_parser.add_argument('userid', required=True)
 register_for_contest_parser.add_argument('contesttype', help="The type of the contest and contest id are required fields",required=True)
 register_for_contest_parser.add_argument('contestid', help="the contestid", required=True)
 
-user_submission_history_parser = reqparse.RequestParser()
-user_submission_history_parser.add_argument('userid', required=True)
-user_submission_history_parser.add_argument('contestid', help="if contestid is valid return all submission categorised by contest")
-user_submission_history_parser.add_argument('contesttype', help="required if problem is from a contest")
+user_submission_history_parser = reqparse.RequestParser() 
+user_submission_history_parser.add_argument('contestid', help="if contestid is valid return all submission categorised by contest",required=True)
+user_submission_history_parser.add_argument('contesttype', help="required if problem is from a contest",required=True)
 user_submission_history_parser.\
-            add_argument('prblmid', help="if prblmid is valid return all submission categorised by problem",required=True)
+            add_argument('prblmid', help="if prblmid is valid return all submission categorised by problem")
 
 
 run_code_parser = reqparse.RequestParser()
@@ -43,8 +42,7 @@ run_code_parser.add_argument('ctype', help = 'contest type .if submission is mad
 run_code_status_parser = reqparse.RequestParser()
 run_code_status_parser.add_argument('taskid', help = 'This field cannot be blank.', required = True)
 run_code_status_parser.add_argument('lang', help = 'This field cannot be blank.', required = True)
-run_code_status_parser.add_argument('prblmid', help = 'This field cannot be blank', required = True)
-run_code_status_parser.add_argument('userid', help = 'This field cannot be blank', required = True)
+run_code_status_parser.add_argument('prblmid', help = 'This field cannot be blank', required = True) 
 run_code_status_parser.add_argument('contestid', help = 'contest id .if submission is made for a contest')
 run_code_status_parser.add_argument('contesttype', help = 'contest type .if submission is made for a contest')
 
@@ -169,6 +167,8 @@ class UserSubmissionHistory(Resource):
     @cross_origin(supports_credentials=True)
     def post(self):
         req_data=user_submission_history_parser.parse_args()
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid") 
         exclude = {'_id':0, 'lastModified':0}
 
         #TODO(ab|jacob) move all this to a caching db. REDIS?
@@ -180,7 +180,7 @@ class UserSubmissionHistory(Resource):
             ):
                 return response(400,"Contest not found",[])
 
-            submissions= list(Submission(req_data["userid"]).\
+            submissions= list(Submission(userid).\
                                 getAll(params=exclude,contestid=req_data["contestid"]))
 
             return response(200,"Submisions ",submissions)
@@ -189,7 +189,7 @@ class UserSubmissionHistory(Resource):
                 _id=ObjectId(req_data["prblmid"])
             ):
 
-            submissions=list(Submission(req_data["userid"]).
+            submissions=list(Submission(userid).
                                 getAll(params=exclude,prblmid=req_data["prblmid"]))
 
             return response(200,"Submisions ",submissions)
@@ -213,9 +213,15 @@ class RunContestCode(Resource):
     def post(self):
         input_data = run_code_parser.parse_args()
 
-        problem_id=input_data["prblmid"] # get id
+        problem_id=input_data.get("prblmid") # get id
         contestid = input_data.get('contestid')
-        ctype = input_data['ctype']
+        ctype = input_data.get('ctype')
+        codecontent = input_data.get('codecontent')
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid")
+        stype = input_data.get('stype')
+        lang = input_data.get('lang')
+        codefile = input_data.get('codefile')
 
         # check if contest is still active. either check the contest status or 
         # compare the starttime and duration with the currenttime
@@ -233,12 +239,6 @@ class RunContestCode(Resource):
             return response(400, "Invalid Problem Id", []) 
  
         task_id=queue.generateID()
-        codecontent = input_data.get('codecontent')
-        currentUser = get_jwt_identity() #fromk jwt
-        userid = currentUser.get("uid")
-        stype = input_data.get('stype')
-        lang = input_data.get('lang')
-        codefile = input_data.get('codefile')
         
         task=Task(lang,codecontent,userid,ProblemInstance(problem),task_id,stype,codefile,contestid,ctype)
         queue.add(task_id,task) 
@@ -252,14 +252,14 @@ class ContestRunCodeStatus(Resource):
     def post(self):
         input_data = run_code_status_parser.parse_args()
 
-        problem_id=input_data["prblmid"]
-        contestid = input_data['contestid']
-        ctype = input_data['contesttype'] 
+        problem_id=input_data.get("prblmid")
+        contestid = input_data.get('contestid')
+        ctype = input_data.get('contesttype')
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid") 
         problem = ContestProblem(ctype, contestid).getBy(_id=ObjectId(problem_id))
         if not problem:
-             return response(400, "Invalid Problem Id", []) 
-
-        user_id=input_data["userid"]
+             return response(400, "Invalid Problem Id", [])  
         task_id=input_data["taskid"]
         language=input_data["lang"]
 
