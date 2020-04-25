@@ -1,0 +1,2 @@
+[httpservers]
+codegee ansible_host=13.82.133.228 ansible_user=codegee

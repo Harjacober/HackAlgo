@@ -24,6 +24,12 @@ add_prob_parser.add_argument('score', type=float, help = 'score denotes the diff
 add_prob_parser.add_argument('tags', help = 'Enter tags separated by comma', store_missing=False)   
 add_prob_parser.add_argument('prblmid', help = 'for updating problem', store_missing=False) 
 
+add_prob_parser_plain= add_prob_parser.copy()
+add_prob_parser_plain.replace_argument("testcases",store_missing=False)
+add_prob_parser_plain.replace_argument("answercases",store_missing=False)
+add_prob_parser_plain.replace_argument("samplecases",store_missing=False)
+add_prob_parser_plain.replace_argument("sampleanswercases",store_missing=False)
+
 submit_prob_parser = reqparse.RequestParser()
 submit_prob_parser.add_argument('author', help = 'username of the admin adding the problem', required=True)
 submit_prob_parser.add_argument('prblmid', help = 'cannot be empty', required=True)
@@ -175,6 +181,7 @@ class ProblemAdd(Resource):
     @cross_origin(supports_credentials=True)
     def post(self):
         input_data = add_prob_parser.parse_args()
+        input_data_plain = add_prob_parser_plain.parse_args()
         difficulty = {"800-1100":"easy", "1200-1500":"medium", "1600-2000":"hard", "2100-2500":"advanced"} #TODO make this global
 
         author = input_data.get('author')
@@ -185,16 +192,23 @@ class ProblemAdd(Resource):
         if input_data.get('testcases') is not None: 
             testcases = input_data['testcases'].read().decode("utf-8")  
             input_data['testcases'] = testcases 
+        else:
+            input_data['testcases']=input_data_plain['testcases']
         if input_data.get('answercases') is not None: 
             answercases = input_data['answercases'].read().decode("utf-8")  
             input_data['answercases'] = answercases 
+        else:
+            input_data['answercases']=input_data_plain['answercases']
         if input_data.get('samplecases') is not None: 
             samplecases = input_data['samplecases'].read().decode("utf-8")  
             input_data['samplecases'] = samplecases 
+        else:
+            input_data['samplecases'] = input_data_plain['samplecases'] 
         if input_data.get('sampleanswercases') is not None: 
             sampleanswercases = input_data['sampleanswercases'].read().decode("utf-8")  
             input_data['sampleanswercases'] = sampleanswercases 
-
+        else:
+            input_data['sampleanswercases'] = input_data_plain['sampleanswercases']
         tags = input_data.get('tags')# create an array of tags 
         if tags is not None:
             tags = tags.split(',') 
@@ -231,6 +245,7 @@ class ProblemUpdate(Resource):
     @cross_origin(supports_credentials=True)
     def post(self):
         input_data = add_prob_parser.parse_args()
+        input_data_plain = add_prob_parser_plain.parse_args()
         difficulty = {"800-1100":"easy", "1200-1500":"medium", "1600-2000":"hard", "2100-2500":"advanced"} #TODO make this global
         author = input_data.get('author')
         if not Admin().getBy(username=author):
@@ -240,15 +255,23 @@ class ProblemUpdate(Resource):
         if input_data.get('testcases') is not None: 
             testcases = input_data['testcases'].read().decode("utf-8")  
             input_data['testcases'] = testcases 
+        else:
+            input_data_plain['testcases'] = testcases 
         if input_data.get('answercases') is not None: 
             answercases = input_data['answercases'].read().decode("utf-8")  
             input_data['answercases'] = answercases 
+        else:
+            input_data['answercases'] = input_data_plain['answercases']
         if input_data.get('samplecases') is not None: 
             samplecases = input_data['samplecases'].read().decode("utf-8")  
             input_data['samplecases'] = samplecases 
+        else:
+            input_data['samplecases'] = input_data_plain['samplecases'] 
         if input_data.get('sampleanswercases') is not None: 
             sampleanswercases = input_data['sampleanswercases'].read().decode("utf-8")  
             input_data['sampleanswercases'] = sampleanswercases 
+        else:
+            input_data['sampleanswercases'] = input_data_plain['sampleanswercases']
         tags = []
         if input_data.get('tags') is not None: 
             tags = input_data.get('tags').split(',') # create an array of tags 1

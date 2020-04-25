@@ -30,4 +30,7 @@ Mongo
 celery  
 #  running celery  
 check scripts/build  
+#  Deploy using ansible   
+use ```ansible-playbook -i host deployApi.yml -k```  
+change the playbook name to the appropiate app you want to deploy
 

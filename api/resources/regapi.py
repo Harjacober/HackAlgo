@@ -46,7 +46,7 @@ change_pswd_parser.add_argument("changepswdid",help="id sent to email",required=
 change_authuser_pswd_parser = reqparse.RequestParser()
 change_authuser_pswd_parser.add_argument("pswd",help="enter user new password",required=True)
 
-BITS=200
+BITS=50
 
 def response(code,msg,data,access_token=""):
     return {"code":code,"msg":msg,"data":data,"access_token":access_token}
@@ -58,7 +58,7 @@ class AdminRegistration(Resource):
     def get(self):
         id=request.args.get("id")
 
-        data=json.loads(redisClient.hget("unregisteredusers",id).decode())
+        data=json.loads(redisClient.hget("unregisteredusers"+self.getType(),id).decode())
         
         if not data:
             return response(400,"something went wrong.Have you registered?",[])
@@ -71,7 +71,7 @@ class AdminRegistration(Resource):
                 return response(400,"usernname taken",[])
 
         uid = self.category.addDoc(data) 
-        redisClient.hdel("unregisteredusers",id)
+        redisClient.hdel("unregisteredusers"+self.getType(),id)
         data.pop("pswd");data["uid"]=str(data["_id"]);data.pop("_id")
         return response(200,"Successfully resgistered",{"uniqueid":str(uid)},access_token=create_access_token(data))
         
@@ -95,8 +95,8 @@ class AdminRegistration(Resource):
 
         data["pswd"]=sha256.hash(data["pswd"]) #replace the old pswd arg with new hash passowrd
     
-        generatedid=hex(secrets.SystemRandom().getrandbits(BITS))
-        redisClient.hset("unregisteredusers",generatedid,json.dumps(data))
+        generatedid=secrets.SystemRandom().getrandbits(BITS)
+        redisClient.hset("unregisteredusers"+self.getType(),generatedid,json.dumps(data))
 
         msg = Message("Welcome to CodeGees",
                   sender=config.MAIL_USERNAME,
@@ -113,6 +113,9 @@ class AdminRegistration(Resource):
         kw={"app-context": current_app._get_current_object()}
         Timer(0,retry,(5,current_app.mail.send,msg),kw).start()
         return response(200,"Success!!! Check you email",[generatedid])
+        
+    def getType(self):
+        return "ADMIN" if isinstance(self.category,Admin) else "USER"
         
 class UserRegistration(AdminRegistration):
     category=User()

@@ -1,3 +1,4 @@
 #!/bin/sh
 # run this file in host container redeploy app gracefully
+sudo git pull https://github.com/Harjacober/HackAlgo.git
 sudo -E docker exec platform sh -c ./scripts/redeploy

@@ -10,8 +10,9 @@ from flask_jwt_extended import (
 
 from coderunner.taskqueue import queue
 from coderunner.task import Task
-from db.models import Problem,Submission,User
+from db.models import Problem,Submission,User,Admin
 from bson.objectid import ObjectId
+from bson.errors import InvalidId
 from coderunner.problem import ProblemInstance
 from werkzeug.datastructures import FileStorage
 
@@ -45,12 +46,15 @@ class RunCode(Resource):
         input_data = run_code_parser.parse_args()
 
         problem_id=input_data["prblmid"] #get id
-        problem = Problem().getBy(_id= ObjectId(problem_id))#fetch the actual problem from database with the problemId 
-        if not problem:
-            return response(400, "Invalid Problem Id", []) 
+        try:
+            problem = Problem().getBy(_id= ObjectId(problem_id))#fetch the actual problem from database with the problemId 
+            if not problem:
+                return response(400, "Invalid Problem Id", []) 
 
-        userid = input_data.get('userid')
-        user = User().getBy(_id=ObjectId(userid))
+            userid = input_data.get('userid')
+            user = User().getBy(_id=ObjectId(userid)) or Admin().getBy(_id=ObjectId(userid))
+        except InvalidId:
+            return response(400, "Invalid ID", []) 
         if not user:
             return response(400,"User Id not found",{})
         task_id=queue.generateID()
