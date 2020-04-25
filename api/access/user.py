@@ -27,6 +27,9 @@ user_submission_history_parser.add_argument('contesttype', help="required if pro
 user_submission_history_parser.\
             add_argument('prblmid', help="if prblmid is valid return all submission categorised by problem")
 
+user_single_submission_parser = reqparse.RequestParser()
+user_single_submission_parser.add_argument("submid", help="Submission id", required=True)
+
 
 run_code_parser = reqparse.RequestParser()
 run_code_parser.add_argument('prblmid', help = 'This field cannot be blank. It also accept email', required = True) 
@@ -93,7 +96,7 @@ class UserEnterContest(Resource):
             return response(400,"User Id not found",{})
 
         # query all contest problems
-        exclude = {'lastModified':0}
+        exclude = {'lastModified':0, 'testcases':0, 'answercases':0,'sizeoftestcases':0}
         problems = list(ContestProblem(ctype, contestid).getAll(params=exclude))  
         for problem in problems:
             problem['_id'] = str(problem['_id'])
@@ -157,45 +160,71 @@ class UserContestHistory(Resource):
         return response(400,"No contest data available",[])
 
 
-class UserSubmissionHistory(Resource):
-    @jwt_required
-    @cross_origin(supports_credentials=True)
-    def get(self,id):
-        return response(300, "Use a POST Request", [])
-
+class UserContestSubmissionHistory(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def post(self):
+        return response(300, "Use a GET Request", [])
+
+    @jwt_required
+    @cross_origin(supports_credentials=True)
+    def get(self):
         req_data=user_submission_history_parser.parse_args()
         currentUser = get_jwt_identity() #fromk jwt
         userid = currentUser.get("uid") 
+        ctype = req_data.get("contesttype")
+        contestid = req_data.get("contestid")
+        prblmid = req_data.get("prblmid")
+        exclude = {'lastModified':0}
+
+        #TODO(ab|jacob) move all this to a caching db. REDIS? 
+
+        user = User().getBy(_id=ObjectId(userid))
+        if not user:
+            return response(400,"User Id not found",{})
+
+        if not Contest(ctype).getBy(_id=ObjectId(contestid)):
+            return response(400, "Contest not found", [])
+        # return submissions to all contests problems
+        if not prblmid:
+            submissions= list(Submission(userid).getAll(params=exclude,contestid=contestid)) 
+            for each in submissions:
+                each["_id"] = str(each.get("_id"))
+            return response(200, "Success", submissions) 
+        # if problem id is invalid
+        if not ContestProblem(ctype, contestid).getBy(_id=ObjectId(prblmid)):
+            return response(400, "check the problem id", [])
+
+        submissions=list(Submission(userid).getAll(params=exclude,prblmid=prblmid))
+        for each in submissions:
+                each["_id"] = str(each.get("_id"))
+        return response(200,"Success",submissions) 
+
+class UserContestSubmissionHistoryById(Resource):
+    @jwt_required
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        return response(300, "Use a GET Request", [])
+
+    @jwt_required
+    @cross_origin(supports_credentials=True)
+    def get(self):
+        req_data=user_single_submission_parser.parse_args()
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid") 
+        submid = req_data.get("submid") 
         exclude = {'_id':0, 'lastModified':0}
 
-        #TODO(ab|jacob) move all this to a caching db. REDIS?
+        #TODO(ab|jacob) move all this to a caching db. REDIS?  
+        user = User().getBy(_id=ObjectId(userid))
+        if not user:
+            return response(400,"User Id not found",{})
 
-        if req_data["contesttype"] and req_data["contestid"]:
-
-            if not ContestProblem(req_data["contesttype"],req_data["contestid"]).getBy(
-                _id=ObjectId(req_data["prblmid"])
-            ):
-                return response(400,"Contest not found",[])
-
-            submissions= list(Submission(userid).\
-                                getAll(params=exclude,contestid=req_data["contestid"]))
-
-            return response(200,"Submisions ",submissions)
-
-        if req_data["prblmid"] and Problem().getBy(
-                _id=ObjectId(req_data["prblmid"])
-            ):
-
-            submissions=list(Submission(userid).
-                                getAll(params=exclude,prblmid=req_data["prblmid"]))
-
-            return response(200,"Submisions ",submissions)
-
-
-        return response(400,"request parameters not valid",{})
+        submissions = Submission(userid).getBy(params=exclude, _id=ObjectId(submid))
+        if submissions:
+            return response(200,"Success",submissions) 
+        else:
+            return response(400, "No submission corresponding to that Id", [])
 
      
 class RunContestCode(Resource):
@@ -223,6 +252,9 @@ class RunContestCode(Resource):
         lang = input_data.get('lang')
         codefile = input_data.get('codefile')
 
+        user = User().getBy(_id=ObjectId(userid))
+        if not user:
+            return response(400,"User Id not found",{})
         # check if contest is still active. either check the contest status or 
         # compare the starttime and duration with the currenttime
         contest = Contest(ctype).getBy(_id=ObjectId(contestid))
@@ -257,6 +289,10 @@ class ContestRunCodeStatus(Resource):
         ctype = input_data.get('contesttype')
         currentUser = get_jwt_identity() #fromk jwt
         userid = currentUser.get("uid") 
+
+        user = User().getBy(_id=ObjectId(userid))
+        if not user:
+            return response(400,"User Id not found",{})
         problem = ContestProblem(ctype, contestid).getBy(_id=ObjectId(problem_id))
         if not problem:
              return response(400, "Invalid Problem Id", [])  

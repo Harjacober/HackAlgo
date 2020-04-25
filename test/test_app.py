@@ -185,7 +185,6 @@ class AppTests(unittest.TestCase):
         )
         resp=app_client.post("/contest/{}/update/".format(contest_type), data=data, headers=header)
 
-        print(resp.data.decode())
         self.assertTrue("200" in resp.data.decode())
         self.assertTrue("Update Successful" in resp.data.decode()) 
 
@@ -438,15 +437,22 @@ class AppTests(unittest.TestCase):
         self.assertTrue(len(json.loads(resp.data.decode())["data"])>0)
 
 
-        data=dict(
-            userid=self.user_id,
+        data=dict( 
             contestid=self.contest_id,
-            prblmid=self.problem_id
+            contesttype=self.contest_type,
+            prblmid=self.contest_prblmid
         )
+        #submission for a specific contest problem
+        resp=app_client.get("/my/submission/history/",data=data,headers=header)  
+        self.assertTrue("Success" in resp.data.decode()) 
 
-        resp=app_client.post("/my/submission/history/",data=data,headers=header)
-
-        self.assertTrue("Submisions" in resp.data.decode())  
+        data=dict( 
+            contestid=self.contest_id,
+            contesttype=self.contest_type
+        )
+        #submission for all contest problems
+        resp=app_client.get("/my/submission/history/",data=data,headers=header)  
+        self.assertTrue("Success" in resp.data.decode())   
     
     def test_8_run_contest_code(self):
         self.assertTrue(len(self.contest_prblmid)>0)
