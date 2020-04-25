@@ -179,12 +179,13 @@ class AppTests(unittest.TestCase):
             desc = "Description goes here",
             duration = 120*60*60*1000.0,
             starttime = self.getValidTime(),
-            authorusername = "marlians",
+            author = "marlians",
             contestid = contest_id
 
         )
         resp=app_client.post("/contest/{}/update/".format(contest_type), data=data, headers=header)
 
+        print(resp.data.decode())
         self.assertTrue("200" in resp.data.decode())
         self.assertTrue("Update Successful" in resp.data.decode()) 
 
@@ -198,7 +199,7 @@ class AppTests(unittest.TestCase):
         s2 = b"2\n3\n4\n2\n1"
         as2 = b"7\n3"
         data=dict(
-            authorusername = "marlians",
+            author = "marlians",
             name="problem test", 
             testcases=(io.BytesIO(c2), 'test.in'),
             sizeoftestcases="3",

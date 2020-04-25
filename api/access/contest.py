@@ -10,12 +10,13 @@ from bson.objectid import ObjectId
 from db.models import Contest, ContestProblem, Admin, User
 from werkzeug.datastructures import FileStorage
 from datetime import datetime
-from utils import Rating
+from utils.ratingsutil import Rating
 from flask import current_app
 from flask_cors import  cross_origin
 from celery import Celery
 import config
 import time
+from coderunner.problem import ProblemInstance
 
 current_time_mills = lambda: float(round(time.time() * 1000))
 
@@ -98,12 +99,12 @@ update_contest_parser.add_argument('title', required=True)
 update_contest_parser.add_argument('desc', required=False)
 update_contest_parser.add_argument('duration',type=float, help="Duration in milliseconds", required=False)
 update_contest_parser.add_argument('starttime',type=float, help="start date in milliseconds", required=False) 
-update_contest_parser.add_argument('authorusername', help="username of the author that wants to update a contest", required=False, store_missing=False)  
+update_contest_parser.add_argument('author', help="username of the author that wants to update a contest", required=False, store_missing=False)  
 update_contest_parser.add_argument('contestid', help="contest id assigned upon contest initialization", required=False, store_missing=False)  
 
-
+ 
 add_prob_parser = reqparse.RequestParser()
-add_prob_parser.add_argument('authorusername', help = 'This field cannot be blank.', required = True)
+add_prob_parser.add_argument('author', help = 'This field cannot be blank.', required = True)
 add_prob_parser.add_argument('name', help = 'This field cannot be blank', store_missing=False) 
 add_prob_parser.add_argument('testcases', type=FileStorage, location = 'files', store_missing=False)
 add_prob_parser.add_argument('sizeoftestcases', type=int, help = 'This field cannot be blank', store_missing=False)
@@ -126,7 +127,7 @@ approval_parser.add_argument("contestid", required=True)
 manage_author_parser = reqparse.RequestParser()
 manage_author_parser.add_argument("creator", required=True) 
 manage_author_parser.add_argument("contestid", required=True) 
-manage_author_parser.add_argument("authorusername", required=True)
+manage_author_parser.add_argument("author", required=True)
 
 get_contests_parser = reqparse.RequestParser()
 get_contests_parser.add_argument('page', type=int, help="Page number", required=True)
@@ -186,7 +187,7 @@ class UpdateContest(Resource):
     def post(self, ctype):
         input_data = update_contest_parser.parse_args()
 
-        author_username = input_data.get('authorusername') 
+        author_username = input_data.get('author') 
         #check if author is registered as an admin
         admin = Admin().getBy(username=author_username)
         if not admin:
@@ -202,7 +203,7 @@ class UpdateContest(Resource):
         # remove keys that are not needed
         input_data.pop('authors', None)
         input_data.pop('contestype', None)   
-        input_data.pop('authorusername', None)   
+        input_data.pop('author', None)   
         input_data.pop('contestid', None)    
 
         # update the contest details 
@@ -222,7 +223,7 @@ class AddProblemForContest(Resource):
         input_data = add_prob_parser.parse_args()
 
         contestid = input_data.get('contestid')
-        author_username = input_data['authorusername']
+        author_username = input_data['author']
         #check if author is registered as an admin
         admin = Admin().getBy(username=author_username)
         if not admin:
@@ -274,7 +275,7 @@ class UpdateProblemForContest(Resource):
         if 'prblmid' not in input_data:
             return response(400, "prblmid is required", [])
         contestid = input_data.get('contestid')
-        author_username = input_data['authorusername']
+        author_username = input_data['author']
         #check if author is registered as an admin
         admin = Admin().getBy(username=author_username)
         if not admin:
@@ -338,9 +339,17 @@ class ApproveContest(Resource):
         starttime = data.get('starttime')
         duration = data.get('duration') 
         sixhrs = mintime*60*60*1000.0 
-
         if starttime < current_time_mills() + sixhrs:
             return response(400, "start time must be at least {}hrs in the future".format(mintime), [])
+        
+        # query all contest problems
+        exclude = {'lastModified':0}
+        problems = list(ContestProblem(ctype, contestid).getAll(params=exclude))
+        #confirm that all the contests problem meets specification
+        for problem in problems:
+            probInstance = ProblemInstance(problem)
+            if not probInstance.isValid():
+                return response(400, 'Problem "{0}" does not meet specification'.format(probInstance.getName()), [])
 
         start_contest_time = (starttime - current_time_mills()) / 1000 # celeery takes time in seconds not milliseconds  
 
@@ -392,7 +401,7 @@ class AddNewAuthor(Resource):
         input_data = manage_author_parser.parse_args()
 
         contestid = input_data['contestid']
-        author_username = input_data['authorusername']
+        author_username = input_data['author']
         creator = input_data['creator']  
 
         data = Contest(ctype).getBy(_id=ObjectId(contestid))
@@ -426,7 +435,7 @@ class RemoveAuthor(Resource):
         input_data = manage_author_parser.parse_args()
         
         contestid = input_data['contestid']
-        author_username = input_data['authorusername']
+        author_username = input_data['author']
         creator = input_data['creator']  
         
         data = Contest(ctype).getBy(_id=ObjectId(contestid))
