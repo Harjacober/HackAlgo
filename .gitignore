@@ -1,3 +1,7 @@
 *__pycache__*
 *.pyc
 *venv*
+app.pid
+celery.pid
+celerytestfile.in
+*.swp

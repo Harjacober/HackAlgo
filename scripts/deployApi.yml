@@ -1,0 +1,9 @@
+---
+- hosts: all
+  tasks:
+    - name: redploy the api gracefully.
+      shell:
+        cmd: ./scripts/gracefuldeploy
+        chdir: /home/codegee/HackAlgo/
+      become_user: root
+      become: true

@@ -90,7 +90,10 @@ class AppTests(unittest.TestCase):
         self.assertTrue('email' in resp.data.decode())
         d=json.loads(resp.data.decode())
         if "registration" in url:
-            keyreg=list(redisClient.hgetall("unregisteredusers").keys())[0]
+            if url=="/user/registration/":
+                keyreg=list(redisClient.hgetall("unregisteredusersUSER").keys())[0]
+            else:
+                keyreg=list(redisClient.hgetall("unregisteredusersADMIN").keys())[0]
             resp=app_client.get(url+"?id="+keyreg.decode())
             resp=json.loads(resp.data.decode())
 
@@ -306,6 +309,7 @@ class AppTests(unittest.TestCase):
         #testing python
         resp=codeRun.run(url,url_status,self.api_token_user,app_client,codeRun.pythonData())
         data=json.loads(resp.data.decode()) 
+        print(data)
         for i in range(3):
             self.assertTrue(data["data"][0]["result"][i]["passed"])
 

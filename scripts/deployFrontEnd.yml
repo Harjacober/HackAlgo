@@ -1,0 +1,9 @@
+---
+- hosts: all
+  tasks:
+    - name: Deploying the frontend.
+      shell:
+        cmd: /home/codegee/HackAlgo/scripts/frontenddeploy.sh
+        chdir: /home/codegee/HackAlgo-Front-end-/
+      become_user: root
+      become: true

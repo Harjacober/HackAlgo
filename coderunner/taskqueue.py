@@ -1,15 +1,15 @@
 """
 This class holds runnng tasks and can provide the status of each 
 """
-
 import sched,time
-import threading
+import threading,sys
 from os import getcwd
-from config import TIMETOEJECT
+from config import TIMETOEJECT,TESTING
 from bson.objectid import ObjectId
 from multiprocessing import Pipe
 from collections import deque
 from db import redisClient
+from redis.exceptions import ConnectionError
 from redis_collections import SyncableDict, SyncableList,SyncableDeque
 
 TASKDONE="DONE"
@@ -18,7 +18,6 @@ TASKSTART="START"
 #Running each tasks is estimated to take 500mb
 #So having minimum of 10 tasks is a good bound
 TASKS=10
-
 class Queue(threading.Thread):
     _tasks=SyncableDict(redis=redisClient) 
     _doneTasks=SyncableDict(redis=redisClient)
@@ -30,7 +29,7 @@ class Queue(threading.Thread):
     _lock=threading.Lock()    
 
     QueueConnection,ClientConnection=Pipe()
-    
+
     def __init__(self):
         threading.Thread.__init__(self,daemon=True)
 
@@ -46,7 +45,7 @@ class Queue(threading.Thread):
 
     def add(self,id,task):
         if id in Queue._tasks:
-            print("WARN: id in task")
+            print("WARN: id in task ",id)
 
         #we just want to keep 10 task runing in memory
         if len(Queue._tasks)<=TASKS:
@@ -64,8 +63,23 @@ class Queue(threading.Thread):
             Queue._tasks.pop(id)
         Queue._lock.release()
 
+    def runSchedEvent(self):
+        try:
+            tasks=Queue._pendingTasks.copy()
+            for t in tasks:
+                if hasattr(t,"runtime") and time.time()<=TIMETOEJECT+t.runtime:
+                    Queue._s.run(blocking=False)
+            tasks=Queue._doneTasks.copy()
+            for e in tasks:
+                t=Queue._doneTasks[e]
+                if hasattr(t,"runtime") and time.time()<=TIMETOEJECT+t.runtime:
+                    Queue._s.run(blocking=False)
+        except ConnectionError:
+            Queue._s.run(blocking=False)
+        
     def run(self):
         while Queue._Alive:
+            self.runSchedEvent()
             try:
                 done=Queue.QueueConnection.recv()
                 if isinstance(done,list) and len(done)>=2 and done[0]==TASKDONE:
@@ -73,12 +87,12 @@ class Queue(threading.Thread):
                     if len(Queue._pendingTasks)>0:
                         id,task=Queue._pendingTasks.popleft()
                         Queue._s.enter(0, 1, self.add,argument=(id,task,))
-                        Queue._s.enter(TIMETOEJECT, 2, self.done,argument=(id,))   
+                        Queue._s.enter(TIMETOEJECT, 1, self.done,argument=(id,))   
 
             except EOFError:
                 Queue.QueueConnection,Queue.ClientConnection=Pipe()
 
-            Queue._s.run(blocking=False)
+            self.runSchedEvent()
             self.sync()
 
     def getById(self,id):
@@ -106,14 +120,11 @@ class Queue(threading.Thread):
         if id in Queue._tasks:
             Queue._tasks.pop(id)
             Queue._idsAvailable.append(id)
-            print(" Removed ID {}".format(id))
-            return
+            print(" Removed ID {}".format(id))   
         if id in Queue._doneTasks:
             Queue._doneTasks.pop(id)
             Queue._idsAvailable.append(id)
             print(" Removed ID {}".format(id))
-            return
-        print("Task not found in queue")
 
     def checkForID(self,id):
         return id in Queue._tasks or id in Queue._doneTasks    

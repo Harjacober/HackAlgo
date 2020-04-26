@@ -195,6 +195,55 @@ class Task:
 
     def status(self):
         return self.state
+    
+    def formatRunOutput(self,string):
+        if not string:return string
+        #starting by replacing all file name with a generic name
+        return string.replace(self.filepath,"submited."+self.lang)
+
+    def runPerCase(self,n_cases,binargs,**kwargs):
+        for cc in range(n_cases):
+            errput = None
+            ans = None
+            try:
+                ans=runCommand(binargs,input=self.cases[cc],**kwargs)
+            except subprocess.TimeoutExpired:
+                self.result[cc] ={"passed":False,"output":"Timeout","errput":"Timeout"}
+                self.verdict = "Failed"
+                errput = "TimeOut"
+                break
+            except MemoryError:
+                self.result[cc] ={"passed":False,"output":"Memory Error","errput":"Memory Error"}
+                self.verdict = "Failed"
+                errput = "OutOFMemory"
+                break
+            except Exception as e:
+                errput="RuntimeError"
+                if str(type(e))=="<class 'subprocess.TimeoutExpired'>":
+                    errput="TimeOut"
+                    
+            if ans:
+                output=ans.stdout.strip()
+                errput=errput or ans.stderr.strip()
+                if not output and not errput:
+                    errput="No result from Interpreter"
+                if ans.returncode > 0:
+                    errput="RuntimeError"
+
+                self.result[cc] = {
+                                    "passed":output==self.answercase[cc] and ans.returncode==0,
+                                    "output":self.formatRunOutput(output),
+                                    "errput":self.formatRunOutput(errput)
+                                    }             
+                if not self.answercase[cc] or ans.returncode>0 or output!=self.answercase[cc]: 
+                    self.verdict = "Failed"
+            else:
+                self.result[cc] = {
+                                    "passed":False,
+                                    "output":"",
+                                    "errput":self.formatRunOutput(errput)
+                                    }   
+                self.verdict = "Failed"
 
     def runCompile(self,compiler_name,compile_options,run_options,n_cases,binary):
 
@@ -202,35 +251,18 @@ class Task:
                                             capture_output=True,encoding="utf-8",memorylimit=self.memlimit)
 
         #if while trying to compile and there was an error 
+        l=len(self.result)
         if compileans.returncode >0 :
-            for cc in range(n_cases):
-                self.result[cc] ={"passed":False,"output":"","errput":compileans.stderr.strip()}
+            for cc in range(l):
+                self.result[cc] ={"passed":False,"output":self.formatRunOutput(compileans.stderr.strip()),"errput":"CompileError"}
             return
 
     
-        for cc in range(n_cases):
-            try:
-                ans=runCommand([binary]+run_options, capture_output=True,timeout= self.timelimit,\
-                                input=self.cases[cc],encoding="utf-8",memorylimit=self.memlimit)
-            except subprocess.TimeoutExpired:
-                self.result[cc] ={"passed":False,"output":"Timeout","errput":"Timeout"}
-                self.verdict = "Failed" 
-                return
-            except MemoryError:
-                self.result[cc] ={"passed":False,"output":"Memory Error","errput":"Memory Error"}
-                self.verdict = "Failed"
-                return
-
-            output=ans.stdout.strip()
-            errput=ans.stderr.strip()
-
-            self.result[cc] ={
-                            "passed":output==self.answercase[cc] and ans.returncode==0,
-                            "output":output,
-                            "errput":errput
-                            }
+        self.runPerCase(l,[binary]+run_options,capture_output=True,timeout= self.timelimit,\
+                                encoding="utf-8",memorylimit=self.memlimit)
 
     def run(self,ClientConnection):
+        setattr(self,"runtime",time())
         l=len(self.result)
         self.state=self.PossibelTasksState[1]
         #some languagues have to compile then run 
@@ -249,32 +281,11 @@ class Task:
         else:
             # languages like python, js, php should be fine.
             self.memlimit= self.memlimit+100 # extra 100mb for interpreted languanges
-            for cc in range(l):
-                args=[]
-                args.extend(self.resolveFolder(self.lang))
-                args.append(self.filepath) 
-                try:
-                    ans=runCommand(args,capture_output=True,timeout= self.timelimit,
-                            input=self.cases[cc],encoding="utf-8",memorylimit=self.memlimit,lang=self.lang)
-                except subprocess.TimeoutExpired:
-                    self.result[cc] ={"passed":False,"output":"Timeout","errput":"Timeout"}
-                    self.verdict = "Failed"
-                    break
-                except MemoryError:
-                    self.result[cc] ={"passed":False,"output":"Memory Error","errput":"Memory Error"}
-                    self.verdict = "Failed"
-                    break
+            args=self.resolveFolder(self.lang)+[self.filepath]
+            self.runPerCase(l,args,capture_output=True,timeout= self.timelimit,\
+                            encoding="utf-8",memorylimit=self.memlimit,lang=self.lang)
+            
 
-                output=ans.stdout.strip()
-                errput=ans.stderr.strip()
-
-                self.result[cc] = {
-                                "passed":output==self.answercase[cc] and ans.returncode==0,
-                                "output":output,
-                                "errput":errput
-                                }             
-                if not self.answercase[cc] or ans.returncode>0 or output!=self.answercase[cc]: 
-                    self.verdict = "Failed"
 
         self.state=self.PossibelTasksState[2]
         #create a submission in the database    
