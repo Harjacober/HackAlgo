@@ -17,6 +17,7 @@ from celery import Celery
 import config
 import time
 from coderunner.problem import ProblemInstance
+from utils.contestutil import ContestStatus
 
 current_time_mills = lambda: float(round(time.time() * 1000))
 
@@ -329,15 +330,17 @@ class ApproveContest(Resource):
 
         creator = input_data['creator'] 
         contestid = input_data['contestid']
-        data = Contest(ctype).getBy(_id=ObjectId(contestid))
-        if data is None:
+        contest = Contest(ctype).getBy(_id=ObjectId(contestid))
+        if not contest:
             return response(400, "Check the contest id", [])
-        if creator != data.get('creator'):
+        if creator != contest.get('creator'):
             return response(400, "Not authorized", [])
+        if contest.get('status') == ContestStatus.getStatusCode("active"):
+            return response(400, "contest already approved", [])
         # confirm that start date is not less than 12hrs in the future before approval 
         mintime = 12
-        starttime = data.get('starttime')
-        duration = data.get('duration') 
+        starttime = contest.get('starttime')
+        duration = contest.get('duration') 
         sixhrs = mintime*60*60*1000.0 
         if starttime < current_time_mills() + sixhrs:
             return response(400, "start time must be at least {}hrs in the future".format(mintime), [])
@@ -345,6 +348,8 @@ class ApproveContest(Resource):
         # query all contest problems
         exclude = {'lastModified':0}
         problems = list(ContestProblem(ctype, contestid).getAll(params=exclude))
+        if not problems:
+            return response(400, "Contest must have at least one problem", [])
         #confirm that all the contests problem meets specification
         for problem in problems:
             probInstance = ProblemInstance(problem)
@@ -353,7 +358,7 @@ class ApproveContest(Resource):
 
         start_contest_time = (starttime - current_time_mills()) / 1000 # celeery takes time in seconds not milliseconds  
 
-        params = {'status': 2}
+        params = {'status': ContestStatus.getStatusCode("active")}
         if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
             # schedule task to start contest here
             startContest.apply_async(countdown=start_contest_time, args=[contestid, ctype, duration])

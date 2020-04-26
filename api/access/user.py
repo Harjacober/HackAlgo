@@ -10,14 +10,14 @@ from flask_cors import  cross_origin
 
 from coderunner.taskqueue import queue 
 from coderunner.task import Task
+from utils.contestutil import ContestStatus
 
  
 enter_contest_parser = reqparse.RequestParser() 
 enter_contest_parser.add_argument('contesttype', help="The type of the contest and contest id are required fields",required=True)
 enter_contest_parser.add_argument('contestid', help="the contestid", required=True)
 
-register_for_contest_parser = reqparse.RequestParser()
-register_for_contest_parser.add_argument('userid', required=True)
+register_for_contest_parser = reqparse.RequestParser() 
 register_for_contest_parser.add_argument('contesttype', help="The type of the contest and contest id are required fields",required=True)
 register_for_contest_parser.add_argument('contestid', help="the contestid", required=True)
 
@@ -84,13 +84,14 @@ class UserEnterContest(Resource):
         if not contest:
             return response(400,"Contest not found",{})
         else:
-            if contest['status'] == 2:
+            if contest['status'] == ContestStatus.getStatusCode("active"):
                 return response(400,"Contest is yet to start",{})
-            elif contest['status'] == -1:
+            elif contest['status'] == ContestStatus.getStatusCode("completed"):
                 return response(400,"Contest has ended",{})
-            elif contest['status'] == 0:
+            elif contest['status'] == ContestStatus.getStatusCode("inreview"):
                 return response(400,"Contest is not active yet",{})
-        
+        req_data["title"]=contest.get("title") #required as part of the information to be stored in `UserRegisteredContest` collection
+
         user = User().getBy(_id=ObjectId(userid))
         if not user:
             return response(400,"User Id not found",{})
@@ -328,16 +329,19 @@ class UserRegisterForContest(Resource):
         #TODO(ab|jacob) move all this to a caching db. REDIS?
         contestid = req_data.get('contestid')
         ctype = req_data.get('contesttype')
-        userid = req_data.get("userid")
+        currentUser = get_jwt_identity() #fromk jwt
+        if not currentUser:
+            return response(400, "User Id not found", [])
+        userid = currentUser.get("uid")
         contest = Contest(ctype).getBy( _id=ObjectId(contestid))
         if not contest:
             return response(400,"Contest not found",{})
         else:
-            if contest['status'] == 1:
+            if contest['status'] == ContestStatus.getStatusCode("started"):
                 return response(400,"Contest has already started",{})
-            elif contest['status'] == -1:
+            elif contest['status'] == ContestStatus.getStatusCode("completed"):
                 return response(400,"Contest has ended",{})
-            elif contest['status'] == 0:
+            elif contest['status'] == ContestStatus.getStatusCode("inreview"):
                 return response(400,"Contest is not active yet",{})
  
         user = User().getBy(_id=ObjectId(userid))
