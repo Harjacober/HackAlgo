@@ -90,7 +90,8 @@ class UserEnterContest(Resource):
                 return response(400,"Contest has ended",{})
             elif contest['status'] == 0:
                 return response(400,"Contest is not active yet",{})
-        
+        req_data["name"]=contest.get("name") #required as part of the information to be stored in `UserRegisteredContest` collection
+
         user = User().getBy(_id=ObjectId(userid))
         if not user:
             return response(400,"User Id not found",{})
