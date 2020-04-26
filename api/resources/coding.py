@@ -17,8 +17,7 @@ from coderunner.problem import ProblemInstance
 from werkzeug.datastructures import FileStorage
 
 run_code_parser = reqparse.RequestParser()
-run_code_parser.add_argument('prblmid', help = 'This field cannot be blank. It also accept email', required = True)
-run_code_parser.add_argument('userid', help = 'This field cannot be blank', required = True)
+run_code_parser.add_argument('prblmid', help = 'This field cannot be blank. It also accept email', required = True) 
 run_code_parser.add_argument('codecontent', help = 'This field cannot be blank', required = True)
 run_code_parser.add_argument('codefile', type=FileStorage, location='files', required = False, store_missing=False)
 run_code_parser.add_argument('lang', help = 'This field cannot be blank', required = True)
@@ -46,15 +45,13 @@ class RunCode(Resource):
         input_data = run_code_parser.parse_args()
 
         problem_id=input_data["prblmid"] #get id
-        try:
-            problem = Problem().getBy(_id= ObjectId(problem_id))#fetch the actual problem from database with the problemId 
-            if not problem:
-                return response(400, "Invalid Problem Id", []) 
+        problem = Problem().getBy(_id= ObjectId(problem_id))#fetch the actual problem from database with the problemId 
+        if not problem:
+            return response(400, "Invalid Problem Id", []) 
 
-            userid = input_data.get('userid')
-            user = User().getBy(_id=ObjectId(userid)) or Admin().getBy(_id=ObjectId(userid))
-        except InvalidId:
-            return response(400, "Invalid ID", []) 
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid")
+        user = User().getBy(_id=ObjectId(userid))
         if not user:
             return response(400,"User Id not found",{})
         task_id=queue.generateID()

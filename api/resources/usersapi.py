@@ -25,10 +25,8 @@ getprofile_parser = reqparse.RequestParser()
 getprofile_parser.add_argument('uniqueid', help="Accepts username or user unique id", required=False)
 getprofile_parser.add_argument('username', help="Accepts username or user unique id", required=False)
 
-getsubmission_parser = reqparse.RequestParser()
-getsubmission_parser.add_argument('userid', required=True)
-getsubmission_parser.add_argument('prblid', required=False)
-getsubmission_parser.add_argument('submid', required=False )
+getsubmission_parser = reqparse.RequestParser() 
+getsubmission_parser.add_argument('submid', required=False) 
 
 
 def response(code,msg,data,access_token=""):
@@ -115,15 +113,16 @@ class SubmissionInfo(Resource):
 
     @jwt_required
     @cross_origin(supports_credentials=True)
-    def get(self):
-        return response(300, "Use a POST Request", [])  
+    def post(self):
+        return response(300, "Use a GET Request", [])  
 
     @jwt_required
     @cross_origin(supports_credentials=True) 
-    def post(self):
+    def get(self):
         data = getsubmission_parser.parse_args()
-        userid = data['userid']
-        subm_id = data['submid']
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid") 
+        subm_id = data.get('submid')
         exclude = {'_id':0, 'lastModified':0}
         user_submission = Submission(userid).getBy(params=exclude, _id=ObjectId(subm_id))
         if user_submission:
@@ -134,21 +133,23 @@ class SubmissionList(Resource):
 
     @jwt_required
     @cross_origin(supports_credentials=True)
-    def get(self, problemid): 
-        return response(300, "Use a POST Request", [])  
+    def post(self, problemid): 
+        return response(300, "Use a GET Request", [])  
         
     @jwt_required 
     @cross_origin(supports_credentials=True)  
-    def post(self, problemid):
-        data = getsubmission_parser.parse_args()
-        userid = data['userid'] 
-        exclude = {'_id':0, 'codecontent': 0, 'result':0, 'lastModified':0}
+    def get(self, problemid): 
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid") 
+        exclude = {'result':0, 'lastModified':0}
         if problemid == "all":
-            submissions = Submission(userid).getAll(params=exclude)
+            submissions = list(Submission(userid).getAll(params=exclude))
         else:   
-            submissions = Submission(userid).getAll(params=exclude, prblmid=problemid)
+            submissions = list(Submission(userid).getAll(params=exclude, prblmid=problemid))
         if submissions:    
-            return response(200, "Success", list(submissions))   
+            for each in submissions:
+                each["_id"] = str(each.get("_id"))
+            return response(200, "Success", submissions)  
         return response(400, "No matching Submission found", [])
 
 

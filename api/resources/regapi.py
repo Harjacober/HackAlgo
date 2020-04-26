@@ -15,7 +15,7 @@ from db import redisClient
 from flask import current_app,redirect,render_template
 from flask_mail import Message
 from flask_cors import  cross_origin
-from utils import retry
+from utils.util import retry
 
 
 

@@ -31,6 +31,7 @@ celery
 #  running celery  
 check scripts/build  
 #  Deploy using ansible   
-use ```ansible-playbook -i host deployApi.yml -k```  
-change the playbook name to the appropiate app you want to deploy
+use ```ansible-playbook -i host deployApi.yml -K -k```  
+change the playbook name to the appropiate app you want to deploy  
+use this for front end deployment ```ansible-playbook -i host deployFrontEnd.yml -K -k```  
 

@@ -5,6 +5,8 @@ from flask import jsonify
 from werkzeug.datastructures import FileStorage
 from db.models import Problem, Admin
 from flask_cors import  cross_origin
+from coderunner.problem import ProblemInstance
+from utils.util import response
 
 add_prob_parser = reqparse.RequestParser()
 
@@ -46,9 +48,7 @@ req_show_problem.add_argument('filter')
 delete_problem_parser = reqparse.RequestParser()
 delete_problem_parser.add_argument('author', help = 'username of the admin adding the problem', required=True)
 delete_problem_parser.add_argument('prblmid', help = 'cannot be empty', required=True)
-
-def response(code,msg,data):
-    return {"code":code,"msg":msg,"data":data}
+ 
 
 class ProblemDetails(Resource):
     """
@@ -329,6 +329,8 @@ class SubmitProblem(Resource):
             return response(400, "Problem not found", [])
         if author != pb.get('author'): 
             return response(400, "not the author of the problem", [])  
+        if not ProblemInstance(pb).isValid():
+            return response(400, 'Problem does not meet specification', [])
          
         params = {"status": 1, 'solvedby':[]} # add a new field `solvedby` to indicate all users that have solved a problem
         if Problem().update(params=params, _id=ObjectId(input_data['prblmid'])):
