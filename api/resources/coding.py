@@ -51,7 +51,7 @@ class RunCode(Resource):
 
         currentUser = get_jwt_identity() #fromk jwt
         userid = currentUser.get("uid")
-        user = User().getBy(_id=ObjectId(userid))
+        user = User().getBy(_id=ObjectId(userid)) or Admin().getBy(_id=ObjectId(userid))
         if not user:
             return response(400,"User Id not found",{})
         task_id=queue.generateID()

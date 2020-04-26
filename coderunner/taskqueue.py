@@ -67,12 +67,15 @@ class Queue(threading.Thread):
         try:
             tasks=Queue._pendingTasks.copy()
             for t in tasks:
-                if hasattr(t,"runtime") and time.time()<=TIMETOEJECT+t.runtime:
+                # checks if the current time is greater than time of first run of the
+                # task plus extra stardard define TIMETOEJECT
+                if hasattr(t,"runtime") and abs(time.time()-t.runtime)>=TIMETOEJECT:
                     Queue._s.run(blocking=False)
             tasks=Queue._doneTasks.copy()
             for e in tasks:
                 t=Queue._doneTasks[e]
-                if hasattr(t,"runtime") and time.time()<=TIMETOEJECT+t.runtime:
+                # see comment above
+                if hasattr(t,"runtime") and abs(time.time()-t.runtime)>=TIMETOEJECT:
                     Queue._s.run(blocking=False)
         except ConnectionError:
             Queue._s.run(blocking=False)
