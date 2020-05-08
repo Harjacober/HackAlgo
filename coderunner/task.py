@@ -25,7 +25,7 @@ compilers={
     "py":py_dir,
     "java":"/usr/bin/java",
     "c":c_dir,
-    "c++":cplus_dir,
+    "cpp":cplus_dir,
     "python":py_dir,
     "python2":"/usr/bin/python2",
     "php":"/usr/bin/php",
@@ -103,7 +103,7 @@ class Task:
             return obj
             
     PossibelTasksState=["initialize","running","finished"]
-    def __init__(self,lang,content,userid,problem,id,stype,codefile,contestid="",ctype=""):
+    def __init__(self,lang,content,userid,problem,id,stype,codefile,contestid=None,ctype=None):
         """
         :param stype: the type of submission. differentiates actual 
                       test cases from sample cases.
@@ -143,7 +143,11 @@ class Task:
         self.enter()
 
     def toJson(self):
-        return {"state":self.state,"lang":self.lang,"userid":self.userid,"_id":self.id,"result":self.result}
+        # Don't show expected output for contest submission
+        if self.contestid:
+            for each in self.result:
+                each.pop('expectedoutput')
+        return {"state":self.state,"lang":self.lang,"_id":self.id,"result":self.result}
 
     def __str__(self):
         return str(self.__dict__)
@@ -208,12 +212,20 @@ class Task:
             try:
                 ans=runCommand(binargs,input=self.cases[cc],**kwargs)
             except subprocess.TimeoutExpired:
-                self.result[cc] ={"passed":False,"output":"Timeout","errput":"Timeout"}
+                self.result[cc] ={"passed":False,
+                                    "output":"Time Limit Exceeded",
+                                    "errput":"",
+                                    "expectedoutput":self.answercase[cc]
+                                    }
                 self.verdict = "Failed"
                 errput = "TimeOut"
                 break
             except MemoryError:
-                self.result[cc] ={"passed":False,"output":"Memory Error","errput":"Memory Error"}
+                self.result[cc] ={"passed":False,
+                                    "output":"Memory Limit Exceeded",
+                                    "errput":"",
+                                    "expectedoutput":self.answercase[cc]
+                                    }
                 self.verdict = "Failed"
                 errput = "OutOFMemory"
                 break
@@ -233,7 +245,8 @@ class Task:
                 self.result[cc] = {
                                     "passed":output==self.answercase[cc] and ans.returncode==0,
                                     "output":self.formatRunOutput(output),
-                                    "errput":self.formatRunOutput(errput)
+                                    "errput":self.formatRunOutput(errput),
+                                    "expectedoutput":self.answercase[cc]
                                     }             
                 if not self.answercase[cc] or ans.returncode>0 or output!=self.answercase[cc]: 
                     self.verdict = "Failed"
@@ -241,7 +254,8 @@ class Task:
                 self.result[cc] = {
                                     "passed":False,
                                     "output":"",
-                                    "errput":self.formatRunOutput(errput)
+                                    "errput":self.formatRunOutput(errput),
+                                    "expectedoutput":self.answercase[cc]
                                     }   
                 self.verdict = "Failed"
 
@@ -274,7 +288,7 @@ class Task:
             options_compile=["-o",self.filepath+".out"]
             options_run=[]
             self.runCompile("gcc",options_compile,options_run,l,self.filepath+".out")
-        elif self.lang=="c++":
+        elif self.lang=="cpp":
             options_compile=["-o",self.filepath+".out"]
             options_run=[]
             self.runCompile("g++",options_compile,options_run,l,self.filepath+".out")
@@ -292,7 +306,7 @@ class Task:
         submission_data = {'prblmid':self.problem.getprblmid(),'name':self.problem.getName(),'userid':self.userid,'contestid':self.contestid,'ctype':self.ctype,'codecontent':self.content,
         'lang':self.lang,'stype':self.stype,'result': self.result,'verdict': self.verdict,'timesubmitted':self.timeofsubmission}
         if self.stype == "test":   
-            if not bool(self.contestid):
+            if not self.contestid:
                 submission_data.pop('userid', None)
                 submission_data.pop('contestid', None)
                 submission_data.pop('ctype', None)

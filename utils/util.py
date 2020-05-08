@@ -1,6 +1,16 @@
+SupportedLanguages = {"go",
+                        "py",
+                        "java",
+                        "c",
+                        "cpp",
+                        "python",
+                        "python2",
+                        "php",
+                        "js" 
+                        }
+
 def response(code,msg,data):
     return {"code":code,"msg":msg,"data":data}
-
 
 def retry(times,function,*args,**kwargs):
     """Assist in retrying function calls that are likely to fail"""

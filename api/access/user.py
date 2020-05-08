@@ -11,6 +11,7 @@ from flask_cors import  cross_origin
 from coderunner.taskqueue import queue 
 from coderunner.task import Task
 from utils.contestutil import ContestStatus
+from utils import util
 
  
 enter_contest_parser = reqparse.RequestParser() 
@@ -251,6 +252,8 @@ class RunContestCode(Resource):
         userid = currentUser.get("uid")
         stype = input_data.get('stype')
         lang = input_data.get('lang')
+        if lang not in util.SupportedLanguages:
+            return response(400, "Specified language not supported", [])
         codefile = input_data.get('codefile')
 
         user = User().getBy(_id=ObjectId(userid))

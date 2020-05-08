@@ -61,24 +61,8 @@ class UserProfile(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        data = getprofile_parser.parse_args()
-        if not data:
-            return response(400,"No values passed",[])
-
-        userName=data.get("username")
-        if userName:
-            exclude = {'pswd':0, 'lastModified':0}
-            user_data = self.category.getBy( params=exclude, username=userName) 
-            user_data['_id'] = str(user_data.get('_id'))
-            if user_data:
-                userid = user_data.get('_id')
-                solvedProblems = dict()
-                submissions = Submission(userid).getAll(params={'_id':0}, verdict='Passed')
-                for submission in submissions:
-                    solvedProblems[submission.get('prblmid')] = submission.get('name')
-                user_data['solvedProblems'] = solvedProblems
-                return response(200, "Success", user_data)
-        userid =  data.get('uniqueid')
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid")  
         uid = ObjectId(userid)
         exclude = {'pswd':0, 'lastModified':0}
         user_data = self.category.getBy( params=exclude, _id=uid) 

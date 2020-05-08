@@ -15,6 +15,7 @@ from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from coderunner.problem import ProblemInstance
 from werkzeug.datastructures import FileStorage
+from utils import util
 
 run_code_parser = reqparse.RequestParser()
 run_code_parser.add_argument('prblmid', help = 'This field cannot be blank. It also accept email', required = True) 
@@ -54,10 +55,14 @@ class RunCode(Resource):
         user = User().getBy(_id=ObjectId(userid)) or Admin().getBy(_id=ObjectId(userid))
         if not user:
             return response(400,"User Id not found",{})
+
         task_id=queue.generateID()
         codecontent = input_data.get('codecontent')
         stype = input_data.get('stype')
         lang = input_data.get('lang')
+        #check if programming language specified is supported
+        if lang not in util.SupportedLanguages:
+            return response(400, "Specified language not supported", [])
         codefile = input_data.get('codefile') 
         task=Task(lang,codecontent,userid,ProblemInstance(problem),task_id,stype,codefile)
         queue.add(task_id,task) 
@@ -84,9 +89,9 @@ class RunCodeStatus(Resource):
         if not problem:
             return response(400, "Invalid Problem Id", []) 
 
-        user_id=input_data["userid"]
-        task_id=input_data["taskid"]
-        language=input_data["lang"]
+        user_id=input_data.get("userid")
+        task_id=input_data.get("taskid")
+        language=input_data.get("lang")
 
         task=queue.getById(task_id)
  

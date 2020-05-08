@@ -71,7 +71,7 @@ def updateRank(contestid, ctype):
     from utils import Rating
 
     # update the status field to indicate that the contest is over
-    params = {'status': -1}
+    params = {'status': ContestStatus.getStatusCode('completed')}
     Contest(ctype).update(params=params, _id=ObjectId(contestid)) 
     # compute the rating of the contest participants
     contest = Contest(ctype).getBy(_id=ObjectId(contestid))
@@ -165,7 +165,7 @@ class InitializeContest(Resource):
         roundnum = Contest(ctype).getAll().count() + 1
         input_data['roundnum'] = roundnum
         input_data['authors'] = [creator]
-        input_data['status'] = 0 # 0 means not approved, 1 means approved, -1 means contest is over
+        input_data['status'] = ContestStatus.getStatusCode('inreview')
         input_data['duration'] = 0.0
         input_data['starttime'] = 0.0 
         input_data['participants'] = {}  
@@ -194,9 +194,12 @@ class UpdateContest(Resource):
         if not admin:
             return response(400, "Username does not exist", [])
         contestid = input_data.get('contestid')
-        data = Contest(ctype).getBy(_id=ObjectId(contestid))
-        if not data:
+        contest = Contest(ctype).getBy(_id=ObjectId(contestid))
+        if not contest:
             return response(400, "check contestid", [])
+        #can't update a contest that has ended
+        if contest.get('status') == ContestStatus.getStatusCode("completed"):
+            return response(400,"Contest has ended",{}) 
         # check if author is authorized
         if author_username not in data.get('authors'):
             return response(400, "Unauthorized author", []) 
@@ -376,13 +379,13 @@ class ForceStartOrEndContest(Resource):
     @cross_origin(supports_credentials=True)
     def post(self, ctype, contestid, action): 
         if action == "start":
-            params = {'status': 1}
+            params = {'status': ContestStatus.getStatusCode('started')}
             if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
                 return response(200, "Contest forcefully started", [])
 
             return response(400, "Unable to start contest", [])    
         elif action == "end" :
-            params = {'status': -1}
+            params = {'status': ContestStatus.getStatusCode('completed')}
             if Contest(ctype).update(params=params, _id=ObjectId(contestid)):
                 # compute the participants rank when contest is forcefully ended
                 updateRank.apply_async(countdown=1, args=[contestid, ctype])
@@ -508,8 +511,7 @@ class GetContestById(Resource):
 class GetContest(Resource):   
     @jwt_required
     @cross_origin(supports_credentials=True)
-    def get(self, ctype, status):
-        status_code = {'started':1, 'inreview':0, 'completed':-1, 'active':2}
+    def get(self, ctype, status): 
         args = get_contests_parser.parse_args()
         page = args.get('page')
         limit = args.get('limit')
@@ -520,9 +522,9 @@ class GetContest(Resource):
         userid = currentUser.get("uid")
         if status == "all":
             # exclude only inreview contest
-            query = dict(status={"$ne": status_code["inreview"]}) 
+            query = dict(status={"$ne": ContestStatus.getStatusCode("inreview")}) 
         else:
-            query = dict(status=status_code[status])
+            query = dict(status=ContestStatus.getStatusCode(status))
         if filters is None: # return all data
             exclude = {'lastModified':0}
             data = list(Contest(ctype).getAll(params=exclude, start=(page-1)*limit, size=limit, **query)) # all contests based on the status specified
