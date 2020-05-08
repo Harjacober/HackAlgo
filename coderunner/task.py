@@ -4,7 +4,7 @@ from time import time
 import subprocess
 from datetime import datetime
 from shutil import rmtree 
-from db.models import UserRegisteredContest,Contest,ContestProblem,Problem,Submission
+from db.models import UserRegisteredContest,Contest,ContestProblem,Problem,Submission,Admin,User
 from bson.objectid import ObjectId
 from platform import system
 from flask import current_app
@@ -119,6 +119,8 @@ class Task:
         else:
             self.content = content # get submitted code content    
         self.userid=userid  
+        user=User().getBy(_id=ObjectId(userid)) or Admin().getBy(_id=ObjectId(userid))
+        self.username = user.get("username")
         self.id=id 
         self.state=Task.PossibelTasksState[0]  
         self.verdict = "Passed"
@@ -379,4 +381,5 @@ class Task:
             'participants.{}.timepenalty'.format(userid): timepenalty}}
             Contest(ctype).flexibleUpdate(update, _id=ObjectId(contestid)) 
             data['score'] = totalscore
-            current_app.socketio.emit('newscore', {'data':totalscore},namespace='/scoreboard/')
+            wsdata={"point":totalscore,"username":self.username,"attempted":len(problemscore)}
+            current_app.socketio.emit('newscore', wsdata,namespace='/scoreboard/')
