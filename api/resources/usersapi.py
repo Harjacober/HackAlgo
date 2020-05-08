@@ -13,7 +13,7 @@ from flask_cors import  cross_origin
 
 
 profile_parser = reqparse.RequestParser() 
-profile_parser.add_argument('uniqueid', help='unqueid of user whose profile needs to be updated', required=False, store_missing=False)
+profile_parser.add_argument('username', required=False, store_missing=False)
 profile_parser.add_argument('name', help = '', required = False, store_missing=False)
 profile_parser.add_argument('birthday', help = '', required = False, store_missing=False)
 profile_parser.add_argument('gender', help = 'should either be male, female or other', required = False, store_missing=False)
@@ -21,9 +21,6 @@ profile_parser.add_argument('location', help = '', required = False, store_missi
 profile_parser.add_argument('summary', help = 'Brief description about yourself', required = False, store_missing=False)
 profile_parser.add_argument('profilephoto', help='Link to profile pictture on storage', required=False, store_missing=False)
 
-getprofile_parser = reqparse.RequestParser()
-getprofile_parser.add_argument('uniqueid', help="Accepts username or user unique id", required=False)
-getprofile_parser.add_argument('username', help="Accepts username or user unique id", required=False)
 
 getsubmission_parser = reqparse.RequestParser() 
 getsubmission_parser.add_argument('submid', required=False) 
@@ -44,9 +41,10 @@ class UserUpdateProfile(Resource):
     def post(self):
         data = profile_parser.parse_args() 
         #update the profile(document) with unqiueid provided 
-        uid = ObjectId(data['uniqueid']) #convert str id to a bson object
-        if self.category.update(params=data, _id=uid):
-            uid = ObjectId(data['uniqueid'])
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid")  
+        uid = ObjectId(userid) #convert str id to a bson object
+        if self.category.update(params=data, _id=uid): 
             exclude = {'pswd':0, 'lastModified':0}
             user_data = self.category.getBy( params=exclude, _id=uid) 
             user_data['_id'] = str(user_data.get('_id'))
@@ -61,24 +59,8 @@ class UserProfile(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def get(self):
-        data = getprofile_parser.parse_args()
-        if not data:
-            return response(400,"No values passed",[])
-
-        userName=data.get("username")
-        if userName:
-            exclude = {'pswd':0, 'lastModified':0}
-            user_data = self.category.getBy( params=exclude, username=userName) 
-            user_data['_id'] = str(user_data.get('_id'))
-            if user_data:
-                userid = user_data.get('_id')
-                solvedProblems = dict()
-                submissions = Submission(userid).getAll(params={'_id':0}, verdict='Passed')
-                for submission in submissions:
-                    solvedProblems[submission.get('prblmid')] = submission.get('name')
-                user_data['solvedProblems'] = solvedProblems
-                return response(200, "Success", user_data)
-        userid =  data.get('uniqueid')
+        currentUser = get_jwt_identity() #fromk jwt
+        userid = currentUser.get("uid")  
         uid = ObjectId(userid)
         exclude = {'pswd':0, 'lastModified':0}
         user_data = self.category.getBy( params=exclude, _id=uid) 

@@ -392,7 +392,7 @@ class AppTests(unittest.TestCase):
             contestid = self.contest_id
 
         )  
-        resp=app_client.post("/register/contest/",data=data,headers=header)  
+        resp=app_client.post("/register/contest/",data=data,headers=header)   
         self.assertTrue("Registration Success" in resp.data.decode())
 
         # Contest must have started before users can enter

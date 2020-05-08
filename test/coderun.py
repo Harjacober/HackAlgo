@@ -103,7 +103,7 @@ class CodeRunTests:
             prblmid=self.problem_id,
             userid=self.user_id,
             codecontent=code,
-            lang="c++",
+            lang="cpp",
             stype = "test",
             contestid = self.contestid,
             ctype = self.ctype

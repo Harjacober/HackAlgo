@@ -17,7 +17,7 @@ contestdb["comment"]
 #more collections to be added  below as it suit the app 
 
 
-langs=['go', 'py', 'java', 'c', 'c++', 'python', 'python2', 'php', 'js']
+langs=['go', 'py', 'java', 'c', 'cpp', 'python', 'python2', 'php', 'js']
 
 for lgn in langs:
     path = "/tmp/{}/".format(lgn) 
