@@ -201,7 +201,7 @@ class UpdateContest(Resource):
         if contest.get('status') == ContestStatus.getStatusCode("completed"):
             return response(400,"Contest has ended",{}) 
         # check if author is authorized
-        if author_username not in data.get('authors'):
+        if author_username not in contest.get('authors'):
             return response(400, "Unauthorized author", []) 
 
         # remove keys that are not needed

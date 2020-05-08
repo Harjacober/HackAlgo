@@ -146,7 +146,8 @@ class Task:
         # Don't show expected output for contest submission
         if self.contestid:
             for each in self.result:
-                each.pop('expectedoutput')
+                if each:
+                    each.pop('expectedoutput', None)
         return {"state":self.state,"lang":self.lang,"_id":self.id,"result":self.result}
 
     def __str__(self):
@@ -156,8 +157,9 @@ class Task:
         return str(self.__dict__)
     
     def free(self):
-        del self.contestid,self.ctype,self.problem,self.stype
-        del self.cases,self.answercase,self.timelimit,self.memlimit
+        #del self.contestid,self.ctype,self.problem,self.stype
+        #del self.cases,self.answercase,self.timelimit,self.memlimit
+        pass
 
     def __del___(self):
         #cleaning up
@@ -268,7 +270,11 @@ class Task:
         l=len(self.result)
         if compileans.returncode >0 :
             for cc in range(l):
-                self.result[cc] ={"passed":False,"output":self.formatRunOutput(compileans.stderr.strip()),"errput":"CompileError"}
+                self.result[cc] ={"passed":False,
+                                    "output":self.formatRunOutput(compileans.stderr.strip()),
+                                    "errput":"CompileError",
+                                    "expectedoutput":self.answercase[cc]
+                                    }
             return
 
     
