@@ -46,7 +46,7 @@ req_show_problem.add_argument('limit', type=int, required=True, help="This field
 req_show_problem.add_argument('filter')
 
 delete_problem_parser = reqparse.RequestParser()
-delete_problem_parser.add_argument('author', help = 'username of the admin adding the problem', required=True)
+delete_problem_parser.add_argument('author', help = 'username of the admin deleting the problem', required=True)
 delete_problem_parser.add_argument('prblmid', help = 'cannot be empty', required=True)
  
 
