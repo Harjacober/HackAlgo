@@ -137,8 +137,7 @@ get_contests_parser.add_argument('filter')
 
 delete_contest_parser = reqparse.RequestParser()
 delete_contest_parser.add_argument('author', help = 'username of the admin deleting the contet', required=True)
-delete_contest_parser.add_argument('contestid', help = 'cannot be empty', required=True)
-delete_contest_parser.add_argument('ctype', help = 'cannot be empty', required=True)
+delete_contest_parser.add_argument('contestid', help = 'cannot be empty', required=True) 
 
 
 
@@ -579,11 +578,10 @@ class GetContest(Resource):
 
 class DeleteContest(Resource):
     @jwt_required
-    def delete(self):
+    def delete(self, ctype):
         data = delete_contest_parser.parse_args()
         contestid = data.get("contestid")
-        author = data.get('author')
-        ctype = data.get('ctype')
+        author = data.get('author') 
         try:
             ObjectId(contestid)
         except :
