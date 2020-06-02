@@ -13,7 +13,7 @@ from flask_cors import  cross_origin
 
 
 profile_parser = reqparse.RequestParser() 
-profile_parser.add_argument('username', required=False, store_missing=False)
+#profile_parser.add_argument('username', required=False, store_missing=False)
 profile_parser.add_argument('name', help = '', required = False, store_missing=False)
 profile_parser.add_argument('birthday', help = '', required = False, store_missing=False)
 profile_parser.add_argument('gender', help = 'should either be male, female or other', required = False, store_missing=False)
@@ -52,7 +52,7 @@ class UserUpdateProfile(Resource):
                 return response(200, "update successful",[],access_token=create_access_token(user_data))
             return response(400, "something went wrong",[],access_token="")
 
-        return response(400, "uniqueid does not exist",[])      
+        return response(400, "Invalid Id from token",[])      
  
 class UserProfile(Resource):
     category = User()
@@ -78,6 +78,7 @@ class UserProfile(Resource):
     @jwt_required
     @cross_origin(supports_credentials=True)
     def put(self):
+        #TODO fix this
         data = getprofile_parser.parse_args() 
         uid = ObjectId(data['uniqueid'])
         exclude = {'_id':0, 'pswd':0, 'lastModified':0}
