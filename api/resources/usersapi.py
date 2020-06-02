@@ -9,6 +9,7 @@ from flask_jwt_extended import (
 from bson.objectid import ObjectId
 from db.models import User,Submission
 from flask_cors import  cross_origin
+from utils.util import response
 
 
 
@@ -24,10 +25,6 @@ profile_parser.add_argument('profilephoto', help='Link to profile pictture on st
 
 getsubmission_parser = reqparse.RequestParser() 
 getsubmission_parser.add_argument('submid', required=False) 
-
-
-def response(code,msg,data,access_token=""):
-    return {"code":code,"msg":msg,"data":data,"access_token":access_token}
 
 
 class UserUpdateProfile(Resource):

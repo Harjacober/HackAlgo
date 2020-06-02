@@ -11,7 +11,7 @@ from flask_cors import  cross_origin
 from coderunner.taskqueue import queue 
 from coderunner.task import Task
 from utils.contestutil import ContestStatus
-from utils import util
+from utils.util import SupportedLanguages,response
 
  
 enter_contest_parser = reqparse.RequestParser() 
@@ -50,8 +50,6 @@ run_code_status_parser.add_argument('prblmid', help = 'This field cannot be blan
 run_code_status_parser.add_argument('contestid', help = 'contest id .if submission is made for a contest')
 run_code_status_parser.add_argument('contesttype', help = 'contest type .if submission is made for a contest')
 
-def response(code,msg,data,access_token=""):
-    return {"code":code,"msg":msg,"data":data,"access_token":access_token}
 
 class UserEnterContest(Resource):
     """
@@ -252,7 +250,7 @@ class RunContestCode(Resource):
         userid = currentUser.get("uid")
         stype = input_data.get('stype')
         lang = input_data.get('lang')
-        if lang not in util.SupportedLanguages:
+        if lang not in SupportedLanguages:
             return response(400, "Specified language not supported", [])
         codefile = input_data.get('codefile')
 

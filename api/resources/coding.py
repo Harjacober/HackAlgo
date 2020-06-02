@@ -15,7 +15,8 @@ from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from coderunner.problem import ProblemInstance
 from werkzeug.datastructures import FileStorage
-from utils import util
+from utils.util import SupportedLanguages,response
+
 
 run_code_parser = reqparse.RequestParser()
 run_code_parser.add_argument('prblmid', help = 'This field cannot be blank. It also accept email', required = True) 
@@ -30,9 +31,6 @@ run_code_status_parser.add_argument('lang', help = 'This field cannot be blank.'
 run_code_status_parser.add_argument('prblmid', help = 'This field cannot be blank', required = True)
 run_code_status_parser.add_argument('userid', help = 'This field cannot be blank', required = True)
 
-
-def response(code,msg,data):
-    return {"code":code,"msg":msg,"data":data}
 
 
 class RunCode(Resource): 
@@ -61,7 +59,7 @@ class RunCode(Resource):
         stype = input_data.get('stype')
         lang = input_data.get('lang')
         #check if programming language specified is supported
-        if lang not in util.SupportedLanguages:
+        if lang not in SupportedLanguages:
             return response(400, "Specified language not supported", [])
         codefile = input_data.get('codefile') 
         task=Task(lang,codecontent,userid,ProblemInstance(problem),task_id,stype,codefile)

@@ -10,4 +10,4 @@ class ContestStatus:
     def getStatusCode(key:str):
         contestCode = {'inreview':100, 'active':200, 'started':300, 'completed':400}
         return contestCode[key] 
-    1
+    
