@@ -10,6 +10,7 @@ from db.models import Admin,Internships
 from flask import request 
 from bson.objectid import ObjectId
 from flask_cors import  cross_origin
+from utils.util import response
 
 
 add_internship_parser = reqparse.RequestParser()
@@ -31,10 +32,6 @@ get_internships_parser = reqparse.RequestParser()
 get_internships_parser.add_argument("page", type=int, required=True, help="This field cannot be blank") 
 get_internships_parser.add_argument("limit", type=int, required=True, help="This field cannot be blank") 
 
-
-
-def response(code,msg,data,access_token=""):
-    return {"code":code,"msg":msg,"data":data}
 
 class AddInternship(Resource):
     @jwt_required

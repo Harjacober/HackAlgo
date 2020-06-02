@@ -18,6 +18,7 @@ import config
 import time
 from coderunner.problem import ProblemInstance
 from utils.contestutil import ContestStatus
+from utils.util import response
 
 current_time_mills = lambda: float(round(time.time() * 1000))
 
@@ -139,10 +140,6 @@ delete_contest_parser = reqparse.RequestParser()
 delete_contest_parser.add_argument('author', help = 'username of the admin deleting the contet', required=True)
 delete_contest_parser.add_argument('contestid', help = 'cannot be empty', required=True) 
 
-
-
-def response(code,msg,data,access_token=""):
-    return {"code":code,"msg":msg,"data":data,"access_token":access_token}
 
 class InitializeContest(Resource):
     """

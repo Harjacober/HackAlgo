@@ -5,6 +5,7 @@ from flask_restful import Resource,reqparse
 from flask_jwt_extended import jwt_required
 from bson.objectid import ObjectId
 from flask_cors import  cross_origin
+from utils.util import response
 
 
 get_all_added_prob_parser = reqparse.RequestParser()
@@ -13,12 +14,6 @@ get_all_added_prob_parser.add_argument('uniqueid', help="Admin unique Id", requi
 get_all_involved_contest_parser = reqparse.RequestParser()
 get_all_involved_contest_parser.add_argument('uniqueid', help="Admin unique Id", required=True)
 get_all_involved_contest_parser.add_argument('contesttype', help="contest type", required=True)
-
-
-
-
-def response(code,msg,data):
-    return {"code":code,"msg":msg,"data":data}
 
 
 class AdminUpdateProfile(UserUpdateProfile):

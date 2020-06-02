@@ -1,3 +1,4 @@
+from flask import make_response
 SupportedLanguages = {"go",
                         "py",
                         "java",
@@ -9,8 +10,8 @@ SupportedLanguages = {"go",
                         "js" 
                         }
 
-def response(code,msg,data):
-    return {"code":code,"msg":msg,"data":data}
+def response(code,msg,data,access_token=""):
+   return make_response({"code":code,"msg":msg,"data":data,"access_token":access_token},code)
 
 def retry(times,function,*args,**kwargs):
     """Assist in retrying function calls that are likely to fail"""

@@ -15,7 +15,7 @@ from db import redisClient
 from flask import current_app,redirect,render_template
 from flask_mail import Message
 from flask_cors import  cross_origin
-from utils.util import retry
+from utils.util import retry,response
 
 
 
@@ -47,10 +47,6 @@ change_authuser_pswd_parser = reqparse.RequestParser()
 change_authuser_pswd_parser.add_argument("pswd",help="enter user new password",required=True)
 
 BITS=50
-
-def response(code,msg,data,access_token=""):
-    return {"code":code,"msg":msg,"data":data,"access_token":access_token}
-
 
 class AdminRegistration(Resource):
     category=Admin()
