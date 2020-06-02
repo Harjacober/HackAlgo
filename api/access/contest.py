@@ -68,7 +68,7 @@ def updateRank(contestid, ctype):
     # so dont worry much about this imports performances
     from db.models import Contest, ContestProblem, Admin
     from bson.objectid import ObjectId
-    from utils import Rating
+    from utils.ratingsutil import Rating
 
     # update the status field to indicate that the contest is over
     params = {'status': ContestStatus.getStatusCode('completed')}
@@ -134,6 +134,10 @@ get_contests_parser = reqparse.RequestParser()
 get_contests_parser.add_argument('page', type=int, help="Page number", required=True)
 get_contests_parser.add_argument('limit', type=int, help="size of data", required=True)
 get_contests_parser.add_argument('filter')
+
+delete_contest_parser = reqparse.RequestParser()
+delete_contest_parser.add_argument('author', help = 'username of the admin deleting the contet', required=True)
+delete_contest_parser.add_argument('contestid', help = 'cannot be empty', required=True) 
 
 
 
@@ -572,3 +576,24 @@ class GetContest(Resource):
         return response(300, "Use a GET Request", [])  
 
 
+class DeleteContest(Resource):
+    @jwt_required
+    def delete(self, ctype):
+        data = delete_contest_parser.parse_args()
+        contestid = data.get("contestid")
+        author = data.get('author') 
+        try:
+            ObjectId(contestid)
+        except :
+            return response(400, "Invalid ID", [])
+
+        contest = Contest(ctype).getBy(_id=ObjectId(contestid))
+        if not contest:
+            return response(400, "contest not found", [])
+        if author not in contest.get('authors'): 
+            return response(400, "Not authorized", [])  
+
+        if Contest(ctype).deleteOne(_id=ObjectId(contestid)):
+            return response(200, "Contest deleted Successfully", [])
+        
+        return response(400, "Unable to delete contest, contest with that id might not exist", [])
