@@ -11,7 +11,7 @@ SupportedLanguages = {"go",
                         }
 
 def response(code,msg,data,access_token=""):
-   return make_response({"code":code,"msg":msg,"data":data,"access_token":access_token},code)
+   return make_response({"code":code,"message":msg,"data":data,"access_token":access_token},code)
 
 def retry(times,function,*args,**kwargs):
     """Assist in retrying function calls that are likely to fail"""
