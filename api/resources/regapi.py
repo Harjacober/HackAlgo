@@ -54,10 +54,14 @@ class AdminRegistration(Resource):
     def get(self):
         id=request.args.get("id")
 
-        data=json.loads(redisClient.hget("unregisteredusers"+self.getType(),id).decode())
+        
+        if redisClient.hget("unregisteredusers"+self.getType(),id):
+            data=json.loads(redisClient.hget("unregisteredusers"+self.getType(),id).decode())
+        else:
+            return response(400,"something went wrong. Did you supply the corrrect code?",[])
         
         if not data:
-            return response(400,"something went wrong.Have you registered?",[])
+            return response(400,"something went wrong. Have you registered?",[])
         
         for category in [Admin(),User()]: #Admin && User name should be unique
             if category.getBy(email=data["email"]): #check if email already exist
