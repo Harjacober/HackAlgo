@@ -16,6 +16,7 @@ from flask import current_app,redirect,render_template
 from flask_mail import Message
 from flask_cors import  cross_origin
 from utils.util import retry,response
+import base64
 
 
 
@@ -162,13 +163,15 @@ class ForgetPassword(Resource):
                   recipients=[data["email"]]
                 )
 
-        mac=hmac.new(config.SECRET_KEY)
+        mac=hmac.new(config.SECRET_KEY,digestmod=None)
+        emailmac = mac.copy()
         generatedid=hex(secrets.SystemRandom().getrandbits(BITS)).encode("utf-8")
         mac.update(generatedid)
-        generatedid=mac.hexdigest()
+        emailmac.update(str.encode(data["email"]))
+        generatedid=base64.b64encode((mac.hexdigest()+":"+emailmac.hexdigest()).encode()).decode()
         
-        url="{}/check/password?id={}&email={}".format(config.HOST,generatedid,data["email"])
-        redisClient.hset("pendindmacs",data["email"],json.dumps((generatedid,url)))
+        url="{}/check/password?id={}".format(config.HOST,generatedid)
+        redisClient.hset("pendindmacs",generatedid,json.dumps((generatedid,url)))
 
         userMsg="""
                 <b><a href="{}">Click here to change password<a/></b><br>
@@ -197,12 +200,16 @@ class ChangePassword(Resource):
         if len(data["pswd"]) <6:
             return response(400,"Password lenght must be greater than six",[])  
 
-        pending=json.loads(redisClient.hget("pendindmacs",data["email"]).decode())
+        pending=json.loads(redisClient.hget("pendindmacs",data["changepswdid"]).decode())
         if not pending or len(pending)<2:
             return response(400,"Invalid ID",[])  
 
-        if not hmac.compare_digest(pending[0],data["changepswdid"]):
-            return response(400,"Invalid ID",[])  
+        email=base64.b64decode(str.encode(data["changepswdid"])).split(b":")[-1]
+        mac=hmac.new(config.SECRET_KEY,digestmod=None)
+        mac.update(str.encode(data["email"]))
+
+        if not hmac.compare_digest(email.decode(),mac.hexdigest()):
+            return response(400,"Invalid Email",[])  
         
         user["pswd"] =  sha256.hash(data["pswd"])
         uid = ObjectId(user['_id'])
@@ -214,14 +221,12 @@ class ChangePassword(Resource):
 @cross_origin(supports_credentials=True)
 def ValidatePassword():
     id=request.args.get("id")
-    email=request.args.get("email")
     ok= True if id else False
-    pending=json.loads(redisClient.hget("pendindmacs",email).decode())
+    pending=json.loads(redisClient.hget("pendindmacs",id).decode())
     ok = ok and pending and len(pending)>1 
-    ok = ok and hmac.compare_digest(pending[0],id)
     if not ok:
         return render_template("html/404.html")
-    return redirect("{}/reset-password/{}/{}".format(config.FRONT_END_HOST,email,id), code=302)
+    return redirect("{}/reset-password/{}/{}".format(config.FRONT_END_HOST,id), code=302)
 
 class ChangeAuthUserPassword(Resource):
     @cross_origin(supports_credentials=True)
